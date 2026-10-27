@@ -14,7 +14,7 @@ import {
   type CredentialCipherProvider,
 } from "./providers/credentialCipherProvider.js";
 import { createServiceLogger } from "../logger/serviceLogger.js";
-import { getAppConfigDir } from "../paths.js";
+import { getSharedLegacyConfigDir } from "../paths.js";
 
 /**
  * 凭据存储路径
@@ -25,8 +25,9 @@ import { getAppConfigDir } from "../paths.js";
  */
 const logger = createServiceLogger("credentialService");
 
+// Credenciales (incluye keys de providers): ubicación heredada compartida, no se separa por app.
 function getCredentialsDir() {
-  return getAppConfigDir();
+  return getSharedLegacyConfigDir();
 }
 
 function getCredentialsFile() {

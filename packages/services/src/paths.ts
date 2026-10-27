@@ -11,7 +11,13 @@ import {
 
 let _dataBaseDir: string | null = null;
 export const ZCODE_WINDOWS_APP_INSTALL_DIR_ENV = "ZCODE_WINDOWS_APP_INSTALL_DIR";
+export const APP_DATA_DIR_NAME_ENV = "AUTON_DATA_DIR_NAME";
 const envDataBaseDir = process.env.ZCODE_DATA_BASE_DIR?.trim() || null;
+let _appDataDirName: string | null = null;
+
+export function setAppDataDirName(dir: string | null): void {
+  _appDataDirName = dir?.trim() || null;
+}
 const defaultDataBaseDir = process.env.HOME?.trim() || homedir();
 
 export interface DataBaseDirTargetValidationOptions {
@@ -42,9 +48,20 @@ export function getDataBaseDir(): string {
   return defaultDataBaseDir;
 }
 
-/** {dataBaseDir}/.zcode */
+/** Nombre de la casa de datos: setter > env AUTON_DATA_DIR_NAME > ".zcode". */
+export function getAppDataDirName(): string {
+  if (_appDataDirName) return _appDataDirName;
+  return process.env[APP_DATA_DIR_NAME_ENV]?.trim() || ".zcode";
+}
+
+/** {dataBaseDir}/<dirname> (por defecto .zcode; Auton usa .auton). */
 export function getZCodeDataRootDir(): string {
-  return join(getDataBaseDir(), ".zcode");
+  return join(getDataBaseDir(), getAppDataDirName());
+}
+
+/** Ubicación heredada compartida: {dataBaseDir}/.zcode/v2 (providers y credenciales). */
+export function getSharedLegacyConfigDir(): string {
+  return join(getDataBaseDir(), ".zcode", "v2");
 }
 
 /** 非项目对话共享的真实工作目录；默认 ~/.zcode/workspace/default。 */
@@ -243,8 +260,8 @@ export function getProviderWorkspaceConfigDir(): string {
  * state must only live at the default homedir location.
  */
 export async function copyDataDirectory(oldBaseDir: string, newBaseDir: string): Promise<void> {
-  const oldDir = join(oldBaseDir, ".zcode", "v2");
-  const newDir = join(newBaseDir, ".zcode", "v2");
+  const oldDir = join(oldBaseDir, getAppDataDirName(), "v2");
+  const newDir = join(newBaseDir, getAppDataDirName(), "v2");
   await cp(oldDir, newDir, {
     recursive: true,
     force: false,

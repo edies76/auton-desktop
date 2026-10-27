@@ -34,7 +34,7 @@ import {
   NodeModelSelectionConfigRepository,
   PERSONAL_PROVIDER_CONFIG_FILE_NAME,
 } from "@zcode/provider-node";
-import { getAppConfigDir as resolveAppConfigDir } from "./paths.js";
+import { getAppConfigDir as resolveAppConfigDir, getSharedLegacyConfigDir } from "./paths.js";
 import {
   createHasExistingLocalTask,
   hasAnyAgentSessionRow,
@@ -111,12 +111,17 @@ export {
   getZCodeDataRootDir,
   getConversationWorkspaceDir,
   getAppConfigDir,
+  getAppDataDirName,
+  getSharedLegacyConfigDir,
+  setAppDataDirName,
+  APP_DATA_DIR_NAME_ENV,
   getExportLogStageDir,
   getExportLogDir,
   getFeedbackRootDir,
   getFeedbackAttachmentDir,
   getFeedbackLogArchiveDir,
   getGitCheckpointIndexRootDir,
+  getTasksIndexDatabasePath,
   copyDataDirectory,
   validateDataBaseDirTarget,
   ZCODE_WINDOWS_APP_INSTALL_DIR_ENV,
@@ -1573,8 +1578,8 @@ export function createLocalServices(options: {
   const providerProvisioningSource = createProviderProvisioningSource({
     personalRepository: providerConfigRuntime.personalRepository,
     settingService,
-    credentialFilePath: resolveCredentialFilePath(resolveAppConfigDir()),
-    personalConfigFilePath: join(resolveAppConfigDir(), PERSONAL_PROVIDER_CONFIG_FILE_NAME),
+    credentialFilePath: resolveCredentialFilePath(getSharedLegacyConfigDir()),
+    personalConfigFilePath: join(getSharedLegacyConfigDir(), PERSONAL_PROVIDER_CONFIG_FILE_NAME),
   });
   const providerProvisioningDisposers = [
     providerConfigRuntime.configService.onDidChange((reason) => {
@@ -2401,7 +2406,7 @@ export function createLocalServices(options: {
           // Built-in Active 路径按当前 Endpoint 隔离，不能通过同步的固定路径
           // getter 读取；Agent spawn 必须等待本轮 Endpoint Source 完成解析和物化。
           zcodeBuiltinFilePath: await providerConfigRuntime.resolveZCodeBuiltinActiveFilePath(),
-          personalFilePath: join(resolveAppConfigDir(), PERSONAL_PROVIDER_CONFIG_FILE_NAME),
+          personalFilePath: join(getSharedLegacyConfigDir(), PERSONAL_PROVIDER_CONFIG_FILE_NAME),
         }),
       };
     },
@@ -2991,10 +2996,10 @@ export function createLocalServices(options: {
         accountProviderSource: accountProviderConfigSource,
         credentialService,
         settingService,
-        personalConfigFilePath: join(resolveAppConfigDir(), PERSONAL_PROVIDER_CONFIG_FILE_NAME),
-        stateFilePath: join(resolveAppConfigDir(), "runtime", "provider", "provisioning.json"),
+        personalConfigFilePath: join(getSharedLegacyConfigDir(), PERSONAL_PROVIDER_CONFIG_FILE_NAME),
+        stateFilePath: join(getSharedLegacyConfigDir(), "runtime", "provider", "provisioning.json"),
         listProvisioningCredentialKeys: () =>
-          listProviderProvisioningCredentialKeys(resolveCredentialFilePath(resolveAppConfigDir())),
+          listProviderProvisioningCredentialKeys(resolveCredentialFilePath(getSharedLegacyConfigDir())),
       }),
     );
   }

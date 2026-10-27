@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import { setDataBaseDir } from "@zcode/services/node";
+import { APP_DATA_DIR_NAME_ENV, setAppDataDirName, setDataBaseDir } from "@zcode/services/node";
 
 export function resolveBootstrapSettingsFile(homePath: string = homedir()): string {
   return join(homePath, ".zcode", "v2", "setting.json");
@@ -37,6 +37,10 @@ function readBootstrapDataBaseDirFromDisk(
 }
 
 export function applyEarlyDataBaseDirBootstrap(): string | null {
+  if (!process.env[APP_DATA_DIR_NAME_ENV]?.trim()) {
+    process.env[APP_DATA_DIR_NAME_ENV] = ".auton";
+  }
+  setAppDataDirName(process.env[APP_DATA_DIR_NAME_ENV] ?? ".auton");
   const dataBaseDir = readBootstrapDataBaseDirFromDisk();
   if (dataBaseDir) {
     // 启动早期就把 dataBaseDir 注入进来，避免 logger / crashReporter 先按默认 HOME 建目录，

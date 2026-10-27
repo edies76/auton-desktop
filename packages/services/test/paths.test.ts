@@ -85,6 +85,33 @@ describe("paths", () => {
     expect(existsSync(join(newV2Dir, "setting.json.123.tmp"))).toBe(false);
   });
 
+  it("Auton separa su casa (.auton) pero comparte providers y credenciales (.zcode)", async () => {
+    const home = makeTempHome();
+    process.env.HOME = home;
+    process.env.AUTON_DATA_DIR_NAME = ".auton";
+    vi.resetModules();
+    try {
+      const paths = await import("../src/paths.js");
+      expect(paths.getAppDataDirName()).toBe(".auton");
+      expect(paths.getAppConfigDir()).toBe(join(home, ".auton", "v2"));
+      expect(paths.getZCodeDataRootDir()).toBe(join(home, ".auton"));
+      expect(paths.getTasksIndexDatabasePath()).toBe(join(home, ".auton", "v2", "tasks-index.sqlite"));
+      expect(paths.getSharedLegacyConfigDir()).toBe(join(home, ".zcode", "v2"));
+    } finally {
+      delete process.env.AUTON_DATA_DIR_NAME;
+    }
+  });
+
+  it("sin override la casa sigue siendo .zcode", async () => {
+    const home = makeTempHome();
+    process.env.HOME = home;
+    delete process.env.AUTON_DATA_DIR_NAME;
+    vi.resetModules();
+    const paths = await import("../src/paths.js");
+    expect(paths.getAppDataDirName()).toBe(".zcode");
+    expect(paths.getAppConfigDir()).toBe(join(home, ".zcode", "v2"));
+    expect(paths.getSharedLegacyConfigDir()).toBe(join(home, ".zcode", "v2"));
+  });
   it("Windows 数据目录不能选择 ZCode 安装目录或其子目录", async () => {
     vi.resetModules();
 

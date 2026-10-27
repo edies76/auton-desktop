@@ -6,7 +6,7 @@ import {
   type NodeProviderConfigRuntimeOptions,
 } from "@zcode/provider-node";
 import type { ModelProviderConfig } from "./legacyModelProviderSerialized.js";
-import { getAppConfigDir } from "../paths.js";
+import { getAppConfigDir, getSharedLegacyConfigDir } from "../paths.js";
 import { importLegacyPersonalProviderConfig } from "./legacyPersonalProviderConfigImporter.js";
 
 export interface ProviderConfigRuntimeOptions {
@@ -41,7 +41,7 @@ export class ProviderConfigRuntime {
       onPersonalConfigRecovery: options.onPersonalConfigRecovery,
       onPersonalConfigPollingError: options.onPersonalConfigPollingError,
       personalFilePath:
-        options.personalFilePath ?? join(getAppConfigDir(), PERSONAL_PROVIDER_CONFIG_FILE_NAME),
+        options.personalFilePath ?? join(getSharedLegacyConfigDir(), PERSONAL_PROVIDER_CONFIG_FILE_NAME),
       personalPollingIntervalMs: options.personalPollingIntervalMs,
       watch: options.watch,
       ...(options.readLegacyProviders

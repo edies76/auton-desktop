@@ -46,7 +46,7 @@ import {
   type ModelProviderSystemDisabledReason,
   type ProviderModelMappings,
 } from "./legacyModelProviderSerialized.js";
-import { getAppConfigDir } from "../paths.js";
+import { getSharedLegacyConfigDir } from "../paths.js";
 
 const LEGACY_PRESET_GLM_PROVIDER_IDS = new Set<string>([
   "zai-api",
@@ -92,7 +92,7 @@ function normalizeBigModelCodingPlanAnthropicBaseUrlForEnv(
 }
 
 function getZCodeConfigFilePath(): string {
-  return join(getAppConfigDir(), "config.json");
+  return join(getSharedLegacyConfigDir(), "config.json");
 }
 
 const LEGACY_FALLBACK_CONTEXT_WINDOW = MODEL_PROVIDER_NEW_MODEL_CONTEXT_WINDOW;
