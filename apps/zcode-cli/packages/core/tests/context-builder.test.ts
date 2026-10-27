@@ -860,8 +860,9 @@ describe("ContextBuilder meta user context", () => {
       cacheHint: section.cacheHint,
     }));
     const doctrine = result.sections.find((section) => section.source === "auton_doctrine");
-    expect(doctrine?.content).toContain("Eres Auton, no ZCode");
-    expect(doctrine?.content).not.toContain("orquestador de código en ZCode");
+    expect(doctrine?.content).toContain("Eres un jefe de obra con IA");
+    expect(doctrine?.content).toContain("Tu límite: pensar y dirigir");
+    expect(doctrine?.content).not.toContain("ZCode");
     expect(sectionTargets.slice(0, 5)).toEqual([
       { name: "CLI Prefix", injectionTarget: "system", cacheHint: "stable" },
       { name: "Agent Identity", injectionTarget: "system", cacheHint: "stable" },
