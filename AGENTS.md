@@ -1,3 +1,34 @@
+<!-- AUTON: reglas de este proyecto. Lo que sigue debajo de este bloque es de ZCode y se respeta igual. -->
+
+# Auton Desktop - reglas de este repositorio
+
+**El documento central es [AUTON-VISION.md](./AUTON-VISION.md) (Vision 2.0).** Antes de proponer
+arquitectura, producto, UI o prioridades, leelo. Si lo que vas a hacer contradice la vision,
+pregunta antes de escribir codigo.
+
+## Que es este repo y que no
+
+- **Auton Desktop es el producto** que se presenta en la hackathon de Meta (Global AI Developer
+  Hackathon 2026): la app de escritorio donde se ve y se toca la disciplina de Auton.
+- **`C:\Nueva-carpeta\auton cat jam zcode` NO es el producto.** Es el prototipo de referencia
+  (orquestador + programmers sobre HTTP y Vite). Sirve como **inspiracion y fuente de ideas ya
+  probadas** -el prompt del orquestador, el ciclo de revision de sprints, el protocolo de reporte
+  DONE/DONE_WITH_CONCERNS/NEEDS_CONTEXT/BLOCKED-, pero **su codigo no se copia aqui**: lo que sirva
+  se reimplementa en este repo, con sus pruebas y su estilo.
+- `origin` apunta a `zai-org/ZCode` (Apache 2.0) para traer actualizaciones del upstream; `auton`
+  apunta a este repositorio. La licencia y los avisos de ZCode se mantienen intactos.
+
+## Reglas duras
+
+- **Nunca** credenciales en el repo: ni `.env`, ni keys, ni tokens en codigo, tests, docs o mensajes
+  de commit. Las keys viven en configuracion privada, fuera del arbol versionado.
+- No usar `--no-verify` para saltar checks, salvo cuando el hook no pueda correr (por ejemplo, push
+  a un remoto recien creado y vacio). Si se usa, hay que correrlo despues a mano y decirlo.
+- Un commit por cambio con sentido, con mensaje que explique que cambio y por que.
+- Prioridades de la hackathon: impacto 30%, **uso de herramientas de IA de Meta 25%**, profundidad
+  tecnica 20%, calidad de demo 25%. Por eso el stack de Meta (Muse Code, Meta Model API, pesos
+  abiertos Muse Glimmer) tiene que estar integrado de verdad, y la demo -tablero, evidencia,
+  relojes- vale tanto como la arquitectura.
 ## 核心原则
 
 - 新增或修改行为前，先更新对应 spec；目录不存在时按需创建。先明确产品规则、状态所有者、接口和验收场景，再实现代码。
