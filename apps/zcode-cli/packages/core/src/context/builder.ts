@@ -14,6 +14,7 @@ import type { ToolRegistry } from "../tool/registry.js";
 import { estimateTokens } from "./utils.js";
 import { buildCliPrefixSection } from "./sections/cli-prefix.js";
 import { buildIdentitySection } from "./sections/identity.js";
+import { buildAutonSection } from "./sections/auton.js";
 import { buildWorkflowActorIdentitySection } from "./sections/workflow-actor.js";
 import { buildEnvInfoSection, buildGitSystemContextSection } from "./sections/env-info.js";
 import { buildSkillsSection } from "./sections/skills.js";
@@ -120,6 +121,7 @@ export class ContextBuilder {
       sections.push(buildWorkflowActorIdentitySection(workflowActor));
     } else {
       sections.push(buildIdentitySection(activeOutputStyle));
+      sections.push(buildAutonSection());
     }
 
     // 3. Dynamic system context

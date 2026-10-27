@@ -99,12 +99,12 @@ describe("ContextBuilder meta user context", () => {
       false,
       false,
     ]);
-    expect(result.systemMessages[0]?.content).toBe("You are ZCode, an interactive coding agent");
+    expect(result.systemMessages[0]?.content).toBe("You are Auton, an interactive coding orchestrator");
 
     const stableBody = String(result.systemMessages[1]?.content ?? "");
-    expect(stableBody).toMatch(/^\n?You are an interactive ZCode agent/);
+    expect(stableBody).toMatch(/^\n?You are Auton, the interactive coding orchestrator/);
     expect(stableBody).not.toContain("# Agent Identity");
-    expect(stableBody).not.toContain("You are ZCode, an interactive coding agent");
+    expect(stableBody).not.toContain("You are Auton, an interactive coding orchestrator");
     expect(stableBody).toContain("# Harness");
     expect(stableBody).not.toContain("# Session-specific guidance");
     expect(stableBody).not.toContain("# Environment");
@@ -170,7 +170,7 @@ describe("ContextBuilder meta user context", () => {
     expect(dynamicSystem.split(AUTONOMY_APPENDIX_PROMPT)).toHaveLength(2);
   });
 
-  it("injects the stable ZCode Desktop Context before dynamic behavior", () => {
+  it("injects the stable Auton Desktop Context before dynamic behavior", () => {
     const result = createContextBuilder({
       workingDirectory: "/workspace",
       presentationSurface: "zcode_desktop",
@@ -188,14 +188,14 @@ describe("ContextBuilder meta user context", () => {
     );
     expect(desktopSections).toHaveLength(1);
     expect(desktopSections[0]).toMatchObject({
-      name: "ZCode Desktop Context",
+      name: "Auton Desktop Context",
       source: "desktop_context",
       injectionTarget: "system",
       cacheHint: "stable",
     });
     expect(desktopSections[0]?.content).toBe(
       [
-        "# ZCode Desktop Context",
+        "# Auton Desktop Context",
         "",
         "### Interactive views",
         "- No visualization output directory is supplied; inline Gen UI is unavailable.",
@@ -227,8 +227,8 @@ describe("ContextBuilder meta user context", () => {
     expect(desktopIndex).toBeLessThan(dynamicBehaviorIndex);
 
     expect(result.systemMessages).toHaveLength(3);
-    expect(result.systemMessages[1]?.content).toContain("# ZCode Desktop Context");
-    expect(result.systemMessages[2]?.content).not.toContain("# ZCode Desktop Context");
+    expect(result.systemMessages[1]?.content).toContain("# Auton Desktop Context");
+    expect(result.systemMessages[2]?.content).not.toContain("# Auton Desktop Context");
   });
 
   it("does not inject the Desktop context for the default terminal surface", () => {
@@ -262,7 +262,7 @@ describe("ContextBuilder meta user context", () => {
       cliPrefixPrompt: "legacy override",
     } as any).build();
 
-    expect(result.systemMessages[0]?.content).toBe("You are ZCode, an interactive coding agent");
+    expect(result.systemMessages[0]?.content).toBe("You are Auton, an interactive coding orchestrator");
   });
 
   it("covers default body safety, runtime, and tool-guidance semantic anchors", () => {
@@ -281,7 +281,7 @@ describe("ContextBuilder meta user context", () => {
     const stableBody = String(result.systemMessages[1]?.content ?? "");
     const dynamicSystem = String(result.systemMessages[2]?.content ?? "");
 
-    expect(stableBody).toContain("software engineering tasks");
+    expect(stableBody).toContain("single orchestrator brain");
     expect(stableBody).toContain("mid-conversation system turns");
     expect(stableBody).toContain("Hooks may intercept tool calls");
     expect(stableBody).toContain("Prefer the dedicated file/search tools");
@@ -382,7 +382,7 @@ describe("ContextBuilder meta user context", () => {
     expect(result.metaUserAttachments.map((attachment) => attachment.source)).toEqual([
       "context_prefix",
     ]);
-    expect(result.systemMessages[0]?.content).toBe("You are ZCode, an interactive coding agent");
+    expect(result.systemMessages[0]?.content).toBe("You are Auton, an interactive coding orchestrator");
     expect(result.systemMessages[1]?.content).toBe("\nYou are concise for this task.");
     const meta = metaAttachment(result, "context_prefix");
     expect(meta).not.toContain("<system-reminder>");
@@ -817,10 +817,10 @@ describe("ContextBuilder meta user context", () => {
     const stableBody = result.systemMessages[1]?.content ?? "";
     const dynamicSystem = result.systemMessages[2]?.content ?? "";
     const meta = metaAttachment(result, "context_prefix");
-    expect(cliPrefix).toBe("You are ZCode, an interactive coding agent");
+    expect(cliPrefix).toBe("You are Auton, an interactive coding orchestrator");
     expect(stableBody).not.toContain("# Agent Identity");
-    expect(stableBody).toMatch(/^\n?You are an interactive ZCode agent/);
-    expect(stableBody).not.toContain("You are ZCode, an interactive coding agent");
+    expect(stableBody).toMatch(/^\n?You are Auton, the interactive coding orchestrator/);
+    expect(stableBody).not.toContain("You are Auton, an interactive coding orchestrator");
     expect(stableBody).toContain("# Harness");
     expect(stableBody).not.toContain("# Session-specific guidance");
     expect(stableBody).not.toContain("# Environment");
@@ -859,9 +859,13 @@ describe("ContextBuilder meta user context", () => {
       injectionTarget: section.injectionTarget,
       cacheHint: section.cacheHint,
     }));
-    expect(sectionTargets.slice(0, 4)).toEqual([
+    const doctrine = result.sections.find((section) => section.source === "auton_doctrine");
+    expect(doctrine?.content).toContain("Eres Auton, no ZCode");
+    expect(doctrine?.content).not.toContain("orquestador de código en ZCode");
+    expect(sectionTargets.slice(0, 5)).toEqual([
       { name: "CLI Prefix", injectionTarget: "system", cacheHint: "stable" },
       { name: "Agent Identity", injectionTarget: "system", cacheHint: "stable" },
+      { name: "Auton Doctrine", injectionTarget: "system", cacheHint: "stable" },
       { name: "Dynamic Behavior", injectionTarget: "system", cacheHint: "dynamic" },
       { name: "Environment Info", injectionTarget: "system", cacheHint: "dynamic" },
     ]);
@@ -1051,9 +1055,9 @@ describe("ContextBuilder meta user context", () => {
       "system",
     ]);
     expect(result.metaUserAttachments).toEqual([]);
-    expect(result.systemMessages[0]?.content).toBe("You are ZCode, an interactive coding agent");
+    expect(result.systemMessages[0]?.content).toBe("You are Auton, an interactive coding orchestrator");
     expect(result.systemMessages[1]?.content).not.toContain("# Agent Identity");
-    expect(result.systemMessages[1]?.content).toMatch(/^\n?You are an interactive ZCode agent/);
+    expect(result.systemMessages[1]?.content).toMatch(/^\n?You are Auton, the interactive coding orchestrator/);
     expect(result.systemMessages[1]?.content).toContain("# Harness");
     expect(result.systemMessages[1]?.content).not.toContain("# Session-specific guidance");
     expect(result.systemMessages[1]?.content).not.toContain("# Environment");
@@ -1365,14 +1369,14 @@ describe("ContextBuilder meta user context", () => {
     expect(section?.content).not.toContain("Recent commits:\n(none)");
   });
 
-  it("renders the fixed ZCode CLI prefix and identity body without duplication", () => {
+  it("renders the fixed Auton CLI prefix and identity body without duplication", () => {
     const prefixSection = buildCliPrefixSection();
     const identitySection = buildIdentitySection();
 
-    expect(prefixSection.content).toBe("You are ZCode, an interactive coding agent");
-    expect(identitySection.content).toMatch(/^\n?You are an interactive ZCode agent/);
+    expect(prefixSection.content).toBe("You are Auton, an interactive coding orchestrator");
+    expect(identitySection.content).toMatch(/^\n?You are Auton, the interactive coding orchestrator/);
     expect(identitySection.content).not.toContain("# Agent Identity");
-    expect(identitySection.content).not.toContain("You are ZCode, an interactive coding agent");
+    expect(identitySection.content).not.toContain("You are Auton, an interactive coding orchestrator");
     expect(`${prefixSection.content}\n${identitySection.content}`).not.toContain("${");
     expect(`${prefixSection.content}\n${identitySection.content}`).not.toContain("an AI assistant");
   });
@@ -1380,7 +1384,7 @@ describe("ContextBuilder meta user context", () => {
   it("includes compact stable body boundaries", () => {
     const section = buildIdentitySection();
 
-    expect(section.content).toMatch(/^\n?You are an interactive ZCode agent/);
+    expect(section.content).toMatch(/^\n?You are Auton, the interactive coding orchestrator/);
     expect(section.content).not.toContain("# Agent Identity");
     expect(section.content).toContain("# Harness");
     expect(section.content).toContain("IMPORTANT:");
@@ -1509,11 +1513,11 @@ describe("context builder — workflow actor identity", () => {
     expect(text).toContain("`submit_result`");
 
     // 交互式身份与面向用户对话的三段不在。
-    expect(text).not.toContain("interactive ZCode agent that helps users");
+    expect(text).not.toContain("single orchestrator brain");
     expect(text).not.toContain("# Communicating with the user");
     expect(text).not.toContain("For actions that are hard to reverse");
     expect(text).not.toContain("# Session-specific guidance");
-    expect(text).not.toContain("ZCode Desktop");
+    expect(text).not.toContain("Auton Desktop");
     // 后续段照常。
     expect(text).toContain("# Environment");
   });
@@ -1529,7 +1533,7 @@ describe("context builder — workflow actor identity", () => {
     );
     expect(text).not.toContain('named "');
     expect(text).toContain("# Working inside a workflow");
-    expect(text).not.toContain("interactive ZCode agent");
+    expect(text).not.toContain("single orchestrator brain");
   });
 
   // 产物（docs/dynamic-workflow/authoring.md「The system prompt」）：子代理仍然没有任何产物工具
@@ -1563,7 +1567,7 @@ describe("context builder — workflow actor identity", () => {
     ).toBe(true);
     expect(result.sections.map((section) => section.source)).not.toContain("cli_prefix");
     expect(result.systemMessages.map((m) => String(m.content)).join("\n")).not.toContain(
-      "You are ZCode, an interactive coding agent",
+      "You are Auton, an interactive coding orchestrator",
     );
   });
 
@@ -1634,7 +1638,7 @@ describe("context builder — workflow actor identity", () => {
   it("leaves the interactive identity byte-identical after the shared-helper refactor", () => {
     const text = systemText({ workingDirectory: "/workspace", envInfo });
     expect(text).toContain(
-      "\nYou are an interactive ZCode agent that helps users with software engineering tasks.\n\nIMPORTANT: Assist with authorized security testing",
+      "\nYou are Auton, the interactive coding orchestrator. You speak to the user as the single orchestrator brain; programmers and testers work in the background under your direction.\n\nIMPORTANT: Assist with authorized security testing",
     );
     expect(text).toContain("\n\n# Harness\n- Text you output outside of tool use");
   });

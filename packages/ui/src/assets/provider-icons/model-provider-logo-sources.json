@@ -113,6 +113,15 @@
       "normalization": "Official website webclip downsampled from 256x256 to 80x80 RGB."
     },
     {
+      "brand": "Auton",
+      "file": "model-provider-auton-light.svg",
+      "darkFile": "model-provider-auton-dark.svg",
+      "providerIds": ["auton", "auton-meta"],
+      "sourceUrl": "user-provided:original-mark",
+      "sourceOwner": "Auton (original mark authored for this repo)",
+      "normalization": "Original 64x64 A-in-orbit mark authored in-repo. Dark-on-transparent for light theme, light-on-transparent for dark theme."
+    },
+    {
       "brand": "xAI",
       "file": "model-provider-xai.png",
       "providerIds": ["xai"],

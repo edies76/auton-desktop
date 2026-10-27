@@ -546,6 +546,8 @@ describe("ZCode Built-in Provider Config 完整性", () => {
         "account:bigmodel-highspeed-card",
       ]);
       expect(snapshot.providerTemplates?.keys()).toEqual([
+        "auton",
+        "auton-meta",
         "zai-api",
         "zai-standard-api",
         "bigmodel-api",
@@ -989,6 +991,8 @@ describe("ZCode Built-in Provider Config 完整性", () => {
         "account:bigmodel-offpeak-idle-plan",
         "account:zai-highspeed-card",
         "account:bigmodel-highspeed-card",
+        "template:auton",
+        "template:auton-meta",
         "template:zai-api",
         "template:zai-standard-api",
         "template:bigmodel-api",

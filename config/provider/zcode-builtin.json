@@ -5,6 +5,50 @@
     "providerConfigRules": {
       "templateRules": [
         {
+          "templateId": "auton",
+          "templateNameMap": {
+            "zh-CN": "Auton",
+            "en-US": "Auton"
+          },
+          "config": {
+            "access": {
+              "type": "api-key",
+              "apiKeyManagementUrl": "https://opencode.ai/auth"
+            },
+            "api": {
+              "type": "openai-chat-completions",
+              "baseUrl": "https://opencode.ai/zen/go/v1"
+            },
+            "builtinModelIds": ["beam-free", "longcat-2.5-preview-free"],
+            "logo": {
+              "type": "builtin",
+              "key": "auton"
+            }
+          }
+        },
+        {
+          "templateId": "auton-meta",
+          "templateNameMap": {
+            "zh-CN": "Auton Meta",
+            "en-US": "Auton Meta"
+          },
+          "config": {
+            "access": {
+              "type": "api-key",
+              "apiKeyManagementUrl": "https://dev.meta.ai"
+            },
+            "api": {
+              "type": "openai-chat-completions",
+              "baseUrl": "https://api.meta.ai/v1"
+            },
+            "builtinModelIds": ["muse-wonder-1.0", "muse-spark-1.3", "muse-spark-1.3-contributor", "muse-spark-1.2", "muse-spark-1.2-contributor", "muse-spark-1.1"],
+            "logo": {
+              "type": "builtin",
+              "key": "auton"
+            }
+          }
+        },
+        {
           "templateId": "zai-api",
           "templateNameMap": {
             "zh-CN": "Z.ai Coding Plan",
@@ -4356,6 +4400,62 @@
         }
       ],
       "templateModelRules": [
+        {
+          "templateId": "auton",
+          "modelId": "beam-free",
+          "config": {
+            "enabled": true
+          }
+        },
+        {
+          "templateId": "auton",
+          "modelId": "longcat-2.5-preview-free",
+          "config": {
+            "enabled": true
+          }
+        },
+        {
+          "templateId": "auton-meta",
+          "modelId": "muse-wonder-1.0",
+          "config": {
+            "enabled": true
+          }
+        },
+        {
+          "templateId": "auton-meta",
+          "modelId": "muse-spark-1.3",
+          "config": {
+            "enabled": true
+          }
+        },
+        {
+          "templateId": "auton-meta",
+          "modelId": "muse-spark-1.3-contributor",
+          "config": {
+            "enabled": true
+          }
+        },
+        {
+          "templateId": "auton-meta",
+          "modelId": "muse-spark-1.2",
+          "config": {
+            "enabled": true
+          }
+        },
+        {
+          "templateId": "auton-meta",
+          "modelId": "muse-spark-1.2-contributor",
+          "config": {
+            "enabled": true
+          }
+        },
+        {
+          "templateId": "auton-meta",
+          "modelId": "muse-spark-1.1",
+          "config": {
+            "enabled": true
+          }
+        },
         {
           "templateId": "opencode-go-chat",
           "modelId": "glm-5.3-flash",
