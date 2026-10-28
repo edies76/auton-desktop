@@ -32,6 +32,8 @@ describe("auton orchestrator section", () => {
     expect(section.content).toContain("AskUserQuestion");
     expect(section.content).toContain("TodoWrite");
     expect(section.content).toContain("auton-worker");
+    expect(section.content).toContain("SendMessage");
+    expect(section.content).toContain("TaskStop");
     expect(section.content).toContain("POLÍTICA DE ESFUERZO");
     expect(section.content).toMatch(/DONE_WITH_CONCERNS|NEEDS_CONTEXT|BLOCKED/);
     expect(section.content).toMatch(/narr|1-2 líneas|silencio/i);
