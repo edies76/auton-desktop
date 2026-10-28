@@ -48,7 +48,8 @@ export type ContextSource =
   | "output_style" // 输出风格
   | "context_management" // 长上下文管理提示
   | "desktop_context" // Auton Desktop 渲染与交互协议
-  | "auton_doctrine"; // Doctrina del orquestador Auton (estable)
+  | "auton_doctrine" // Doctrina del orquestador Auton (estable)
+  | "auton_orchestrator"; // Procedimiento operativo del orquestador Auton (estable)
 
 export type ContextInjectionTarget = "system" | "meta_user";
 
