@@ -1,5 +1,5 @@
 /* path 规则集中维护：旧 task 快照与 provider 配置路径仍在这里收口。 */
-import { lstatSync } from "node:fs";
+import { cpSync, existsSync, lstatSync } from "node:fs";
 import { cp } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { basename, join, win32 } from "node:path";
@@ -59,9 +59,33 @@ export function getZCodeDataRootDir(): string {
   return join(getDataBaseDir(), getAppDataDirName());
 }
 
-/** Ubicación heredada compartida: {dataBaseDir}/.zcode/v2 (providers y credenciales). */
+/**
+ * Ubicación de proveedores y credenciales. Antes apuntaba siempre a `.zcode/v2`, compartido
+ * con el ZCode de verdad; ahora respeta la casa de datos de la app (`.auton`) para que las
+ * dos instalaciones no se pisen. La primera vez copia lo que ya hubiera en `.zcode/v2`.
+ */
 export function getSharedLegacyConfigDir(): string {
-  return join(getDataBaseDir(), ".zcode", "v2");
+  const target = join(getDataBaseDir(), getAppDataDirName(), "v2");
+  const legacy = join(getDataBaseDir(), ".zcode", "v2");
+  migrateOnce(legacy, target);
+  return target;
+}
+
+/**
+ * Copia el contenido de `from` a `to` sin sobrescribir lo que ya exista, una sola vez por
+ * proceso. Sirve para heredar proveedores/credenciales del ZCode viejo sin volver a leerlo
+ * nunca más.
+ */
+const migratedDirs = new Set<string>();
+function migrateOnce(from: string, to: string): void {
+  if (from === to || migratedDirs.has(to)) return;
+  migratedDirs.add(to);
+  try {
+    if (!existsSync(from) || existsSync(to)) return;
+    cpSync(from, to, { recursive: true, errorOnExist: false, force: false });
+  } catch {
+    // si no se puede migrar, la app arranca vacía en vez de romperse
+  }
 }
 
 /** 非项目对话共享的真实工作目录；默认 ~/.zcode/workspace/default。 */
@@ -249,9 +273,12 @@ export function getLegacyDeletedTaskSessionSnapshotPath(
  * 避免同机不同工作区配置漂移。
  */
 export function getProviderWorkspaceConfigDir(): string {
-  return ZCODE_AGENT_RUNTIME.nativeConfigDir
+  const target = ZCODE_AGENT_RUNTIME.nativeConfigDir
     ? join(getDataBaseDir(), ZCODE_AGENT_RUNTIME.nativeConfigDir)
-    : join(getDataBaseDir(), ".zcode", "cli");
+    : join(getDataBaseDir(), getAppDataDirName(), "cli");
+  // El CLI viejo guardaba aquí su config global; se hereda una vez y no se vuelve a leer.
+  migrateOnce(join(getDataBaseDir(), ".zcode", "cli"), target);
+  return target;
 }
 
 /**
