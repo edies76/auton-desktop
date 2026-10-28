@@ -82,10 +82,17 @@ function migrateOnce(from: string, to: string): void {
   if (from === to || migratedDirs.has(to)) return;
   migratedDirs.add(to);
   try {
-    if (!existsSync(from) || existsSync(to)) return;
-    // Nunca se heredan bases de datos ni índices de sesiones: Auton arranca con su propio
-    // historial vacío. Solo viajan credenciales, proveedores y configuración.
-    cpSync(from, to, { recursive: true, errorOnExist: false, force: false, filter: (source) => !NEVER_MIGRATE.test(basename(source)) });
+    if (!existsSync(from)) return;
+    // Se copian SOLO los archivos que configuran proveedores, credenciales y cachés.
+    // Nunca bases de datos ni índices de sesiones (Auton arranca con historial propio),
+    // ni setting.json / onboarding-record.json, que arrastran la cuenta de ZCode.
+    const MIGRATABLE = /^(provider_config\.json|credentials\.json|config\.json|bot-config\.|bot-state\.|bots-model-cache\.|coding-plan-cache\.)/i;
+    cpSync(from, to, {
+      recursive: true,
+      errorOnExist: false,
+      force: false,
+      filter: (source) => MIGRATABLE.test(basename(source)),
+    });
   } catch {
     // si no se puede migrar, la app arranca vacía en vez de romperse
   }
