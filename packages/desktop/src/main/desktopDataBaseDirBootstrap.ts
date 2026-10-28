@@ -4,7 +4,7 @@ import { join } from "node:path";
 import { APP_DATA_DIR_NAME_ENV, setAppDataDirName, setDataBaseDir } from "@zcode/services/node";
 
 export function resolveBootstrapSettingsFile(homePath: string = homedir()): string {
-  return join(homePath, ".zcode", "v2", "setting.json");
+  return join(homePath, ".auton", "v2", "setting.json");
 }
 
 export function extractBootstrapDataBaseDir(rawValue: unknown): string | null {
@@ -49,3 +49,4 @@ export function applyEarlyDataBaseDirBootstrap(): string | null {
   }
   return dataBaseDir;
 }
+
