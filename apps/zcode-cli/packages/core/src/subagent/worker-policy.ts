@@ -80,3 +80,12 @@ export function buildAutonWorkerSystemPrompt(policy: WorkerEffortPolicy): string
     "- No toques archivos fuera de tu scope aunque 'mejoren' algo.",
   ].join("\n");
 }
+
+/**
+ * Nombre con el que el worker aparece en logs y metadata. Los programmers
+ * Auton se presentan como auton-*: misma infraestructura, identidad propia.
+ */
+export function childAgentName(agentType: string): string {
+  if (agentType === AUTON_WORKER_AGENT_TYPE) return `auton-${AUTON_WORKER_AGENT_TYPE}`;
+  return `zcode-${agentType}`;
+}

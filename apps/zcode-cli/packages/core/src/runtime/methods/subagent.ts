@@ -42,6 +42,7 @@ import {
 } from "../../subagent/mcp-config.js";
 import { mirrorSubagentToolEvent } from "../../subagent/tool-event-mirror.js";
 import { isBuiltInExploreAgentProfile } from "../../subagent/profile.js";
+import { childAgentName } from "../../subagent/worker-policy.js";
 import {
   buildSubagentChildDisallowRules,
   filterSubagentChildToolNames,
@@ -300,7 +301,7 @@ export function createDefaultSubagentPort(
               agentPrompt: agentPrompt ?? "",
               ...(agentsMdInstructions ? { userInstructions: agentsMdInstructions } : {}),
             },
-            agentName: `zcode-${request.agentType}`,
+            agentName: childAgentName(request.agentType),
             maxTurns: request.maxTurns ?? this.config.subagents?.maxTurns ?? 4,
             parentSessionId: this.sessionId,
             taskType: "subagent_child",
