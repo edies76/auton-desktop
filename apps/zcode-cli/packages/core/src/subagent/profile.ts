@@ -1,5 +1,9 @@
 import { basename } from "node:path";
 import { GENERAL_PURPOSE_AGENT_TYPE, buildGeneralPurposeSystemPrompt } from "./general-purpose.js";
+import {
+  AUTON_WORKER_AGENT_TYPE,
+  buildAutonWorkerSystemPrompt,
+} from "./worker-policy.js";
 import { EXPLORE_AGENT_TYPE } from "./explore.js";
 import { formatExploreAllowedToolsForAgentDescription } from "./explore-tools.js";
 import { filterSubagentChildToolNames } from "./tool-policy.js";
@@ -63,10 +67,24 @@ export function normalizeAgentProfiles(
       modelSelection: overrides[EXPLORE_AGENT_TYPE],
     }),
   );
+  active.set(AUTON_WORKER_AGENT_TYPE, createBuiltInAutonWorkerAgentProfile());
   for (const profile of profiles) {
     active.set(profile.name, profile);
   }
   return Array.from(active.values());
+}
+
+export function createBuiltInAutonWorkerAgentProfile(): AgentProfile {
+  return {
+    name: AUTON_WORKER_AGENT_TYPE,
+    description:
+      "Programmer peer del orquestador Auton. Ejecuta el encargo del brief con su politica de esfuerzo, cierra con REPORTE y no habla con el humano. Usalo cuando el orquestador reparta trabajo a programmers.",
+    color: "green",
+    injectAgentsMd: false,
+    source: "built-in",
+    systemPrompt: buildAutonWorkerSystemPrompt("standard"),
+    tools: ["*"],
+  };
 }
 
 export function createBuiltInGeneralPurposeAgentProfile(
