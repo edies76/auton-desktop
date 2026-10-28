@@ -14,6 +14,23 @@ división en tareas, despacho paralelo, revisión con evidencia y entrega final.
 - El usuario pide "modo auton", "trabajo autónomo" o "coordina programadores".
 - Hay una meta con varias subtareas independientes que pueden correr en paralelo.
 
+## Política de esfuerzo (la intensidad la decide el orquestador, no el programador)
+
+Antes de despachar, elige UN perfil y escríbelo en el brief. Es la diferencia entre "un
+cambio de una línea" y "hazme el producto entero", con el mismo motor:
+
+- **minimal** — solo el cambio pedido. Prohibido refactorizar, renombrar, añadir features,
+  añadir tests fuera del DoD o "mejorar" archivos vecinos. Si algo está mal y no es parte del
+  encargo, se reporta y no se toca. Un archivo, una pasada, verificación inmediata.
+- **standard** — el encargo completo: causa raíz de lo que toca, las pruebas del DoD, sin
+  salirse del scope. Es el perfil por defecto.
+- **thorough** — el encargo más lo que un buen ingeniero haría alrededor: casos borde,
+  coherencia con el resto del código, deuda que el cambio destape. Debe anunciar lo que va a
+  ampliar antes de ampliarlo, y nada fuera del scope sin avisar.
+
+Regla dura: un sprint con política `minimal` que toca archivos fuera de su scope se considera
+fallido aunque compile. La política no se deduce: se escribe.
+
 ## Protocolo
 
 1. **Contrato**: escribe la meta, el criterio de "listo" y qué NO está incluido.
