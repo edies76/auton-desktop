@@ -49,6 +49,7 @@ import {
   normalizeAgentProfiles,
   type AgentProfile,
 } from "./profile.js";
+import { AUTON_WORKER_AGENT_TYPE } from "./worker-policy.js";
 import { EXPLORE_AGENT_ALLOWED_TOOLS } from "./explore-tools.js";
 import { formatLocalAgentTaskNotification } from "./completion-notification.js";
 import { filterSubagentChildToolNames } from "./tool-policy.js";
@@ -802,13 +803,24 @@ function toSubagentExecutionRequest(request: SubagentLaunchRequest): SubagentRun
   return executionRequest;
 }
 
+/**
+ * Los programmers Auton viven en el mismo runtime pero con identidad propia:
+ * prefijo `auton_` en vez de `subagent_`. Así no se mezclan con los subagentes
+ * normales en ningún store, log o listado: la independencia es por nombre,
+ * sin tocar el runtime compartido.
+ */
+export function createChildSessionId(agentType: string, agentId: string): SessionId {
+  if (agentType === AUTON_WORKER_AGENT_TYPE) return createSessionId(`auton_${agentId}`);
+  return createSessionId(`subagent_${agentId}`);
+}
+
 function createSubagentLifecycle(
   options: ExploreSubagentPortOptions,
   request: SubagentRunRequest,
   profile: AgentProfile,
 ): SubagentLifecycle {
   const agentId = options.createAgentId?.() ?? `agent_${crypto.randomUUID()}`;
-  const childSessionId = createSessionId(`subagent_${agentId}`);
+  const childSessionId = createChildSessionId(profile.name, agentId);
   const startedAt = Date.now();
   const agentOutputDir = join(
     options.outputRootDir ?? join(tmpdir(), "zcode-agents"),
