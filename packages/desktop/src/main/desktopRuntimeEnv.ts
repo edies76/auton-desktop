@@ -589,6 +589,8 @@ export function buildHostProcessEnv(hostProcessLocalEnv: Record<string, string>)
     ...(dataBaseDir !== homedir() ? { ZCODE_DATA_BASE_DIR: dataBaseDir } : {}),
     // La casa de datos (.zcode vs .auton) viaja a los hijos igual que el base dir.
     ...{ [APP_DATA_DIR_NAME_ENV]: getAppDataDirName() },
+    // El runtime del agente (adapters) resuelve su almacen con este env; sin el vuelve a ~/.zcode.
+    ...{ AUTON_STORAGE_DIR: join(dataBaseDir, getAppDataDirName()) },
     ...(windowsAppInstallDir ? { [ZCODE_WINDOWS_APP_INSTALL_DIR_ENV]: windowsAppInstallDir } : {}),
     ...(bundledCuaHelperAppPath
       ? { [ZCODE_CUA_BUNDLED_HELPER_APP_PATH_ENV]: bundledCuaHelperAppPath }

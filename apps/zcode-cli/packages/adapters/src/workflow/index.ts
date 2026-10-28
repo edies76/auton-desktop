@@ -19,6 +19,8 @@ import {
   WorkflowRunSnapshotSchema,
 } from "@zcode/contracts";
 
+const ZCODE_HOME = process.env.AUTON_STORAGE_DIR?.trim() || process.env.ZCODE_STORAGE_DIR?.trim() || join(homedir(), ".zcode");
+
 export interface NodeWorkflowStoreOptions {
   rootDir?: string;
 }
@@ -32,7 +34,7 @@ interface WorkflowIndexFile {
   runs: WorkflowRunListItem[];
 }
 
-const DEFAULT_WORKFLOW_ROOT = join(homedir(), ".zcode", "cli", "workflows");
+const DEFAULT_WORKFLOW_ROOT = join(ZCODE_HOME, "cli", "workflows");
 const WORKFLOW_DEFINITION_FILE_EXTENSION = ".json";
 
 export class NodeWorkflowStore implements WorkflowStorePort {

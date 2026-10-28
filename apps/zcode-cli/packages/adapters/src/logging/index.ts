@@ -37,6 +37,8 @@ export type {
   LogRetentionScheduleOptions,
   LogRetentionTimer,
 } from "./retention.js";
+
+const ZCODE_HOME = process.env.AUTON_STORAGE_DIR?.trim() || process.env.ZCODE_STORAGE_DIR?.trim() || join(homedir(), ".zcode");
 export { DefaultLogRedactor } from "./serialize.js";
 export type { SerializableLogEntry, SerializedLogError } from "./serialize.js";
 
@@ -220,7 +222,7 @@ export function createNodeLoggerFactory(options: NodeLoggerFactoryOptions = {}):
 }
 
 export function getDefaultLogDir(): string {
-  return join(homedir(), ".zcode", "cli", "log");
+  return join(ZCODE_HOME, "cli", "log");
 }
 
 function getDefaultMinLevel(env: NodeJS.ProcessEnv | undefined): LogLevel {

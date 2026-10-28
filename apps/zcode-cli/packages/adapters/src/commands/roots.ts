@@ -7,7 +7,7 @@ const COMMANDS_DIR = "commands";
 const GIT_MARKER = ".git";
 const HOME_PREFIX = "~/";
 const PRIORITY_STEP = 10;
-const ZCODE_DIR = ".zcode";
+const ZCODE_DIR = process.env.AUTON_STORAGE_DIR?.trim() ? basename(process.env.AUTON_STORAGE_DIR.trim()) : ".auton";
 const AGENTS_DIR = ".agents";
 
 export interface CustomCommandRootResolutionOptions {
@@ -135,3 +135,4 @@ function resolveConfiguredRoot(path: string, workingDirectory: string, home: str
   const expanded = path.startsWith(HOME_PREFIX) ? join(home, path.slice(HOME_PREFIX.length)) : path;
   return isAbsolute(expanded) ? expanded : resolve(workingDirectory, expanded);
 }
+

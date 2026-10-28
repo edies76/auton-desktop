@@ -59,7 +59,7 @@ export interface PluginRemovePatchResult {
 }
 
 const DEFAULT_CONFIG_FILE = "config.json";
-const DEFAULT_BASE_DIR = "~/.zcode/cli";
+const DEFAULT_BASE_DIR = "~/.auton/cli";
 
 /**
  * Resolve path with ~ expansion
@@ -622,3 +622,4 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function isNodeError(value: unknown): value is NodeJS.ErrnoException {
   return value instanceof Error && "code" in value;
 }
+
