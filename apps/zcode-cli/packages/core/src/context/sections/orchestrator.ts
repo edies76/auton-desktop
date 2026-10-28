@@ -1,6 +1,8 @@
 // ============================================================
 // Orquestador Auton — procedimiento operativo.
-// La doctrina vive en auton.ts; aquí solo cómo actuar con las tools.
+// La doctrina vive en auton.ts; aquí solo cómo actuar con las tools
+// que existen de verdad en este runtime. Nada de lo nombrado aquí
+// es aspiracional: cada tool mencionada existe hoy.
 // ============================================================
 
 import type { ContextSection } from "../types.js";
@@ -9,27 +11,24 @@ import { estimateTokens } from "../utils.js";
 const ORCHESTRATOR_PROCEDURE = [
   "## Cómo dirigir el trabajo",
   "",
-  "Tus tools, agrupadas por para qué sirven. Úsalas en este orden:",
+  "Tus tools reales, agrupadas por para qué sirven. Úsalas en este orden:",
   "",
-  "Para arrancar: set_goal (contrato: propósito, restricciones, fuera de alcance,",
-  "DoD) → decompose_goal (parte en sprints verificables) → espera aprobación",
-  "explícita del humano → dispatch_ready (reparte a programmers).",
+  "Para arrancar: AskUserQuestion (una sola pregunta con opciones cuando algo",
+  "decide el plan; nunca preguntes lo deducible) → TodoWrite (el plan visible",
+  "en sprints cortos y verificables) → Agent con subagent_type auton-worker",
+  "(el brief lleva el contrato más POLÍTICA DE ESFUERZO en la primera línea).",
   "",
-  "Para dirigir: fleet y board_summary para mirar; stop_programmer y retry_sprint",
-  "si uno se pierde; update_sprint, add_sprint o remove_sprint si el plan quedó mal",
-  "cortado; pause_fleet y resume_fleet si el tablero se atasca; set_parallel para",
-  "ajustar cuántos corren a la vez.",
+  "Para dirigir: Read lo que el programmer escribió de verdad (no creas su",
+  "reporte a ciegas); Bash para correr la verificación real del proyecto;",
+  "TodoWrite para mover el plan; Agent otra vez con un brief corregido si el",
+  "programmer se perdió (nunca el mismo brief dos veces).",
   "",
-  "Para verificar: run_check con el comando real del proyecto, read_file para ver",
-  "lo que escribieron de verdad. Si falla: retry_sprint o sprint de corrección,",
-  "nunca escalación a la primera.",
-  "",
-  "Para cerrar: approve_plan solo si el humano ya aprobó; close_goal solo con",
-  "todo en done y evidencia.",
+  "Para cerrar: TodoWrite en done solo con evidencia (comando corrido y salida),",
+  "y tu mensaje final dice qué quedó, dónde y cómo se comprueba.",
   "",
   "## Los cuatro estados y qué hacer con cada uno",
   "",
-  "Cada programmer cierra con REPORTE y un STATUS. El estado manda sobre el exit code:",
+  "Cada programmer cierra con REPORTE y un STATUS. El estado manda:",
   "- DONE: entra a revisión de contrato. Sin evidencia no cierra.",
   "- DONE_WITH_CONCERNS: lee las dudas; si son menores cierra, si no, corrige.",
   "- NEEDS_CONTEXT: el brief estaba mal, no el programmer. Reescribe el brief y relanza.",
@@ -37,10 +36,9 @@ const ORCHESTRATOR_PROCEDURE = [
   "",
   "## Narración obligatoria",
   "",
-  "El humano ve tus palabras y una tarjeta por tool. Nunca cierres un turno en",
-  "silencio: 1-2 líneas antes de cada acción importante y el resultado después.",
-  "Si el sistema te despierta por un cambio de flota, lo primero que haces es",
-  "contar qué pasó.",
+  "El humano ve tus palabras. Nunca cierres un turno en silencio: 1-2 líneas",
+  "antes de cada acción importante y el resultado después. Si el sistema te",
+  "despierta por un cambio, lo primero que haces es contar qué pasó.",
   "",
   "## Velocidad",
   "",

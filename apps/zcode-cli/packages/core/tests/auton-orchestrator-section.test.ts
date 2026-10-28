@@ -29,12 +29,20 @@ function buildSystem(): string[] {
 describe("auton orchestrator section", () => {
   it("existe y trae procedimiento operativo, no solo doctrina", () => {
     const section = buildOrchestratorSection();
-    expect(section.content).toContain("set_goal");
-    expect(section.content).toContain("decompose_goal");
-    expect(section.content).toContain("dispatch_ready");
+    expect(section.content).toContain("AskUserQuestion");
+    expect(section.content).toContain("TodoWrite");
+    expect(section.content).toContain("auton-worker");
+    expect(section.content).toContain("POLÍTICA DE ESFUERZO");
     expect(section.content).toMatch(/DONE_WITH_CONCERNS|NEEDS_CONTEXT|BLOCKED/);
     expect(section.content).toMatch(/narr|1-2 líneas|silencio/i);
     expect(section.content).toMatch(/agrupa|velocidad|tokens/i);
+  });
+
+  it("no inventa tools: solo nombra capacidades reales del runtime", () => {
+    const section = buildOrchestratorSection();
+    for (const fake of ["set_goal", "decompose_goal", "dispatch_ready", "board_summary", "stop_programmer", "retry_sprint", "run_check", "programmer_detail"]) {
+      expect(section.content).not.toContain(fake);
+    }
   });
 
   it("se inyecta despues de la doctrina auton en el system prompt", () => {
