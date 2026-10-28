@@ -77,12 +77,15 @@ export function getSharedLegacyConfigDir(): string {
  * nunca más.
  */
 const migratedDirs = new Set<string>();
+const NEVER_MIGRATE = /^(tasks-index|sessions-index|db)\.sqlite(-wal|-shm)?$/i;
 function migrateOnce(from: string, to: string): void {
   if (from === to || migratedDirs.has(to)) return;
   migratedDirs.add(to);
   try {
     if (!existsSync(from) || existsSync(to)) return;
-    cpSync(from, to, { recursive: true, errorOnExist: false, force: false });
+    // Nunca se heredan bases de datos ni índices de sesiones: Auton arranca con su propio
+    // historial vacío. Solo viajan credenciales, proveedores y configuración.
+    cpSync(from, to, { recursive: true, errorOnExist: false, force: false, filter: (source) => !NEVER_MIGRATE.test(basename(source)) });
   } catch {
     // si no se puede migrar, la app arranca vacía en vez de romperse
   }
