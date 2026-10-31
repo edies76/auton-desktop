@@ -49,7 +49,11 @@ import {
   normalizeAgentProfiles,
   type AgentProfile,
 } from "./profile.js";
-import { AUTON_WORKER_AGENT_TYPE } from "./worker-policy.js";
+import {
+  AUTON_WORKER_AGENT_TYPE,
+  buildAutonWorkerSystemPrompt,
+  parseEffortPolicy,
+} from "./worker-policy.js";
 import { EXPLORE_AGENT_ALLOWED_TOOLS } from "./explore-tools.js";
 import { formatLocalAgentTaskNotification } from "./completion-notification.js";
 import { filterSubagentChildToolNames } from "./tool-policy.js";
@@ -1174,7 +1178,10 @@ async function runAgentToCompletion(
       registerMessageSink: createMessageSinkRegistration(options, lifecycle, registry),
       reportActivity: monitorOptions.reportActivity,
       resumeFromStore: executionOptions.resumeFromStore,
-      systemPrompt: lifecycle.profile.systemPrompt,
+      systemPrompt:
+        lifecycle.profile.name === AUTON_WORKER_AGENT_TYPE
+            ? buildAutonWorkerSystemPrompt(parseEffortPolicy(request.prompt))
+            : lifecycle.profile.systemPrompt,
       workingDirectory: request.workingDirectory,
       workspaceRoot: request.workspaceRoot,
       traceContext: lifecycle.childTraceContext,

@@ -17,11 +17,23 @@ export type AgentType = string;
 
 export const AgentInputSchema = z.object({
   description: z.string().describe("A short (3-5 word) description of the task"),
-  prompt: z.string().describe("The task for the agent to perform"),
+  prompt: z
+    .string()
+    .describe(
+      "The task for the agent to perform. For subagent_type=auton-worker, start it with a line " +
+        "'POLITICA DE ESFUERZO: minimal|standard|thorough'. minimal = only the requested change, " +
+        "no refactors, no extra features, nothing outside scope; standard = the full brief with its " +
+        "DoD, root cause of what it touches; thorough = the brief plus sensible adjacent work, " +
+        "announcing it first. That line rules the worker's scope; if missing it assumes standard.",
+    ),
   subagent_type: z
     .string()
     .optional()
-    .describe("The type of specialized agent to use for this task"),
+    .describe(
+      "The type of specialized agent to use for this task. Use 'auton-worker' for Auton programmers " +
+        "dispatched by the orchestrator: they answer to the orchestrator, not to the human, and close " +
+        "with a REPORTE block (STATUS/HICE/PROBE/ARCHIVOS/DUDAS).",
+    ),
   // subagent 模型由 Settings / Markdown profile 统一决定；若把调用级
   // model 暴露给父模型，历史 tool call 会持续生成旧 override 并覆盖当前配置。
   run_in_background: z
