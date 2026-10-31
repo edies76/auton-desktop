@@ -739,7 +739,6 @@ importers:
         specifier: workspace:*
         version: link:../office-runtime
 
-  apps/zcode-cli/packages/restore-legacy-sessions-plugin: {}
 
   apps/zcode-cli/packages/shared-types:
     devDependencies:
