@@ -51,6 +51,7 @@ const DIRECT_BRANCH_EXPECTED_PROVIDER_TOOL_ORDER = [
   "Write",
   "ToolSearch",
   "DeferredToolCall",
+  "AutonPlan",
   "SendMessage",
   "ReadSessionContext",
   "ReplyToChannel",
@@ -1111,10 +1112,15 @@ describe("tool contract declarations", () => {
     expect(agentInput.properties.description.description).toBe(
       "A short (3-5 word) description of the task",
     );
-    expect(agentInput.properties.prompt.description).toBe("The task for the agent to perform");
-    expect(agentInput.properties.subagent_type.description).toBe(
+    // El brief del programmer lleva la politica de esfuerzo en su primera linea.
+    expect(agentInput.properties.prompt.description).toContain("The task for the agent to perform");
+    expect(agentInput.properties.prompt.description).toContain(
+      "POLITICA DE ESFUERZO: minimal|standard|thorough",
+    );
+    expect(agentInput.properties.subagent_type.description).toContain(
       "The type of specialized agent to use for this task",
     );
+    expect(agentInput.properties.subagent_type.description).toContain("auton-worker");
     expect(agentInput.properties.run_in_background.description).toBe(
       "Set to true to run this agent in the background. You will be notified when it completes.",
     );
