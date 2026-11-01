@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Auton — dirección de ingeniería delegada</title>
+    <meta
+      name="description"
+      content="Auton es un escritorio donde le hablas a un orquestador: él planea, despacha programadores en paralelo, verifica y te devuelve evidencia."
+    />
+    <link rel="stylesheet" href="./site.css" />
+  </head>
+  <body>
+    <header class="nav">
+      <a class="brand" href="./"><span class="mark"></span> Auton</a>
+      <nav>
+        <a href="./docs/">Docs</a>
+        <a href="https://github.com/edies76/auton-desktop" rel="noreferrer">GitHub</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="eyebrow">Auton Desktop · 0.1.0 · alpha</p>
+        <h1>Le hablas a un orquestador.<br />Él dirige a los programadores.</h1>
+        <p class="lead">
+          Tú defines el objetivo y apruebas la dirección. Auton descompone el trabajo, despacha
+          programadores en paralelo, revisa lo que entregan y te devuelve evidencia — no promesas.
+        </p>
+        <div class="actions">
+          <a class="button primary" href="./docs/">Leer la documentación</a>
+          <a class="button" href="./docs/INTERNO.html">Estado del proyecto</a>
+        </div>
+      </section>
+
+      <section class="grid">
+        <article class="card">
+          <h3>Un solo interlocutor</h3>
+          <p>
+            La conversación es con el orquestador. Los programadores no te hablan: reportan a él.
+            Una cabeza, no diez bots.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Trabajo en paralelo</h3>
+          <p>
+            Cada encargo corre como un programador en background con su propio alcance y su propia
+            política de esfuerzo. El orquestador sigue disponible mientras trabajan.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Evidencia o no pasó</h3>
+          <p>
+            El plan vive en disco, cada item cierra con prueba citable y el orquestador emite un
+            veredicto antes de dar algo por terminado.
+          </p>
+        </article>
+      </section>
+
+      <section class="scorecard">
+        <h2>El cuadro que lo sostiene</h2>
+        <p class="muted">
+          El <strong>Scorecard</strong> es el juicio que el orquestador hace de su propio trabajo:
+          veredicto, cinco notas con evidencia, lo que falta y lo que no sabe.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Dimensión</th>
+              <th>Qué mide</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>Alcance</td><td>Cuánto del contrato está cubierto</td></tr>
+            <tr><td>Evidencia</td><td>Qué tan comprobado está lo hecho</td></tr>
+            <tr><td>Calidad</td><td>Si lo entregado resiste una segunda mirada</td></tr>
+            <tr><td>Riesgo</td><td>Qué puede romperse o quedó frágil</td></tr>
+            <tr><td>Claridad</td><td>Si un extraño entiende el estado</td></tr>
+          </tbody>
+        </table>
+        <p class="note">Una nota sin evidencia baja la dimensión. Es la regla anti-inflación.</p>
+      </section>
+
+      <section class="split">
+        <div>
+          <h2>Cómo trabaja</h2>
+          <ol class="steps">
+            <li><b>Plan.</b> El orquestador escribe objetivo e items en <code>.auton/plan.json</code>.</li>
+            <li><b>Despacho.</b> Un programador por frente, con alcance, esfuerzo y criterio de hecho.</li>
+            <li><b>Verificación.</b> No cree el reporte: lee el código y corre lo que haga falta.</li>
+            <li><b>Loop.</b> Falla, diagnostica y relanza. Solo escala lo que es decisión tuya.</li>
+            <li><b>Veredicto.</b> Scorecard con evidencia y próxima acción.</li>
+          </ol>
+        </div>
+        <div>
+          <h2>Qué NO es</h2>
+          <ul class="plain">
+            <li>Un chat con subagentes que se pierden al cerrar.</li>
+            <li>Un generador de pull requests a granel.</li>
+            <li>Una promesa de código sin defectos.</li>
+            <li>Una caja negra: el plan y la evidencia están a la vista.</li>
+          </ul>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <p>
+        Auton Desktop es un fork de <a href="https://github.com/zai-org/ZCode">ZCode</a> bajo
+        Apache 2.0. Alpha privada de hackathon.
+      </p>
+    </footer>
+    <script src="./site.js"></script>
+  </body>
+</html>
