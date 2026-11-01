@@ -15,6 +15,7 @@ import {
   type TraceContext,
 } from "@zcode/contracts";
 import { TASK_TOOL_NAME } from "../compat.js";
+import { AUTON_WORKER_AGENT_TYPE } from "../../subagent/worker-policy.js";
 import type { ToolEntry, ToolHandler } from "../types.js";
 
 const MAX_AGENT_MODEL_BYTES = 120_000;
@@ -204,7 +205,9 @@ const agentHandler: ToolHandler = async (input, context) => {
   return context.subagentPort.launch(
     {
       ...request,
-      runInBackground: parsed.run_in_background === true,
+      // Los programmers de Auton siempre corren en background: el orquestador
+      // despacha y queda libre para el humano en vez de esperar el resultado.
+      runInBackground: parsed.run_in_background === true || agentType === AUTON_WORKER_AGENT_TYPE,
     },
     {
       signal: context.abortSignal,
