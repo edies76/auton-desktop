@@ -1,0 +1,52 @@
+# Changelog
+
+Todo lo relevante de Auton Desktop. Formato basado en
+[Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
+[SemVer](https://semver.org/lang/es/) mientras no haya releases públicas.
+
+## [0.1.0] — 2026-11-01
+
+Primera versión que se puede abrir, usar y enseñar. Alpha privada de hackathon.
+
+### Añadido
+
+- **Orquestador con doctrina propia.** El agente principal se presenta como Auton
+  y trabaja con el ciclo PLAN · BUILD · VERIFY · LOOP · EVIDENCE. Incluye reglas
+  de despacho no bloqueante, verdad en disco y "no terminas el trabajo del
+  programador".
+- **Tool `AutonPlan`.** Lee y escribe `<proyecto>/.auton/plan.json` con objetivo,
+  items, estado, esfuerzo, archivos, evidencia y preguntas abiertas.
+- **Tarjeta del plan en el chat.** Render propio con badges de estado.
+- **Programadores en background.** Un `auton-worker` corre siempre en background,
+  aunque el modelo olvide pedirlo.
+- **Política de esfuerzo por encargo.** `minimal | standard | thorough` en la
+  primera línea del brief; el worker se construye con ese perfil.
+- **Identidad de programador en la UI.** El worker se muestra como *Programador*
+  y el panel lateral se llama *Programmers*, con filas al estilo del panel
+  *New tab*.
+
+### Cambiado
+
+- **Datos separados de ZCode.** Sesiones, credenciales, ajustes y telemetría en
+  `~/.auton`. Los proveedores se heredan una sola vez; el historial no.
+- **Perfil de Electron propio.** `Auton Dev` en lugar de `ZCode Dev`: deja de
+  compartir localStorage, cookies y el navegador embebido con el ZCode real.
+- **Navegación más simple.** Fuera Automations y Plugin Marketplace.
+
+### Eliminado
+
+- Plugin `restore-legacy-sessions` (importaba sesiones de ZCode).
+- Plugins de ofimática por defecto (`documents`, `pdf`, `presentations`,
+  `spreadsheets`): cuatro hosts MCP menos, ~570 MB de RAM ahorrados.
+
+### Corregido
+
+- La configuración de la app se escribía en `~/.zcode/v2/setting.json` aunque los
+  datos ya estuvieran separados.
+- El primer arranque sin proveedores tras migrar el perfil.
+
+### Conocido
+
+- Un `auton-worker` no se reanuda solo tras cerrar la app; el plan sí sobrevive.
+- El panel de programadores no se abre automáticamente al despachar.
+- El agente todavía usa `~/.zcode/cli` para plugins, agentes y logs.
