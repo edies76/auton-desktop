@@ -218,7 +218,9 @@ export const OFFICIAL_PLUGIN_DEFINITIONS: readonly OfficialPluginDefinition[] = 
   ).map(
     ([name, skill, displayName, chineseName, version]): OfficialPluginDefinition => ({
       componentTypes: ["ui"],
-      defaultEnabled: true,
+      // Auton no trae ofimatica: cada plugin de oficina levanta su propio host MCP
+      // (~140 MB cada uno) y no aporta nada al producto.
+      defaultEnabled: false,
       listing: {
         author: ZAI_AUTHOR,
         category: "productivity",
