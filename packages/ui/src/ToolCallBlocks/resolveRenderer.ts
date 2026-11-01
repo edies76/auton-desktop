@@ -35,6 +35,7 @@ import {
 } from "@/lib/workflowToolNames.js";
 import { CuaToolCallBlock, isCuaToolCall } from "@/ToolCallBlocks/renderers/cua.js";
 import { CuaGroupToolCallBlock } from "@/ToolCallBlocks/renderers/cua-group.js";
+import { AutonPlanToolCallBlock, isAutonPlanToolCall } from "@/ToolCallBlocks/renderers/auton-plan.js";
 import { GoalToolCallBlock } from "@/ToolCallBlocks/renderers/goal.js";
 import { NodeReplToolCallBlock } from "@/ToolCallBlocks/renderers/node-repl.js";
 import { McpToolCallBlock, readMcpToolPresentation } from "@/ToolCallBlocks/renderers/mcp.js";
@@ -75,6 +76,11 @@ export function resolveToolCallRenderer(context: ToolCallBlockRenderContext) {
   const toolCall = context.toolCallNode.toolCall;
   if ((toolCall.toolName ?? toolCall.kind) === "ToolSearch") {
     return ToolSearchToolCallBlock;
+  }
+
+  // Auton 的计划工具：不要掉进 raw JSON 兜底卡，按名字先认领。
+  if (isAutonPlanToolCall(toolCall)) {
+    return AutonPlanToolCallBlock;
   }
 
   // 可复用工作流的两个工具按**工具名**先分流，刻意排在 family 之前。两个理由：
