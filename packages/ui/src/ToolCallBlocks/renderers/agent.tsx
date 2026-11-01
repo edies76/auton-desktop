@@ -212,8 +212,13 @@ export function AgentToolCallBlock(context: ToolCallBlockRenderContext) {
   const { toolCall, childToolCalls } = context.toolCallNode;
   const prompt = getAgentPrompt(toolCall);
   const fallbackLabel = formatAgentMessage(intl, "chat.toolCall.agent.fallback", "SubAgent");
-  const primaryText = getAgentPrimaryText(toolCall, fallbackLabel);
+  const rawPrimaryText = getAgentPrimaryText(toolCall, fallbackLabel);
   const agentName = getAgentKindLabel(toolCall, "", context.authoritativeAgentType);
+  // En Auton el worker se llama Programador: el tipo interno no se muestra al humano.
+  const isAutonProgrammer = agentName === "auton-worker";
+  const kindLabel = isAutonProgrammer ? "Programador" : fallbackLabel;
+  const primaryText =
+    isAutonProgrammer && rawPrimaryText === "auton-worker" ? "Programador" : rawPrimaryText;
   const configuredAgentColor = useToolPresentationCapabilities().agentColor?.(agentName);
   const agentColor = agentName
     ? (configuredAgentColor ?? getAgentColor(toolCall) ?? resolveSubagentColorFromName(agentName))
@@ -347,8 +352,8 @@ export function AgentToolCallBlock(context: ToolCallBlockRenderContext) {
         summaryAction={summaryAction}
         // 产品边界：Agent/Task 在父对话中只保留单行摘要；完整 child timeline 统一从
         // 右侧 tab / 手机抽屉查看，因此这里既不自动展开，也不提供手动展开入口。
-        kindLabel={fallbackLabel}
-        expandedKindLabel={fallbackLabel}
+        kindLabel={kindLabel}
+        expandedKindLabel={kindLabel}
         kindDetail={agentNameDetail}
         expandedKindDetail={agentNameDetail}
         sourceLabel={sourceLabel}

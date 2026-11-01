@@ -73,33 +73,41 @@ const DirectoryRow = memo(function DirectoryRow({
 }) {
   const { intl } = useZCodeIntl();
   const timestamp = "endedAt" in item ? item.endedAt : item.startedAt;
+  const statusLabel = intl.formatMessage({ id: `subagentDirectory.status.${item.status}` });
   return (
     <button
       type="button"
-      className="flex w-full min-w-0 items-start gap-3 rounded-lg px-3 py-2.5 text-left text-ui-base transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-input-border-focused"
+      className="flex w-full min-w-0 items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-input-border-focused"
       onClick={() => onOpen(item)}
     >
-      <span className="mt-0.5 text-foreground-subtle">
+      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary/40 text-foreground-subtle">
         <StatusIcon status={item.status} />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="flex min-w-0 items-center gap-2">
-          <span className="truncate font-medium text-foreground">{item.title}</span>
-          <span className="shrink-0 text-ui-sm text-foreground-subtlest">
-            {intl.formatMessage({ id: `subagentDirectory.status.${item.status}` })}
-          </span>
+        <span className="block truncate text-ui-base font-medium text-foreground">{item.title}</span>
+        <span className="mt-0.5 flex min-w-0 items-center gap-1.5 text-ui-sm text-foreground-subtle">
+          <span className="shrink-0">{statusLabel}</span>
+          {item.summary ? (
+            <>
+              <span aria-hidden className="shrink-0 text-foreground-subtlest">
+                ·
+              </span>
+              <span className="min-w-0 truncate">{item.summary}</span>
+            </>
+          ) : null}
         </span>
-        {item.summary ? (
-          <span className="mt-0.5 block truncate text-ui-sm text-foreground-subtle">
-            {item.summary}
-          </span>
-        ) : null}
       </span>
       {timestamp ? (
         <span className="shrink-0 text-ui-sm text-foreground-subtlest">
           {formatTaskRelativeTime(timestamp, intl)}
         </span>
       ) : null}
+      <span
+        aria-hidden
+        className="shrink-0 rounded-md border border-border px-2 py-0.5 text-ui-sm text-foreground-subtle"
+      >
+        Open
+      </span>
     </button>
   );
 });

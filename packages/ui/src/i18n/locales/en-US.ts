@@ -1509,7 +1509,7 @@ const enUS: Record<string, string> = {
   "sidePane.newTab": "New tab",
   "sidePane.openTab": "New tab",
   "sidePane.subagent": "Subagent",
-  "sidePane.subagentDirectory": "Subagents",
+  "sidePane.subagentDirectory": "Programmers",
   "sidePane.selectionChat": "Side conversation",
   "sidePane.workflowRun": "Workflow run",
   "sidePane.workflowDirectory": "Workflow runs",

@@ -1978,10 +1978,6 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
       goBackShortcutLabel={goBackShortcutLabel}
       goForwardShortcutLabel={goForwardShortcutLabel}
       onOpenCommandCenter={handleOpenCommandCenter}
-      onOpenAutomations={handleOpenAutomations}
-      automationsActive={workspaceMainView === "automations"}
-      onOpenPluginStore={handleOpenPluginStore}
-      pluginStoreActive={workspaceMainView === "plugin-store"}
       // 桌面没有 mobile 导航动作；内联包装曾让右侧开关穿透侧栏 memo，重复渲染全部项目。
       onWebRemoteTaskOpen={
         mobile
