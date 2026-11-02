@@ -4,6 +4,28 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases públicas.
 
+## [0.2.0] — 2026-11-01
+
+Segunda vuelta sobre la misma base: el panel de programadores se abre solo, el
+plan se lee completo y el despacho vuelve a depender del prompt.
+
+### Añadido
+
+- **El panel de programadores se abre solo** la primera vez que arranca un
+  programador en la sesión, para que la flota esté a la vista.
+- **Tarjeta del plan más rica**: enunciado del objetivo, restricciones, detalle de
+  cada item y sus archivos, pruebas y preguntas abiertas.
+- **Sitio público**: landing y `/docs` generados desde los markdown del repo y
+  publicados en S3 (`auton-docs-027252078119`).
+- **`docs/VERSIONADO.md`**, **`docs/SCORECARD.md`** y **`docs/PODA-MVP.md`**.
+
+### Cambiado
+
+- **El despacho en background vuelve a depender del prompt.** Se quita el forzado
+  en código del handler `Agent`; la regla queda en la doctrina del orquestador.
+- Los tres archivos de Auton se mueven a sus propios módulos
+  (`contracts/src/auton`, `core/src/auton`, `ui/src/auton`).
+
 ## [0.1.0] — 2026-11-01
 
 Primera versión que se puede abrir, usar y enseñar. Alpha privada de hackathon.

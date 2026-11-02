@@ -5,7 +5,7 @@ que de verdad pasa, qué está verificado y qué nos falta. Si algo de aquí se
 contradice con `AUTON-VISION.md`, manda la visión para producto y este archivo
 para estado técnico.
 
-Última actualización: 2026-11-01.
+Última actualización: 2026-11-01 (0.2.0).
 
 ## 1. Dónde estamos
 
@@ -51,11 +51,16 @@ Lo que ya se probó de punta a punta en la app:
    logs). Eso mantiene viva la lista de plugins ajena y contamina. Mover a
    `~/.auton/cli` y desactivar `computer-use` en esa copia.
 3. **Auto-apertura del panel Programmers** al despachar.
-4. **Lista de proyectos.** Las filas viejas ya están borradas del índice SQLite y
-   el perfil de Electron se limpió; queda confirmar en la app que no vuelven.
+4. **Lista de proyectos.** Resuelto: era el perfil de Electron viejo (`Auton Dev`)
+   sembrando localStorage y las filas del índice SQLite. El perfil se borró, las
+   filas se marcaron como borradas y la lista arranca vacía y se mantiene vacía.
 5. **Dos `app-server` del agente** (~530 MB entre los dos). Uno debería bastar.
 6. **Verificación independiente** como etapa formal (hoy verifica el orquestador).
 7. **Documentación de la demo**: guion del video y benchmark contra baseline.
+
+Hecho en 0.2.0: el panel de programadores se abre solo al primer despacho, la
+tarjeta del plan muestra objetivo, restricciones y el detalle de cada item, y los
+tres archivos de Auton viven en módulos propios (`*_/src/auton`).
 
 ## 5. Cómo medimos
 
