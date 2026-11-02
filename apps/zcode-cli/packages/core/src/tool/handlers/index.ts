@@ -40,7 +40,7 @@ import {
 import { isSubagentDispatchToolName } from "../compat.js";
 import { skillToolEntry } from "./skill.js";
 import { todoReadToolEntry, todoWriteToolEntry } from "./todo.js";
-import { autonPlanToolEntry } from "./auton-plan.js";
+import { autonPlanToolEntry } from "../../auton/plan-handler.js";
 import {
   cronCreateToolEntry,
   cronDeleteToolEntry,

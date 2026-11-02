@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { autonPlanToolEntry, resolveAutonPlanPath } from "../src/tool/handlers/auton-plan.js";
+import { autonPlanToolEntry, resolveAutonPlanPath } from "../src/auton/plan-handler.js";
 import type { ToolExecutionContext } from "../src/tool/types.js";
 
 const workspaces: string[] = [];

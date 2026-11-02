@@ -6,6 +6,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ComponentPropsWithoutRef,
   type MouseEvent,
@@ -1457,6 +1458,18 @@ function SubagentStatusSection({
 }) {
   const { intl } = useZCodeIntl();
   const [now, setNow] = useState(() => Date.now());
+  // En Auton el primer programador que arranca abre el panel de programadores:
+  // el humano ve la flota en cuanto existe, sin tener que buscarla.
+  const autoOpenedDirectoryRef = useRef(false);
+  useEffect(() => {
+    if (autoOpenedDirectoryRef.current || subagents.length === 0) return;
+    if (!onOpenSubagentDirectory || !parentSessionId) return;
+    autoOpenedDirectoryRef.current = true;
+    onOpenSubagentDirectory({
+      parentSessionId,
+      rootSessionId: rootSessionId ?? parentSessionId,
+    });
+  }, [onOpenSubagentDirectory, parentSessionId, rootSessionId, subagents.length]);
   const ordered = useMemo(
     () => [...subagents].sort((left, right) => (left.startedAt ?? 0) - (right.startedAt ?? 0)),
     [subagents],

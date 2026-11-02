@@ -35,7 +35,7 @@ import {
 } from "@/lib/workflowToolNames.js";
 import { CuaToolCallBlock, isCuaToolCall } from "@/ToolCallBlocks/renderers/cua.js";
 import { CuaGroupToolCallBlock } from "@/ToolCallBlocks/renderers/cua-group.js";
-import { AutonPlanToolCallBlock, isAutonPlanToolCall } from "@/ToolCallBlocks/renderers/auton-plan.js";
+import { AutonPlanToolCallBlock, isAutonPlanToolCall } from "@/auton/plan-card.js";
 import { GoalToolCallBlock } from "@/ToolCallBlocks/renderers/goal.js";
 import { NodeReplToolCallBlock } from "@/ToolCallBlocks/renderers/node-repl.js";
 import { McpToolCallBlock, readMcpToolPresentation } from "@/ToolCallBlocks/renderers/mcp.js";

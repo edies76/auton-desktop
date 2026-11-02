@@ -57,6 +57,19 @@ bucket y usar el endpoint HTTP del bucket. Sirve para enseñar, no para producci
 
 ## Estado
 
-El sitio se genera y se puede abrir en local (`site/dist/index.html`). **No se ha
-desplegado**: falta decidir dominio y cuenta. Es el siguiente paso cuando quieras
-tener la URL pública para el jurado.
+**Publicado.** El sitio está en vivo en un bucket S3 con website hosting:
+
+```
+http://auton-docs-027252078119.s3-website-us-east-1.amazonaws.com
+```
+
+Bucket: `auton-docs-027252078119`, región `us-east-1`, lectura pública solo para
+los objetos del sitio. Se republica con:
+
+```bash
+node site/build.mjs
+aws s3 sync site/dist s3://auton-docs-027252078119 --delete
+```
+
+Falta un dominio propio y HTTPS con CloudFront; el endpoint HTTP sirve para
+enseñar la demo hoy.

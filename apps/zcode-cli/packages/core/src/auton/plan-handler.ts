@@ -19,7 +19,7 @@ import {
   type AutonPlanInput,
   type AutonPlanOutput,
 } from "@zcode/contracts";
-import type { ToolEntry, ToolHandler } from "../types.js";
+import type { ToolEntry, ToolHandler } from "../tool/types.js";
 
 const MAX_AUTON_PLAN_MODEL_BYTES = 60_000;
 

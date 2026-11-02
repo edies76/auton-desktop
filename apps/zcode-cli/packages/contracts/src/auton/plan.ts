@@ -7,7 +7,7 @@
 
 import { z } from "zod";
 import type { ToolCallId, TraceId } from "../interfaces/shared.js";
-import { toToolJsonSchema } from "./json-schema.js";
+import { toToolJsonSchema } from "../tools/json-schema.js";
 
 export const AUTON_PLAN_TOOL_NAME = "AutonPlan";
 
