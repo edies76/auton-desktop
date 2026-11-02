@@ -92,7 +92,51 @@ Su valor no debería depender de esta app. Más adelante debería poder llevarse
 siendo el mismo ingeniero. **Se deja para después**, solo se anota: implica diseñar su núcleo separado
 de la interfaz, y hoy no toca.
 
-## Lo que NO se hace ahora
+## 9. El contexto de un bucle que no termina (la pieza que faltaba)
+
+Un bucle infinito con contexto es imposible **si el contexto es la conversación**. El error de todos los
+harnesses actuales es ese: tratan el hilo como el contexto del modelo, y cuando crece, **lo resumen**.
+Resumir 800k en 15k pierde cosas valiosas, siempre. Por eso el compacto no es la solución: es el
+síntoma.
+
+**La solución es separar tres cosas que hoy van juntas:**
+
+| Capa | Qué es | Tamaño | Vive |
+|---|---|---|---|
+| **Contexto vivo** | Contrato + sprint activo + últimos intercambios + lo recuperado para esta decisión | pequeño y acotado | en la llamada al modelo |
+| **Registro durable** | Todo lo que pasó: eventos, encargos, reportes, decisiones, artefactos, resultados de comandos | ilimitado | en disco (base de datos + archivos) |
+| **Recuperación** | Buscar en el registro y traer solo lo que se necesita, cuando se necesita | lo que pida la consulta | herramienta del orquestador |
+
+**Regla**: nada se resume por obligación. Nada se tira. Se **indexa**, y se **recupera** cuando hace
+falta. La conversación larga no se comprime: se deja de meter entera en el modelo.
+
+- El humano **sí** tiene la conversación completa (con sus tramos por sprint). El modelo no necesita
+  tenerla: necesita poder **consultarla**.
+- Cada cosa importante lleva **identificador y referencias** (objetivo → sprint → worker → artefacto →
+  decisión). Así el orquestador puede tirar del hilo: esto es exactamente lo que DeepSeek llama *Chain
+  of Recall*, y es la parte de su artículo que **sí** hay que adoptar tal cual.
+- Lo que el humano pide ("¿por qué se cambió esto?") se responde **consultando el registro**, no
+  recordando. Y si la respuesta no está, se dice que no está, en vez de inventarla.
+- El compacto queda como último recurso para el contexto vivo, no como mecanismo principal. Y cuando se
+  use, **el material original queda en el registro** y es recuperable.
+
+**Consecuencia de producto**: el orquestador gana una herramienta de memoria (`recordar`/`buscar` sobre
+el registro) que devuelve pocas líneas y punteros. Eso es lo que hace sostenible un bucle que no termina.
+
+## 10. El canal: por qué el multiagente se siente o no se siente
+
+En todos los harness actuales los agentes son **sesiones separadas**: abres pestañas, cambias de una a
+otra y tú eres el mensajero. El multiagente **no se siente**, se administra.
+
+En Auton hay **un solo hilo** (el del humano) y dentro de él, **canales de trabajo anidados**: cada
+worker es un canal que se puede abrir y cerrar sin límite, con su reloj corriendo, y que habla con el
+orquestador **en su idioma** (el reporte de estado y las preguntas). El humano ve la crónica; cuando
+quiere detalle, abre el canal de ese worker.
+
+Eso permite lo que hoy no se puede: **varios cambios a la vez en el mismo chat**, incluido pedir un
+arreglo de interfaz mientras otro worker está en otra cosa. El orquestador reparte, cada worker mantiene
+su hilo, y el humano sigue teniendo **una sola conversación**.
+
 
 - **No se toca la interfaz de ZCode.** Se reutiliza tal cual.
 - **No se hace una interfaz propia del orquestador** (sin la división de proyectos y tareas a la
