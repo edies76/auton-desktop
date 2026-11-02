@@ -50,18 +50,20 @@ La línea `POLITICA DE ESFUERZO:` dentro del brief sigue aceptándose como
 compatibilidad para encargos viejos, pero el brief ya no la lleva.
 
 **Reversión con orden.** `Write` y `Edit` registran cada cambio de un programador
-en `.auton/changes.jsonl` (contenido anterior y posterior, agente, sesión, item y
-fin de línea). `AutonRevert` revierte por `agentId`, por `itemId` o por `paths`:
-- restaura byte a byte, reaplicando el fin de línea original (CRLF incluido);
+en `.auton/changes.jsonl`: los **bytes crudos** antes y después (base64), más el
+contenido textual, agente, sesión e item. `AutonRevert` revierte por `agentId`,
+por `itemId` o por `paths`:
+- restaura **byte a byte** desde los bytes guardados: CRLF, finales mixtos y
+  archivos que no son UTF-8 vuelven idénticos;
 - borra los archivos que el programador creó desde cero;
 - si el archivo cambió después del cambio registrado, lo reporta como conflicto
   y no lo pisa;
 - es idempotente: la segunda pasada devuelve `already`;
 - deja rastro en `.auton/reverts.jsonl`.
 
-**Límite honesto:** un archivo cuya codificación no es UTF-8 no se registra
-(la lectura lo deja con bytes de reemplazo). La reversión lo reporta como
-`blocked` en vez de fingir una restauración que corrompería el archivo.
+Si por algún motivo no se pudieron capturar los bytes, cae al modo texto y usa el
+fin de línea registrado; en ese caso un archivo no UTF-8 se reporta `blocked` en
+vez de arriesgar una restauración aproximada.
 
 ## 5. Deuda y pendientes, en orden de impacto
 

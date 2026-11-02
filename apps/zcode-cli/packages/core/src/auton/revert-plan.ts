@@ -19,7 +19,11 @@ export interface RevertTarget {
   before: string | null;
   /** Contenido que el diario espera encontrar ahora. */
   expectedAfter: string | null;
-  /** Fin de línea con el que se guardó el contenido previo. */
+  /** Bytes crudos previos (base64); null cuando el archivo no existía. */
+  beforeBase64?: string | null;
+  /** Bytes crudos posteriores (base64); null cuando se borró. */
+  afterBase64?: string | null;
+  /** Fin de línea con el que se guardó el contenido previo (solo texto). */
   lineEndings?: "LF" | "CRLF";
   records: number;
 }
@@ -63,6 +67,8 @@ export function planRevert(
       path,
       before: first.before,
       expectedAfter: last.after,
+      ...("beforeBase64" in first ? { beforeBase64: first.beforeBase64 ?? null } : {}),
+      ...("afterBase64" in last ? { afterBase64: last.afterBase64 ?? null } : {}),
       ...(first.lineEndings ? { lineEndings: first.lineEndings } : {}),
       records: ordered.length,
     });

@@ -52,10 +52,65 @@ function applyLineEndings(value: string, lineEndings: "LF" | "CRLF" | undefined)
   return lineEndings === "CRLF" ? value.replace(/\r?\n/g, "\r\n") : value;
 }
 
+function readBytes(absolutePath: string): Buffer | null {
+  try {
+    return readFileSync(absolutePath);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return null;
+    throw error;
+  }
+}
+
+function bytesFromBase64(value: string | null | undefined): Buffer | null {
+  if (value === null || value === undefined) return null;
+  return Buffer.from(value, "base64");
+}
+
+/** Restaura y compara por bytes crudos: exacto con CRLF, mixtos y no-UTF-8. */
+function applyTargetBytes(
+  absolute: string,
+  target: RevertTarget & { beforeBase64: string | null; afterBase64: string | null },
+): RevertFileResult {
+  const current = readBytes(absolute);
+  const before = bytesFromBase64(target.beforeBase64);
+  const expectedAfter = bytesFromBase64(target.afterBase64);
+
+  if (current === null ? before === null : before !== null && current.equals(before)) {
+    return { path: target.path, outcome: "already", reason: "already at the pre-change content" };
+  }
+
+  const matchesExpected =
+    current === null ? expectedAfter === null : expectedAfter !== null && current.equals(expectedAfter);
+
+  if (!matchesExpected) {
+    return {
+      path: target.path,
+      outcome: "conflict",
+      reason: "the file changed after the recorded change; not overwritten",
+    };
+  }
+
+  if (before === null) {
+    rmSync(absolute, { force: true });
+    return { path: target.path, outcome: "reverted", reason: "deleted (did not exist before)" };
+  }
+
+  mkdirSync(dirname(absolute), { recursive: true });
+  writeFileSync(absolute, before);
+  return { path: target.path, outcome: "reverted" };
+}
+
 function applyTarget(workspaceRoot: string, target: RevertTarget): RevertFileResult {
   const absolute = insideWorkspace(workspaceRoot, target.path);
   if (!absolute) {
     return { path: target.path, outcome: "blocked", reason: "path outside the workspace" };
+  }
+
+  if ("beforeBase64" in target && "afterBase64" in target) {
+    return applyTargetBytes(absolute, target as RevertTarget & {
+      beforeBase64: string | null;
+      afterBase64: string | null;
+    });
   }
 
   let raw: string | null;
@@ -72,7 +127,7 @@ function applyTarget(workspaceRoot: string, target: RevertTarget): RevertFileRes
     return { path: target.path, outcome: "already", reason: "already at the pre-change content" };
   }
 
-  if (current !== target.expectedAfter) {
+  if (current !== toLf(target.expectedAfter ?? "")) {
     return {
       path: target.path,
       outcome: "conflict",

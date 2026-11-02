@@ -60,7 +60,7 @@ afterEach(async () => {
 });
 
 describe("journal and revert with the real filesystem adapter", () => {
-  it("restores a CRLF file byte for byte", async () => {
+  it("restores a CRLF file byte for byte when the write itself carries CRLF", async () => {
     const root = await workspace();
     const file = join(root, "windows.txt");
     const original = Buffer.from("linea uno\r\nlinea dos\r\n", "utf8");
@@ -69,14 +69,16 @@ describe("journal and revert with the real filesystem adapter", () => {
     const sessionId = createChildSessionId("auton-worker", "prog-crlf");
     const { adapter, context: ctx } = await context(root, file, sessionId);
 
-    await writeHandler({ file_path: file, content: "linea uno\nlinea dos cambiada\n" }, ctx);
+    // El contenido del programador también trae CRLF: el diario debe comparar
+    // contra los bytes reales, no contra texto normalizado.
+    await writeHandler(
+      { file_path: file, content: "linea uno\r\nlinea dos cambiada\r\n" },
+      ctx,
+    );
 
     const journal = readChanges(root);
     expect(journal).toHaveLength(1);
-    expect(journal[0]?.lineEndings).toBe("CRLF");
-    expect(journal[0]?.before).toBe("linea uno\nlinea dos\n");
-    // El adaptador real reaplica CRLF al escribir.
-    expect((await readFile(file)).toString("utf8")).toContain("\r\n");
+    expect(journal[0]?.beforeBase64).toBe(original.toString("base64"));
 
     const reverted = (await autonRevertHandler({ agentId: "prog-crlf" }, ctx)) as {
       result: string;
@@ -88,28 +90,39 @@ describe("journal and revert with the real filesystem adapter", () => {
     expect(adapter).toBeDefined();
   });
 
-  it("does not pretend to restore a file whose bytes are not valid UTF-8", async () => {
+  it("restores a file with mixed LF and CRLF endings byte for byte", async () => {
+    const root = await workspace();
+    const file = join(root, "mixto.txt");
+    const original = Buffer.from("uno\r\ndos\ntres\r\n", "utf8");
+    await writeFile(file, original);
+
+    const sessionId = createChildSessionId("auton-worker", "prog-mixed");
+    const { context: ctx } = await context(root, file, sessionId);
+    await writeHandler({ file_path: file, content: "uno\ndos\ntres cambiado\n" }, ctx);
+
+    await autonRevertHandler({ agentId: "prog-mixed" }, ctx);
+
+    expect(Buffer.compare(await readFile(file), original)).toBe(0);
+  });
+
+  it("restores a file whose bytes are not valid UTF-8", async () => {
     const root = await workspace();
     const file = join(root, "binario.txt");
-    await writeFile(file, Buffer.from([0xff, 0xfe, 0x41, 0x0a]));
+    const original = Buffer.from([0xff, 0xfe, 0x41, 0x0a]);
+    await writeFile(file, original);
 
     const sessionId = createChildSessionId("auton-worker", "prog-bin");
     const { context: ctx } = await context(root, file, sessionId);
 
     await writeHandler({ file_path: file, content: "texto plano\n" }, ctx);
+    expect(readChanges(root)).toHaveLength(1);
 
-    expect(readChanges(root)).toHaveLength(0);
-
-    const written = await readFile(file);
     const reverted = (await autonRevertHandler({ paths: ["binario.txt"] }, ctx)) as {
       result: string;
-      files: { outcome: string }[];
     };
 
-    expect(reverted.result).toBe("blocked");
-    expect(reverted.files[0]?.outcome).toBe("blocked");
-    // La reversión no toca el archivo: no puede garantizar los bytes originales.
-    expect(Buffer.compare(await readFile(file), written)).toBe(0);
+    expect(reverted.result).toBe("reverted");
+    expect(Buffer.compare(await readFile(file), original)).toBe(0);
   });
 
   it("reverts an LF change twice without altering bytes", async () => {

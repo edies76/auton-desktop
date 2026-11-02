@@ -57,6 +57,17 @@ function realFileSystem(): FileSystemPort {
         truncated: false,
       };
     },
+    async readBinaryFile(request: { path: string }) {
+      const content = await readFile(request.path);
+      const info = await stat(request.path);
+      return {
+        bytesRead: content.byteLength,
+        content,
+        path: request.path,
+        revision: revisionFor(request.path, content.toString("utf8"), info.mtimeMs),
+        sizeBytes: info.size,
+      };
+    },
     async writeTextFile(request: {
       path: string;
       content: string;

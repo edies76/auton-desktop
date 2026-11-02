@@ -20,6 +20,7 @@ import { createStructuredPatch } from "../diff.js";
 import { stampMemoryOriginSessionId } from "../../memory/origin-session.js";
 import { resolveWorkspacePath } from "../path-policy.js";
 import { isAutonWorkerSession, recordFileChange } from "../../auton/journal.js";
+import { captureBytes } from "../../auton/capture-bytes.js";
 import {
   createReadFileStateKey,
   findLatestReadFileState,
@@ -122,6 +123,8 @@ export const writeHandler: ToolHandler = async (input, context) => {
     memoryRoot: context.memoryRoot,
     sessionId: context.sessionId,
   });
+  const journalIt = isAutonWorkerSession(context.sessionId);
+  const beforeBytes = journalIt ? await captureBytes(fileSystemPort, filePath) : undefined;
   const writeStartedAt = Date.now();
   const writeResult = await fileSystemPort.writeTextFile(
     {
@@ -138,14 +141,17 @@ export const writeHandler: ToolHandler = async (input, context) => {
   );
   const fsWriteMs = elapsedMsSince(writeStartedAt);
 
-  if (isAutonWorkerSession(context.sessionId)) {
+  if (journalIt) {
     try {
+      const afterBytes = await captureBytes(fileSystemPort, filePath);
       recordFileChange({
         workspaceRoot: context.workspaceRoot,
         sessionId: context.sessionId,
         path: filePath,
         before: originalFile,
         after: contentToWrite,
+        ...(beforeBytes !== undefined ? { beforeBytes } : {}),
+        ...(afterBytes !== undefined ? { afterBytes } : {}),
         ...(originalLineEndings ? { lineEndings: originalLineEndings } : {}),
         ...(originalEncoding ? { encoding: originalEncoding } : {}),
       });

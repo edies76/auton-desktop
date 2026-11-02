@@ -37,6 +37,7 @@ import {
 } from "../edit-matchers.js";
 import { resolveWorkspacePath } from "../path-policy.js";
 import { isAutonWorkerSession, recordFileChange } from "../../auton/journal.js";
+import { captureBytes } from "../../auton/capture-bytes.js";
 import {
   createReadFileStateKey,
   findEditableReadFileState,
@@ -505,6 +506,10 @@ async function writeEditResult(input: {
     memoryRoot: input.context.memoryRoot,
     sessionId: input.context.sessionId,
   });
+  const journalIt = isAutonWorkerSession(input.context.sessionId);
+  const beforeBytes = journalIt
+    ? await captureBytes(fileSystemPort, input.filePath)
+    : undefined;
   const writeStartedAt = Date.now();
   const writeResult = await fileSystemPort.writeTextFile(
     {
@@ -521,14 +526,17 @@ async function writeEditResult(input: {
   );
   const fsWriteMs = elapsedMsSince(writeStartedAt);
 
-  if (isAutonWorkerSession(input.context.sessionId)) {
+  if (journalIt) {
     try {
+      const afterBytes = await captureBytes(fileSystemPort, input.filePath);
       recordFileChange({
         workspaceRoot: input.context.workspaceRoot,
         sessionId: input.context.sessionId,
         path: input.filePath,
         before: input.originalFile,
         after: contentToWrite,
+        ...(beforeBytes !== undefined ? { beforeBytes } : {}),
+        ...(afterBytes !== undefined ? { afterBytes } : {}),
         lineEndings: input.read?.lineEndings ?? detectLineEndings(input.originalFile),
         ...(input.read?.encoding ? { encoding: input.read.encoding } : {}),
       });

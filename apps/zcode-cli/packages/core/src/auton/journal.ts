@@ -23,9 +23,13 @@ export interface ChangeRecord {
   before: string | null;
   /** Contenido después del cambio; null cuando el archivo se borró. */
   after: string | null;
-  /** Fin de línea del archivo cuando se registró el cambio. */
+  /** Bytes crudos (base64) antes del cambio; null cuando el archivo no existía. */
+  beforeBase64?: string | null;
+  /** Bytes crudos (base64) después del cambio; null cuando el archivo se borró. */
+  afterBase64?: string | null;
+  /** Fin de línea del archivo cuando se registró el cambio (solo compatibilidad). */
   lineEndings?: "LF" | "CRLF";
-  /** Codificación del archivo; solo se aceptan las que round-tripean por UTF-8. */
+  /** Codificación del archivo (solo compatibilidad). */
   encoding?: string;
 }
 
@@ -52,8 +56,7 @@ export function revertsPath(workspaceRoot: string): string {
   return join(autonDir(workspaceRoot), REVERTS_FILE_NAME);
 }
 
-export function appendChange(workspaceRoot: string, record: ChangeRecord): void {
-  const file = changesPath(workspaceRoot);
+export function appendChange(workspaceRoot: string, record: ChangeRecord): void {  const file = changesPath(workspaceRoot);
   mkdirSync(dirname(file), { recursive: true });
   appendFileSync(file, `${JSON.stringify(record)}\n`, "utf8");
 }
@@ -74,6 +77,8 @@ export function readChanges(workspaceRoot: string): ChangeRecord[] {
       const after = parsed.after ?? null;
       if (before !== null && typeof before !== "string") continue;
       if (after !== null && typeof after !== "string") continue;
+      const beforeBase64 = parseCapturedBytes(parsed.beforeBase64);
+      const afterBase64 = parseCapturedBytes(parsed.afterBase64);
       records.push({
         at: parsed.at,
         agentId: parsed.agentId,
@@ -82,6 +87,8 @@ export function readChanges(workspaceRoot: string): ChangeRecord[] {
         path: parsed.path,
         before,
         after,
+        ...(beforeBase64.captured ? { beforeBase64: beforeBase64.value } : {}),
+        ...(afterBase64.captured ? { afterBase64: afterBase64.value } : {}),
         ...(parsed.lineEndings === "LF" || parsed.lineEndings === "CRLF"
           ? { lineEndings: parsed.lineEndings }
           : {}),
@@ -123,10 +130,15 @@ export function readRevertAudit(workspaceRoot: string): RevertAuditEntry[] {
  */
 const UTF8_ENCODINGS = new Set(["utf8", "utf-8", "ascii", "us-ascii"]);
 
+function parseCapturedBytes(value: unknown): { captured: boolean; value: string | null } {
+  if (value === null) return { captured: true, value: null };
+  if (typeof value === "string") return { captured: true, value };
+  return { captured: false, value: null };
+}
+
 /**
- * Devuelve false cuando el cambio no se puede restaurar byte a byte (codificación
- * distinta de UTF-8, o texto que llegó con bytes inválidos). No se registra nada:
- * la reversión lo reportará como bloqueado en vez de fingir un éxito.
+ * Devuelve false solo cuando no hay bytes crudos y el texto no sirve para
+ * restaurar (no round-trip ea por UTF-8). Con bytes, la reversión es exacta.
  */
 export function recordFileChange(input: {
   workspaceRoot: string;
@@ -134,15 +146,22 @@ export function recordFileChange(input: {
   path: string;
   before: string | null;
   after: string | null;
+  /** Bytes del archivo antes del cambio; null cuando no existía. */
+  beforeBytes?: Buffer | null;
+  /** Bytes del archivo después del cambio; null cuando se borró. */
+  afterBytes?: Buffer | null;
   itemId?: string;
   lineEndings?: "LF" | "CRLF";
   encoding?: string;
   now?: Date;
 }): boolean {
-  const encoding = (input.encoding ?? "utf8").toLowerCase();
-  if (!UTF8_ENCODINGS.has(encoding)) return false;
-  if ((input.before ?? "").includes("\uFFFD") || (input.after ?? "").includes("\uFFFD")) {
-    return false;
+  const hasBytes = input.beforeBytes !== undefined || input.afterBytes !== undefined;
+  if (!hasBytes) {
+    const encoding = (input.encoding ?? "utf8").toLowerCase();
+    if (!UTF8_ENCODINGS.has(encoding)) return false;
+    if ((input.before ?? "").includes("\uFFFD") || (input.after ?? "").includes("\uFFFD")) {
+      return false;
+    }
   }
 
   const agentId = agentIdFromSessionId(input.sessionId);
@@ -156,8 +175,14 @@ export function recordFileChange(input: {
     path: relativePath,
     before: input.before,
     after: input.after,
+    ...(input.beforeBytes !== undefined
+      ? { beforeBase64: input.beforeBytes === null ? null : input.beforeBytes.toString("base64") }
+      : {}),
+    ...(input.afterBytes !== undefined
+      ? { afterBase64: input.afterBytes === null ? null : input.afterBytes.toString("base64") }
+      : {}),
     ...(input.lineEndings ? { lineEndings: input.lineEndings } : {}),
-    ...(input.encoding ? { encoding } : {}),
+    ...(input.encoding ? { encoding: input.encoding.toLowerCase() } : {}),
   });
   return true;
 }
