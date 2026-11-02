@@ -42,7 +42,28 @@ Lo que ya se probó de punta a punta en la app:
 | Perfil del worker y esfuerzo | `packages/core/src/subagent/worker-policy.ts`, `profile.ts`, `runner.ts` |
 | Aislamiento de datos | `packages/services/src/paths.ts`, `packages/desktop/src/main/desktopDataBaseDirBootstrap.ts` |
 
-## 4. Deuda y pendientes, en orden de impacto
+## 4. Reversión y esfuerzo
+
+**Esfuerzo como parámetro.** La tool `Agent` acepta `effort` (`minimal |
+standard | thorough`) y el runner construye el prompt del worker desde ese campo.
+La línea `POLITICA DE ESFUERZO:` dentro del brief sigue aceptándose como
+compatibilidad para encargos viejos, pero el brief ya no la lleva.
+
+**Reversión con orden.** `Write` y `Edit` registran cada cambio de un programador
+en `.auton/changes.jsonl` (contenido anterior y posterior, agente, sesión, item y
+fin de línea). `AutonRevert` revierte por `agentId`, por `itemId` o por `paths`:
+- restaura byte a byte, reaplicando el fin de línea original (CRLF incluido);
+- borra los archivos que el programador creó desde cero;
+- si el archivo cambió después del cambio registrado, lo reporta como conflicto
+  y no lo pisa;
+- es idempotente: la segunda pasada devuelve `already`;
+- deja rastro en `.auton/reverts.jsonl`.
+
+**Límite honesto:** un archivo cuya codificación no es UTF-8 no se registra
+(la lectura lo deja con bytes de reemplazo). La reversión lo reporta como
+`blocked` en vez de fingir una restauración que corrompería el archivo.
+
+## 5. Deuda y pendientes, en orden de impacto
 
 1. **Reanudación de programadores.** El plan sobrevive; el proceso del worker no.
    Al reabrir, un item `running` se queda colgado. Siguiente paso: al arrancar,
@@ -65,14 +86,14 @@ Hecho en 0.2.0: el panel de programadores se abre solo al primer despacho, la
 tarjeta del plan muestra objetivo, restricciones y el detalle de cada item, y los
 tres archivos de Auton viven en módulos propios (`*_/src/auton`).
 
-## 5. Cómo medimos
+## 6. Cómo medimos
 
 - Memoria: `Get-CimInstance Win32_Process` filtrando `electron.exe` y agrupando por
   tipo (`--type=renderer`, `app-server`, `__zcode-plugin-host`).
 - El modo desarrollo suma ~600 MB de `tsup --watch` y Vite que no existen en una
   build empaquetada; al comparar, separar app de tooling.
 
-## 6. Protocolo de trabajo con otros agentes
+## 7. Protocolo de trabajo con otros agentes
 
 Vive en `docs/AGENT-BRIEFING.md`. Reglas cortas: un escritor por archivo, avisar
 antes de tocar más de un archivo, un commit por cambio, nada de credenciales en

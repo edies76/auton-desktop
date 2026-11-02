@@ -23,6 +23,10 @@ export interface ChangeRecord {
   before: string | null;
   /** Contenido después del cambio; null cuando el archivo se borró. */
   after: string | null;
+  /** Fin de línea del archivo cuando se registró el cambio. */
+  lineEndings?: "LF" | "CRLF";
+  /** Codificación del archivo; solo se aceptan las que round-tripean por UTF-8. */
+  encoding?: string;
 }
 
 export interface RevertAuditEntry {
@@ -78,6 +82,10 @@ export function readChanges(workspaceRoot: string): ChangeRecord[] {
         path: parsed.path,
         before,
         after,
+        ...(parsed.lineEndings === "LF" || parsed.lineEndings === "CRLF"
+          ? { lineEndings: parsed.lineEndings }
+          : {}),
+        ...(typeof parsed.encoding === "string" ? { encoding: parsed.encoding } : {}),
       });
     } catch {
       // Una linea corrupta no invalida el resto del diario.
@@ -113,6 +121,13 @@ export function readRevertAudit(workspaceRoot: string): RevertAuditEntry[] {
  * Registra un cambio real de archivo para un programador. Se llama desde las
  * tools de escritura cuando la sesión pertenece a un worker de Auton.
  */
+const UTF8_ENCODINGS = new Set(["utf8", "utf-8", "ascii", "us-ascii"]);
+
+/**
+ * Devuelve false cuando el cambio no se puede restaurar byte a byte (codificación
+ * distinta de UTF-8, o texto que llegó con bytes inválidos). No se registra nada:
+ * la reversión lo reportará como bloqueado en vez de fingir un éxito.
+ */
 export function recordFileChange(input: {
   workspaceRoot: string;
   sessionId: string;
@@ -120,20 +135,31 @@ export function recordFileChange(input: {
   before: string | null;
   after: string | null;
   itemId?: string;
+  lineEndings?: "LF" | "CRLF";
+  encoding?: string;
   now?: Date;
-}): void {
-  const relative = toWorkspaceRelative(input.workspaceRoot, input.path);
+}): boolean {
+  const encoding = (input.encoding ?? "utf8").toLowerCase();
+  if (!UTF8_ENCODINGS.has(encoding)) return false;
+  if ((input.before ?? "").includes("\uFFFD") || (input.after ?? "").includes("\uFFFD")) {
+    return false;
+  }
+
   const agentId = agentIdFromSessionId(input.sessionId);
   const itemId = input.itemId ?? findAgentItem(input.workspaceRoot, agentId);
+  const relativePath = toWorkspaceRelative(input.workspaceRoot, input.path);
   appendChange(input.workspaceRoot, {
     at: (input.now ?? new Date()).toISOString(),
     agentId,
     sessionId: input.sessionId,
     ...(itemId ? { itemId } : {}),
-    path: relative,
+    path: relativePath,
     before: input.before,
     after: input.after,
+    ...(input.lineEndings ? { lineEndings: input.lineEndings } : {}),
+    ...(input.encoding ? { encoding } : {}),
   });
+  return true;
 }
 
 export function agentIdFromSessionId(sessionId: string): string {

@@ -19,6 +19,8 @@ export interface RevertTarget {
   before: string | null;
   /** Contenido que el diario espera encontrar ahora. */
   expectedAfter: string | null;
+  /** Fin de línea con el que se guardó el contenido previo. */
+  lineEndings?: "LF" | "CRLF";
   records: number;
 }
 
@@ -61,6 +63,7 @@ export function planRevert(
       path,
       before: first.before,
       expectedAfter: last.after,
+      ...(first.lineEndings ? { lineEndings: first.lineEndings } : {}),
       records: ordered.length,
     });
   }

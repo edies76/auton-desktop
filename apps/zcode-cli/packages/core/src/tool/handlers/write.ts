@@ -146,6 +146,8 @@ export const writeHandler: ToolHandler = async (input, context) => {
         path: filePath,
         before: originalFile,
         after: contentToWrite,
+        ...(originalLineEndings ? { lineEndings: originalLineEndings } : {}),
+        ...(originalEncoding ? { encoding: originalEncoding } : {}),
       });
     } catch {
       // El diario no puede tumbar una escritura que ya se aplicó.

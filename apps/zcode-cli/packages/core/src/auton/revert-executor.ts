@@ -44,18 +44,29 @@ function readIfPresent(absolutePath: string): string | null {
   }
 }
 
+function toLf(value: string): string {
+  return value.replace(/\r\n/g, "\n");
+}
+
+function applyLineEndings(value: string, lineEndings: "LF" | "CRLF" | undefined): string {
+  return lineEndings === "CRLF" ? value.replace(/\r?\n/g, "\r\n") : value;
+}
+
 function applyTarget(workspaceRoot: string, target: RevertTarget): RevertFileResult {
   const absolute = insideWorkspace(workspaceRoot, target.path);
   if (!absolute) {
     return { path: target.path, outcome: "blocked", reason: "path outside the workspace" };
   }
 
-  let current: string | null;
+  let raw: string | null;
   try {
-    current = readIfPresent(absolute);
+    raw = readIfPresent(absolute);
   } catch (error) {
     return { path: target.path, outcome: "blocked", reason: (error as Error).message };
   }
+
+  // El diario guarda texto con saltos LF; el archivo puede estar en CRLF.
+  const current = raw === null ? null : toLf(raw);
 
   if (current === target.before) {
     return { path: target.path, outcome: "already", reason: "already at the pre-change content" };
@@ -75,7 +86,7 @@ function applyTarget(workspaceRoot: string, target: RevertTarget): RevertFileRes
   }
 
   mkdirSync(dirname(absolute), { recursive: true });
-  writeFileSync(absolute, target.before, "utf8");
+  writeFileSync(absolute, applyLineEndings(target.before, target.lineEndings), "utf8");
   return { path: target.path, outcome: "reverted" };
 }
 

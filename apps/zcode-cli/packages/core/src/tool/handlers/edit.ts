@@ -529,6 +529,8 @@ async function writeEditResult(input: {
         path: input.filePath,
         before: input.originalFile,
         after: contentToWrite,
+        lineEndings: input.read?.lineEndings ?? detectLineEndings(input.originalFile),
+        ...(input.read?.encoding ? { encoding: input.read.encoding } : {}),
       });
     } catch {
       // El diario no puede tumbar una edición que ya se aplicó.

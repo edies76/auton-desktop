@@ -16,7 +16,7 @@ const ORCHESTRATOR_PROCEDURE = [
   "Para arrancar: AskUserQuestion (una sola pregunta con opciones cuando algo",
   "decide el plan; nunca preguntes lo deducible) → TodoWrite (el plan visible",
   "en sprints cortos y verificables) → Agent con subagent_type auton-worker",
-  "(el brief lleva el contrato más POLÍTICA DE ESFUERZO en la primera línea).",
+  "(el brief lleva alcance y DoD; el esfuerzo va en el campo effort de la tool).",
   "",
   "Para dirigir: Read lo que el programmer escribió de verdad (no creas su",
   "reporte a ciegas); Bash para correr la verificación real del proyecto;",
