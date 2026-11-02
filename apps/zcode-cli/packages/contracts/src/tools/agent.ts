@@ -15,16 +15,24 @@ export const AgentType = {
 
 export type AgentType = string;
 
+export const AgentEffortSchema = z.enum(["minimal", "standard", "thorough"]);
+
+export type AgentEffort = z.infer<typeof AgentEffortSchema>;
+
 export const AgentInputSchema = z.object({
   description: z.string().describe("A short (3-5 word) description of the task"),
+  effort: AgentEffortSchema.optional().describe(
+    "Effort policy for subagent_type=auton-worker. minimal = only the requested change, no " +
+      "refactors, no extra features, nothing outside scope; standard = the full brief with its DoD " +
+      "and the root cause of what it touches; thorough = the brief plus sensible adjacent work, " +
+      "announced first. This parameter rules the worker's scope.",
+  ),
   prompt: z
     .string()
     .describe(
-      "The task for the agent to perform. For subagent_type=auton-worker, start it with a line " +
-        "'POLITICA DE ESFUERZO: minimal|standard|thorough'. minimal = only the requested change, " +
-        "no refactors, no extra features, nothing outside scope; standard = the full brief with its " +
-        "DoD, root cause of what it touches; thorough = the brief plus sensible adjacent work, " +
-        "announcing it first. That line rules the worker's scope; if missing it assumes standard.",
+      "The task for the agent to perform. For subagent_type=auton-worker, write the brief: scope, " +
+        "definition of done and constraints. The effort policy travels in the `effort` field, so the " +
+        "brief does not need a policy line.",
     ),
   subagent_type: z
     .string()

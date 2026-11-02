@@ -36,6 +36,7 @@ import {
   preserveQuoteStyle,
 } from "../edit-matchers.js";
 import { resolveWorkspacePath } from "../path-policy.js";
+import { isAutonWorkerSession, recordFileChange } from "../../auton/journal.js";
 import {
   createReadFileStateKey,
   findEditableReadFileState,
@@ -519,6 +520,20 @@ async function writeEditResult(input: {
     { signal: input.context.abortSignal },
   );
   const fsWriteMs = elapsedMsSince(writeStartedAt);
+
+  if (isAutonWorkerSession(input.context.sessionId)) {
+    try {
+      recordFileChange({
+        workspaceRoot: input.context.workspaceRoot,
+        sessionId: input.context.sessionId,
+        path: input.filePath,
+        before: input.originalFile,
+        after: contentToWrite,
+      });
+    } catch {
+      // El diario no puede tumbar una edición que ya se aplicó.
+    }
+  }
 
   const readFileStateEntry = updateReadFileStateAfterEdit(
     input.context.readFileState,

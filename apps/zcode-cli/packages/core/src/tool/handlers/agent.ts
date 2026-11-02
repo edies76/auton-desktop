@@ -189,6 +189,7 @@ const agentHandler: ToolHandler = async (input, context) => {
     parentToolCallId: context.toolCallId,
     agentType,
     description: parsed.description,
+    effort: parsed.effort,
     prompt: parsed.prompt,
     callerCanReadOutputFile: canReadBackgroundOutputFile(context.providerVisibleToolNames),
     workingDirectory: context.workingDirectory,

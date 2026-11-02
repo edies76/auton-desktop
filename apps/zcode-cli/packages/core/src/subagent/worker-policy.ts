@@ -9,16 +9,35 @@ export const AUTON_WORKER_AGENT_TYPE = "auton-worker" as const;
 
 export type WorkerEffortPolicy = "minimal" | "standard" | "thorough";
 
-const POLICY_LINE = "política de esfuerzo:";
+function stripAccents(value: string): string {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
 
+export function readEffortPolicyFromBrief(brief: string): WorkerEffortPolicy | undefined {
+  for (const rawLine of brief.split(/\r?\n/)) {
+    const line = stripAccents(rawLine.trim().toLowerCase());
+    const match = /^politica de esfuerzo\s*:\s*(minimal|standard|thorough)\b/.exec(line);
+    if (match?.[1] === "minimal" || match?.[1] === "standard" || match?.[1] === "thorough") {
+      return match[1];
+    }
+  }
+  return undefined;
+}
+
+/** Compatibilidad: lee la línea del brief; si falta, cae a standard. */
 export function parseEffortPolicy(brief: string): WorkerEffortPolicy {
-  const line = brief
-    .split(/\r?\n/)
-    .map((item) => item.trim())
-    .find((item) => item.toLowerCase().startsWith(POLICY_LINE));
-  const value = line?.slice(POLICY_LINE.length).trim().toLowerCase();
-  if (value === "minimal" || value === "standard" || value === "thorough") return value;
-  return "standard";
+  return readEffortPolicyFromBrief(brief) ?? "standard";
+}
+
+/**
+ * El parámetro de la tool manda; la línea del brief queda como compatibilidad.
+ * Sin parámetro y sin línea, standard.
+ */
+export function resolveWorkerEffort(input: {
+  effort?: WorkerEffortPolicy | undefined;
+  brief: string;
+}): WorkerEffortPolicy {
+  return input.effort ?? readEffortPolicyFromBrief(input.brief) ?? "standard";
 }
 
 const POLICY_BODY: Record<WorkerEffortPolicy, string[]> = {
@@ -62,8 +81,9 @@ export function buildAutonWorkerSystemPrompt(policy: WorkerEffortPolicy): string
     "necesita una decisión que no puedes tomar, no inventes: cierra con",
     "STATUS: NEEDS_CONTEXT y la pregunta exacta.",
     "",
-    "Tu encargo empieza con una línea POLÍTICA DE ESFUERZO (minimal, standard o",
-    "thorough). Esa línea manda sobre tu alcance. Si falta, asume standard.",
+    "Tu encargo llega con una política de esfuerzo (minimal, standard o thorough),",
+    "fijada por el orquestador como parámetro. Esa política manda sobre tu alcance.",
+    "Si además aparece una línea POLÍTICA DE ESFUERZO en el brief, es el mismo valor.",
     "",
     buildWorkerPolicySection(policy),
     "",
@@ -79,6 +99,17 @@ export function buildAutonWorkerSystemPrompt(policy: WorkerEffortPolicy): string
     "- No crees subagentes ni delegues tu encargo.",
     "- No toques archivos fuera de tu scope aunque 'mejoren' algo.",
   ].join("\n");
+}
+
+/**
+ * Punto único que usa el runner: el parámetro de la tool manda, la línea del
+ * brief queda como compatibilidad.
+ */
+export function buildAutonWorkerPromptForRequest(input: {
+  effort?: WorkerEffortPolicy;
+  brief: string;
+}): string {
+  return buildAutonWorkerSystemPrompt(resolveWorkerEffort(input));
 }
 
 /**

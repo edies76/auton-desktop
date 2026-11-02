@@ -52,6 +52,7 @@ const DIRECT_BRANCH_EXPECTED_PROVIDER_TOOL_ORDER = [
   "ToolSearch",
   "DeferredToolCall",
   "AutonPlan",
+  "AutonRevert",
   "SendMessage",
   "ReadSessionContext",
   "ReplyToChannel",
@@ -1112,11 +1113,13 @@ describe("tool contract declarations", () => {
     expect(agentInput.properties.description.description).toBe(
       "A short (3-5 word) description of the task",
     );
-    // El brief del programmer lleva la politica de esfuerzo en su primera linea.
+    // El esfuerzo viaja como parámetro de la tool; el brief no lo lleva.
     expect(agentInput.properties.prompt.description).toContain("The task for the agent to perform");
     expect(agentInput.properties.prompt.description).toContain(
-      "POLITICA DE ESFUERZO: minimal|standard|thorough",
+      "The effort policy travels in the `effort` field",
     );
+    expect(agentInput.properties.effort.description).toContain("minimal");
+    expect(agentInput.properties.effort.description).toContain("thorough");
     expect(agentInput.properties.subagent_type.description).toContain(
       "The type of specialized agent to use for this task",
     );

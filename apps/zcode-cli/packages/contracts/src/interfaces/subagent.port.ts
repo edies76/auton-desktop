@@ -14,6 +14,8 @@ export interface SubagentRunRequest {
   parentToolCallId: ToolCallId | string;
   agentType: string;
   description: string;
+  /** Política de esfuerzo fijada por el orquestador; el brief no la lleva. */
+  effort?: "minimal" | "standard" | "thorough";
   prompt: string;
   callerCanReadOutputFile?: boolean;
   workingDirectory: string;

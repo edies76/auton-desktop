@@ -19,6 +19,7 @@ import {
 import { createStructuredPatch } from "../diff.js";
 import { stampMemoryOriginSessionId } from "../../memory/origin-session.js";
 import { resolveWorkspacePath } from "../path-policy.js";
+import { isAutonWorkerSession, recordFileChange } from "../../auton/journal.js";
 import {
   createReadFileStateKey,
   findLatestReadFileState,
@@ -136,6 +137,20 @@ export const writeHandler: ToolHandler = async (input, context) => {
     { signal: context.abortSignal },
   );
   const fsWriteMs = elapsedMsSince(writeStartedAt);
+
+  if (isAutonWorkerSession(context.sessionId)) {
+    try {
+      recordFileChange({
+        workspaceRoot: context.workspaceRoot,
+        sessionId: context.sessionId,
+        path: filePath,
+        before: originalFile,
+        after: contentToWrite,
+      });
+    } catch {
+      // El diario no puede tumbar una escritura que ya se aplicó.
+    }
+  }
 
   const readFileStateEntry = updateReadFileStateAfterWrite(
     context.readFileState,

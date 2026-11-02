@@ -51,8 +51,8 @@ import {
 } from "./profile.js";
 import {
   AUTON_WORKER_AGENT_TYPE,
-  buildAutonWorkerSystemPrompt,
-  parseEffortPolicy,
+  buildAutonWorkerPromptForRequest,
+  type WorkerEffortPolicy,
 } from "./worker-policy.js";
 import { EXPLORE_AGENT_ALLOWED_TOOLS } from "./explore-tools.js";
 import { formatLocalAgentTaskNotification } from "./completion-notification.js";
@@ -78,6 +78,8 @@ export interface ExploreSubagentRuntimeRequest {
   /** 每次读取都返回 runtime task registry 的当前 foreground/background 状态。 */
   background: boolean;
   disallowedTools?: readonly string[];
+  /** Política de esfuerzo fijada por el orquestador como parámetro de la tool. */
+  effort?: WorkerEffortPolicy;
   sessionId: SessionId;
   description: string;
   maxTurns?: number;
@@ -1180,7 +1182,7 @@ async function runAgentToCompletion(
       resumeFromStore: executionOptions.resumeFromStore,
       systemPrompt:
         lifecycle.profile.name === AUTON_WORKER_AGENT_TYPE
-            ? buildAutonWorkerSystemPrompt(parseEffortPolicy(request.prompt))
+            ? buildAutonWorkerPromptForRequest({ effort: request.effort, brief: request.prompt })
             : lifecycle.profile.systemPrompt,
       workingDirectory: request.workingDirectory,
       workspaceRoot: request.workspaceRoot,
