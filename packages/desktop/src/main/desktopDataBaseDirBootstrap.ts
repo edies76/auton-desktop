@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { APP_DATA_DIR_NAME_ENV, setAppDataDirName, setDataBaseDir } from "@zcode/services/node";
@@ -56,11 +56,28 @@ function readBootstrapDataBaseDirFromDisk(
   }
 }
 
+// El CLI del agente arranca con su propia casa (.auton/cli). Se hereda una sola vez
+// el config del ZCode viejo (modelo, features, hooks) para no dejar al usuario a
+// oscuras; sus sesiones y su base no viajan.
+function seedAutonCliConfig(homePath: string = homedir()): void {
+  const target = join(homePath, ".auton", "cli", "config.json");
+  if (existsSync(target)) return;
+  const legacy = join(homePath, ".zcode", "cli", "config.json");
+  if (!existsSync(legacy)) return;
+  try {
+    mkdirSync(dirname(target), { recursive: true });
+    copyFileSync(legacy, target);
+  } catch {
+    // Si no se puede heredar, el CLI arranca con su config por defecto.
+  }
+}
+
 export function applyEarlyDataBaseDirBootstrap(): string | null {
   if (!process.env[APP_DATA_DIR_NAME_ENV]?.trim()) {
     process.env[APP_DATA_DIR_NAME_ENV] = ".auton";
   }
   seedAutonSettingsFromLegacy();
+  seedAutonCliConfig();
   setAppDataDirName(process.env[APP_DATA_DIR_NAME_ENV] ?? ".auton");
   const dataBaseDir = readBootstrapDataBaseDirFromDisk();
   if (dataBaseDir) {

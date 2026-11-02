@@ -591,6 +591,10 @@ export function buildHostProcessEnv(hostProcessLocalEnv: Record<string, string>)
     ...{ [APP_DATA_DIR_NAME_ENV]: getAppDataDirName() },
     // El runtime del agente (adapters) resuelve su almacen con este env; sin el vuelve a ~/.zcode.
     ...{ AUTON_STORAGE_DIR: join(dataBaseDir, getAppDataDirName()) },
+    // Casa del CLI del agente: sin esto sigue abriendo ~/.zcode/cli (sesiones, plugins,
+    // logs y una base de 800 MB) y reimporta tareas del ZCode real en cada arranque.
+    ...{ ZCODE_STORAGE_DIR: join(dataBaseDir, getAppDataDirName()) },
+    ...{ ZCODE_HOME: join(dataBaseDir, getAppDataDirName()) },
     ...(windowsAppInstallDir ? { [ZCODE_WINDOWS_APP_INSTALL_DIR_ENV]: windowsAppInstallDir } : {}),
     ...(bundledCuaHelperAppPath
       ? { [ZCODE_CUA_BUNDLED_HELPER_APP_PATH_ENV]: bundledCuaHelperAppPath }
