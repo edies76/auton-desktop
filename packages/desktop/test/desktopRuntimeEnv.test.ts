@@ -145,6 +145,8 @@ vi.mock("@zcode/shared", () => ({
 vi.mock("@zcode/services/node", () => ({
   getAppConfigDir: vi.fn(() => "/mock/config"),
   getDataBaseDir: vi.fn(() => "/mock/db"),
+  getAppDataDirName: vi.fn(() => ".auton"),
+  APP_DATA_DIR_NAME_ENV: "AUTON_DATA_DIR_NAME",
   ZCODE_CUA_BUNDLED_HELPER_APP_PATH_ENV: "ZCODE_CUA_BUNDLED_HELPER_APP_PATH",
   ZCODE_WINDOWS_APP_INSTALL_DIR_ENV: "ZCODE_WINDOWS_APP_INSTALL_DIR",
 }));
@@ -980,13 +982,13 @@ describe("desktopRuntimeEnv runtime identity", () => {
     } = await import("../src/main/desktopRuntimeEnv.js");
 
     expect(isPreviewPackagedRuntime).toBe(true);
-    expect(runtimeApplicationName).toBe("ZCode Preview");
+    expect(runtimeApplicationName).toBe("Auton Preview");
     // Bugfix：这两条路径由实现用宿主 path.join 从 app.getPath("appData") 拼出，
     // Windows 上是 `\mock\appData\ZCode Preview`，写死 POSIX 字面量必然失败。
     // 用例要断言的是「Preview 单独占一个 Electron 数据目录」的目录结构，与分隔符无关，
     // 所以用同样的 join 表达；在 POSIX 上是恒等变换。
-    expect(runtimeUserDataPath).toBe(join("/mock/appData", "ZCode Preview"));
-    expect(runtimeSessionDataPath).toBe(join("/mock/appData", "ZCode Preview", "session"));
+    expect(runtimeUserDataPath).toBe(join("/mock/appData", "Auton Preview"));
+    expect(runtimeSessionDataPath).toBe(join("/mock/appData", "Auton Preview", "session"));
   });
 
   it("e2e 可保留 Chromedriver 注入的 Electron userData 目录", async () => {
