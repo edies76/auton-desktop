@@ -51,7 +51,18 @@ function formatLocalAgentNotificationSummary(
     "agentType" | "description" | "error" | "status"
   >,
 ): string {
-  const summary = `Agent ${input.agentType} task "${input.description}" ${input.status}.`;
+  // En Auton el worker se llama Programador y el aviso de cierre se lee en esa
+  // voz: es la tarjeta que el humano ve cuando un encargo termina.
+  const summary =
+    input.agentType === "auton-worker"
+      ? `Programador "${input.description}" ${
+          input.status === "completed"
+            ? "terminó"
+            : input.status === "failed"
+              ? "falló"
+              : "se detuvo"
+        }.`
+      : `Agent ${input.agentType} task "${input.description}" ${input.status}.`;
   const error =
     input.status === "failed" && input.error?.trim() ? input.error : undefined;
   // 修复原因：失败 summary 是 Agent 卡“子智能体输出”的来源，必须保留原前缀并
