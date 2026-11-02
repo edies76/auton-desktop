@@ -99,4 +99,49 @@ describe("effort as an Agent tool parameter", () => {
 
     expect(systemPrompt).toContain("POLÍTICA DE ESFUERZO: minimal");
   });
+
+  it("records the plan item for the launched programmer", async () => {
+    const { mkdtemp, readFile, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const root = await mkdtemp(join(tmpdir(), "auton-agent-item-"));
+    try {
+      const launch = vi.fn(async (request: { agentType: string }) => ({
+        status: "async_launched" as const,
+        agentId: "agent_item_1",
+        agentType: request.agentType,
+        description: "landing page",
+        canReadOutputFile: false,
+        outputFile: "/tmp/agent_item_1.txt",
+      }));
+      const context = {
+        sessionId: "session_item",
+        turnId: "turn_item",
+        toolCallId: "call_item",
+        workingDirectory: root,
+        workspaceRoot: root,
+        trace: { traceId: "trace", spanId: "span" },
+        providerVisibleToolNames: [],
+        subagentPort: { launch },
+      } as unknown as ToolExecutionContext;
+
+      await agentToolEntry.handler(
+        {
+          description: "landing page",
+          prompt: "Escribe index.html.",
+          subagent_type: "auton-worker",
+          item_id: "s7",
+        },
+        context,
+      );
+
+      const map = JSON.parse(await readFile(join(root, ".auton", "agent-items.json"), "utf8")) as Record<
+        string,
+        string
+      >;
+      expect(map.agent_item_1).toBe("s7");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
 });

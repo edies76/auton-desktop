@@ -15,6 +15,7 @@ import {
   type TraceContext,
 } from "@zcode/contracts";
 import { TASK_TOOL_NAME } from "../compat.js";
+import { rememberAgentItem } from "../../auton/journal.js";
 import type { ToolEntry, ToolHandler } from "../types.js";
 
 const MAX_AGENT_MODEL_BYTES = 120_000;
@@ -202,7 +203,7 @@ const agentHandler: ToolHandler = async (input, context) => {
       turnId: context.turnId,
     } as TraceContext,
   };
-  return context.subagentPort.launch(
+  const output = await context.subagentPort.launch(
     {
       ...request,
       runInBackground: parsed.run_in_background === true,
@@ -213,6 +214,19 @@ const agentHandler: ToolHandler = async (input, context) => {
       ...(context.subagentModelOverride ? { modelOverride: context.subagentModelOverride } : {}),
     },
   );
+
+  if (parsed.item_id) {
+    const agentId = (output as { agentId?: unknown }).agentId;
+    if (typeof agentId === "string" && agentId.length > 0) {
+      try {
+        rememberAgentItem(context.workspaceRoot, agentId, parsed.item_id);
+      } catch {
+        // El mapeo item↔agente no puede tumbar un despacho ya hecho.
+      }
+    }
+  }
+
+  return output;
 };
 
 export const agentToolEntry: ToolEntry = {

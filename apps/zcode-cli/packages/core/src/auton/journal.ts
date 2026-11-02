@@ -5,7 +5,7 @@
 // contenido anterior y posterior. La reversión se apoya en ese diario: es la
 // única fuente que permite dejar el archivo byte a byte como estaba.
 
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 export const AUTON_DIR_NAME = ".auton";
@@ -123,11 +123,13 @@ export function recordFileChange(input: {
   now?: Date;
 }): void {
   const relative = toWorkspaceRelative(input.workspaceRoot, input.path);
+  const agentId = agentIdFromSessionId(input.sessionId);
+  const itemId = input.itemId ?? findAgentItem(input.workspaceRoot, agentId);
   appendChange(input.workspaceRoot, {
     at: (input.now ?? new Date()).toISOString(),
-    agentId: agentIdFromSessionId(input.sessionId),
+    agentId,
     sessionId: input.sessionId,
-    ...(input.itemId ? { itemId: input.itemId } : {}),
+    ...(itemId ? { itemId } : {}),
     path: relative,
     before: input.before,
     after: input.after,
@@ -135,13 +137,61 @@ export function recordFileChange(input: {
 }
 
 export function agentIdFromSessionId(sessionId: string): string {
-  const trimmed = sessionId.trim();
+  const trimmed = sessionId.trim().replace(/^sess_/, "");
   if (trimmed.startsWith("auton_")) return trimmed.slice("auton_".length);
   return trimmed;
 }
 
+/**
+ * Las sesiones hijas de un worker se crean con createChildSessionId, que pasa por
+ * createSessionId y añade el prefijo "sess_": el id real es `sess_auton_<agentId>`.
+ * También se acepta la forma sin prefijo por compatibilidad con datos antiguos.
+ */
 export function isAutonWorkerSession(sessionId: string | undefined): boolean {
-  return typeof sessionId === "string" && sessionId.trim().startsWith("auton_");
+  if (typeof sessionId !== "string") return false;
+  return /^(sess_)?auton_/.test(sessionId.trim());
+}
+
+/** Mapa agente → item del plan, escrito al despachar y leído al registrar cambios. */
+export const AGENT_ITEMS_FILE_NAME = "agent-items.json";
+
+function agentItemsPath(workspaceRoot: string): string {
+  return join(autonDir(workspaceRoot), AGENT_ITEMS_FILE_NAME);
+}
+
+export function rememberAgentItem(
+  workspaceRoot: string,
+  agentId: string,
+  itemId: string,
+): void {
+  const file = agentItemsPath(workspaceRoot);
+  let map: Record<string, string> = {};
+  try {
+    if (existsSync(file)) {
+      const parsed = JSON.parse(readFileSync(file, "utf8")) as unknown;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        map = parsed as Record<string, string>;
+      }
+    }
+  } catch {
+    map = {};
+  }
+  map[agentId] = itemId;
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, `${JSON.stringify(map, null, 2)}\n`, "utf8");
+}
+
+export function findAgentItem(workspaceRoot: string, agentId: string): string | undefined {
+  try {
+    const file = agentItemsPath(workspaceRoot);
+    if (!existsSync(file)) return undefined;
+    const parsed = JSON.parse(readFileSync(file, "utf8")) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return undefined;
+    const value = (parsed as Record<string, unknown>)[agentId];
+    return typeof value === "string" && value.length > 0 ? value : undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 export function toWorkspaceRelative(workspaceRoot: string, absolutePath: string): string {

@@ -27,6 +27,13 @@ export const AgentInputSchema = z.object({
       "and the root cause of what it touches; thorough = the brief plus sensible adjacent work, " +
       "announced first. This parameter rules the worker's scope.",
   ),
+  item_id: z
+    .string()
+    .optional()
+    .describe(
+      "Plan item this programmer is working on (id from AutonPlan). File changes are tagged with " +
+        "it, so AutonRevert can undo a single item later.",
+    ),
   prompt: z
     .string()
     .describe(
