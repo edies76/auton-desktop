@@ -103,7 +103,12 @@ Use \`action: "read"\` to load the current plan before you plan or dispatch anyt
 Use \`action: "write"\` with the COMPLETE list of work items to replace the plan; it is the source of truth, so send every item each time.
 
 Work item statuses: ready, running, waiting, blocked, done, dropped. Use \`waiting\` when an item needs a human decision, and put that question in \`questions\`.
-Set \`effort\` (minimal, standard, thorough) and \`files\` on every item you dispatch, and paste the same effort line into the programmer's brief.`,
+Set \`effort\` (minimal, standard, thorough), \`owner\` (programmer by default;
+orchestrator only for one small single-file item) and \`files\` on every item you
+dispatch, and paste the same effort line into the programmer's brief.
+
+If the request has two or more independent deliverables, the plan needs one item
+per deliverable and one programmer per item; do not do that work yourself.`,
     readOnly: false,
     destructive: false,
     concurrentSafe: false,

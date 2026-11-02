@@ -35,6 +35,8 @@ export const AutonEffortSchema = z.enum(["minimal", "standard", "thorough"]);
 
 export const AutonStrengthSchema = z.enum(["explicit", "inferred"]);
 
+export const AutonOwnerSchema = z.enum(["orchestrator", "programmer"]);
+
 export const AutonPlanEvidenceSchema = z
   .object({
     kind: z.enum(["command", "test", "file", "url", "note"]).describe("Kind of evidence"),
@@ -50,6 +52,9 @@ export const AutonPlanItemSchema = z
     detail: z.string().optional().describe("Scope, definition of done and constraints"),
     status: AutonPlanItemStatusSchema.describe("Current state of this work item"),
     effort: AutonEffortSchema.optional().describe("How hard the programmer should work"),
+    owner: AutonOwnerSchema
+      .optional()
+      .describe("Who does the work: orchestrator only for small single-file items"),
     strength: AutonStrengthSchema.optional().describe("Whether a human asked for it explicitly"),
     files: z.array(z.string()).optional().describe("Files this item is allowed to touch"),
     evidence: z.array(AutonPlanEvidenceSchema).optional(),

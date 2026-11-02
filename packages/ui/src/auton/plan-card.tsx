@@ -16,6 +16,7 @@ interface PlanItemView {
   detail?: string;
   status: string;
   effort?: string;
+  owner?: string;
   files: string[];
   evidenceCount: number;
   questions: string[];
@@ -84,6 +85,7 @@ function readPlanView(value: unknown): PlanView | null {
       detail: readString(raw.detail),
       status,
       effort: readString(raw.effort),
+      owner: readString(raw.owner),
       files: readStringArray(raw.files),
       evidenceCount: Array.isArray(raw.evidence) ? raw.evidence.length : 0,
       questions: readStringArray(raw.questions),
@@ -122,6 +124,7 @@ export function isAutonPlanToolCall(toolCall: PlanToolCall): boolean {
 
 function itemMeta(item: PlanItemView): string[] {
   const meta: string[] = [];
+  if (item.owner === "orchestrator") meta.push("you");
   if (item.files.length > 0) meta.push(item.files.length === 1 ? "1 file" : `${item.files.length} files`);
   if (item.evidenceCount > 0) {
     meta.push(item.evidenceCount === 1 ? "1 proof" : `${item.evidenceCount} proofs`);
