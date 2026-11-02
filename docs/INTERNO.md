@@ -51,9 +51,12 @@ Lo que ya se probó de punta a punta en la app:
    logs). Eso mantiene viva la lista de plugins ajena y contamina. Mover a
    `~/.auton/cli` y desactivar `computer-use` en esa copia.
 3. **Auto-apertura del panel Programmers** al despachar.
-4. **Lista de proyectos.** Resuelto: era el perfil de Electron viejo (`Auton Dev`)
-   sembrando localStorage y las filas del índice SQLite. El perfil se borró, las
-   filas se marcaron como borradas y la lista arranca vacía y se mantiene vacía.
+4. **Lista de proyectos.** El perfil de Electron viejo (`Auton Dev`) y las filas
+   del índice SQLite se limpiaron. Las tareas viejas **vuelven a insertarse** en
+   cada arranque: el importador usa `INSERT OR IGNORE`, así que la contención es
+   **marcarlas `deleted = 1`** en vez de borrar la fila (verificado: 28 → 1
+   fantasma sin título). Falta encontrar el importador y cortarlo de raíz; el
+   origen confirmado es `~/.zcode/v2/tasks-index.sqlite` (mismos `task_id`).
 5. **Dos `app-server` del agente** (~530 MB entre los dos). Uno debería bastar.
 6. **Verificación independiente** como etapa formal (hoy verifica el orquestador).
 7. **Documentación de la demo**: guion del video y benchmark contra baseline.
