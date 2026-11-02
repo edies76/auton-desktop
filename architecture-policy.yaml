@@ -744,6 +744,30 @@ modules:
       - packages/ui/src/auton/contract.ts
     layers:
       ui: .
+  # cli-auton-contracts：由 architecture:adopt 登记
+  - id: cli-auton-contracts
+    roots:
+      - apps/zcode-cli/packages/contracts/src/auton
+    managed: true
+    requires:
+      - zcode-cli
+    publicEntrypoints:
+      - apps/zcode-cli/packages/contracts/src/auton/index.ts
+      - apps/zcode-cli/packages/contracts/src/auton/contract.ts
+    layers:
+      domain: .
+  # cli-auton-core：由 architecture:adopt 登记
+  - id: cli-auton-core
+    roots:
+      - apps/zcode-cli/packages/core/src/auton
+    managed: true
+    requires:
+      - zcode-cli
+    publicEntrypoints:
+      - apps/zcode-cli/packages/core/src/auton/index.ts
+      - apps/zcode-cli/packages/core/src/auton/contract.ts
+    layers:
+      adapters: .
 
 global:
   # 临时时间戳（2026-09-10）：unmanaged-new-file 只约束此日期之后首次入库的文件。
