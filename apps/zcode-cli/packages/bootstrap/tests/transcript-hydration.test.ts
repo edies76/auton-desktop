@@ -2445,6 +2445,48 @@ describe("transcript→event 合成", () => {
     });
   });
 
+  it("冷恢复从 Agent 输入的 subagent_type 还原 auton-worker", () => {
+    const messages = [
+      userMessage("u-worker", "abre un worker", 1000),
+      assistantMessageWithParts(
+        "a-worker",
+        "u-worker",
+        [
+          {
+            id: "a-worker-tool" as never,
+            sessionID: "s1" as never,
+            messageID: "a-worker" as never,
+            type: "tool",
+            callID: "call-worker",
+            tool: "Agent",
+            state: {
+              status: "completed",
+              input: {
+                description: "Revisar README",
+                prompt: "Revisa el README en solo lectura",
+                subagent_type: "auton-worker",
+              },
+              output: "Trabajo terminado: el README describe Auton.",
+              title: "Agent Revisar README",
+              metadata: {},
+              time: { start: 1001, end: 1005 },
+            },
+          },
+        ],
+        1001,
+      ),
+    ];
+
+    const { events, projection } = reduce(messages);
+
+    expect(
+      events.find((event) => event.type === SessionEventType.SubagentSpawned)?.payload,
+    ).toMatchObject({ agentType: "auton-worker" });
+    expect(
+      projection.getSnapshot().rows.window.find((row) => row.kind === "subagent"),
+    ).toMatchObject({ subagentType: "auton-worker" });
+  });
+
   it("失败 MCP 工具的字符串 modelContent 不丢失冷恢复展示信息", () => {
     const display = {
       kind: "mcp_tool",

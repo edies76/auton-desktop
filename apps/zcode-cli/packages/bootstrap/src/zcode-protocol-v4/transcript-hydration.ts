@@ -513,6 +513,7 @@ function subagentInfoFromToolPart(
     agentType:
       stringField(output, "agentType") ??
       stringField(metadata, "agentType") ??
+      stringField(input, "subagent_type") ??
       stringField(input, "agent") ??
       stringField(input, "agentType") ??
       "subagent",
