@@ -57,3 +57,10 @@ Verificado con: `autonWorkerPanel.test.tsx` (8), `autonWorkerFocusPane.test.tsx`
 capturas `launch-1.png`, `launch-2.png`, `worker-summary.png`, `worker-chat.png`, `worker-stopped.png`.
 Nota: el orquestador vivo crea subagentes como canales worker; los agentes completos de ZCode se
 muestran en su grupo cuando el runtime los marca en `workerTaskIds`.
+
+- Worker completo de ZCode probado en vivo: el orquestador lanzó `Agent` con `subagent_type
+  auton-worker`; la sesión real (`sess_auton_*`) apareció en `Agentes ZCode 1` como `worker 4`,
+  Trabajando 00:23, con el hilo del orquestador abierto y fuera de la lista. El resumen y
+  "Ver chat completo" usaron su conversación real sin compositor; parar la dejó Terminado.
+  Capturas: `launch-full-worker.png`, `launch-full-worker-summary.png`,
+  `launch-full-worker-chat.png`, `full-worker-stopped2.png`.
