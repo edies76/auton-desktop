@@ -121,8 +121,8 @@ export const AUTON_WORKER_STATUS_META: Record<
   },
   terminado: {
     label: "Terminado",
-    badgeClass: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
-    dotClass: "bg-emerald-500",
+    badgeClass: "bg-secondary text-secondary-foreground",
+    dotClass: "bg-muted-foreground",
   },
 };
 

@@ -214,7 +214,9 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
         kind: "project",
         projectId: project.id,
         hostId: project.hostId,
-      })}
+      })
+        .sort((left, right) => right.updatedAt - left.updatedAt)
+        .slice(0, 1)}
       onSelect={onSelectTask}
       refresh={refresh}
       service={service}

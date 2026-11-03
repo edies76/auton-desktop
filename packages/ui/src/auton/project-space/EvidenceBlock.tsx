@@ -16,7 +16,7 @@ export function AutonEvidenceBlock({ evidence }: AutonEvidenceBlockProps) {
       data-testid="auton-evidence-block"
     >
       <header className="flex items-center gap-2 border-border border-b px-3 py-2">
-        <span className="flex size-5 items-center justify-center rounded-md bg-emerald-500/15 text-emerald-600 dark:text-emerald-300">
+        <span className="flex size-5 items-center justify-center rounded-md bg-secondary text-secondary-foreground">
           <FileCheck2 className="size-3" />
         </span>
         <span className="text-ui-sm font-medium text-foreground">Evidencia</span>

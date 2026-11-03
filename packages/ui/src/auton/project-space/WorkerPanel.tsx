@@ -1,5 +1,10 @@
-import { Square, Wrench } from "lucide-react";
-import { Badge } from "@/components/ui/badge.js";
+import {
+  CheckCircle2Icon,
+  CircleAlertIcon,
+  LoaderCircleIcon,
+  PauseCircleIcon,
+  Square,
+} from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import { cn } from "@/components/lib/utils.js";
 import {
@@ -25,6 +30,21 @@ export interface AutonWorkerPanelProps {
   canStop?: boolean;
   /** Dentro del sidebar existente no pinta otra superficie ni borde propio. */
   embedded?: boolean;
+}
+
+function WorkerStatusIcon({ status }: { status: AutonWorkerView["status"] }) {
+  const className = "size-4 shrink-0";
+  switch (status) {
+    case "trabajando":
+      return <LoaderCircleIcon aria-hidden className={`${className} animate-spin`} />;
+    case "terminado":
+      return <CheckCircle2Icon aria-hidden className={className} />;
+    case "bloqueado":
+      return <CircleAlertIcon aria-hidden className={className} />;
+    case "preguntando":
+    case "esperando":
+      return <PauseCircleIcon aria-hidden className={className} />;
+  }
 }
 
 function WorkerRow({
@@ -54,47 +74,29 @@ function WorkerRow({
       data-role="worker"
       data-silent={silent ? "true" : "false"}
       className={cn(
-        "flex w-full min-w-0 items-start gap-2 overflow-hidden rounded-lg px-2 py-2.5 transition-colors",
+        "flex w-full min-w-0 items-start gap-2 rounded-lg px-2 py-2.5 transition-colors",
         selected ? "bg-selected" : "hover:bg-surface-hover",
       )}
     >
       <button
         type="button"
-        className="flex min-w-0 flex-1 items-start gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+        className="flex min-w-0 flex-1 items-start gap-3 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-input-border-focused"
         onClick={() => onOpenWorker(worker.id)}
         aria-label={`Abrir ${worker.name}`}
         data-testid="auton-worker-open"
       >
-        <span className="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-lg border border-border bg-secondary/40 text-foreground-subtle">
-          <Wrench className="size-4" />
+        <span className="mt-0.5 text-foreground-subtle">
+          <WorkerStatusIcon status={worker.status} />
         </span>
-        <span className="min-w-0 flex-1 overflow-hidden">
+        <span className="min-w-0 flex-1">
           <span className="flex min-w-0 items-center gap-2">
             <span className="min-w-0 truncate text-ui-base font-medium text-foreground">
               {worker.name}
             </span>
-            <span className="shrink-0 text-ui-sm text-foreground-subtlest tabular-nums" data-testid="auton-worker-clock">
-              {formatClock(workerElapsed(worker, now))}
-            </span>
-          </span>
-          <span className="mt-0.5 flex min-w-0 items-center gap-1.5 overflow-hidden">
-            <Badge
-              data-testid="auton-worker-status"
-              data-status={worker.status}
-              className={cn("h-4 rounded-sm px-1.5 text-ui-xs", meta.badgeClass)}
-            >
-              {meta.label}
-            </Badge>
-            <span
-              className={cn("size-1.5 rounded-full", meta.dotClass, silent && "animate-pulse")}
-              aria-hidden="true"
-            />
+            <span className="shrink-0 text-ui-sm text-foreground-subtlest">{meta.label}</span>
           </span>
           {silent ? (
-            <span
-              className="mt-0.5 block text-ui-xs text-amber-600 animate-pulse dark:text-amber-300"
-              data-testid="auton-worker-silence"
-            >
+            <span className="mt-0.5 block truncate text-ui-sm text-foreground-subtle">
               {formatWorkerSilence(worker.lastSignalAt, now)}
             </span>
           ) : worker.lastLine ? (
@@ -103,13 +105,19 @@ function WorkerRow({
             </span>
           ) : null}
         </span>
+        <span
+          className="shrink-0 text-ui-sm text-foreground-subtlest tabular-nums"
+          data-testid="auton-worker-clock"
+        >
+          {formatClock(workerElapsed(worker, now))}
+        </span>
       </button>
       {canStop && worker.status !== "terminado" ? (
         <Button
           type="button"
           variant="ghost"
           size="icon"
-          className="size-7 shrink-0 text-foreground-subtlest hover:text-destructive"
+          className="size-7 shrink-0 text-foreground-subtlest hover:text-foreground"
           aria-label={`Parar ${worker.name}`}
           data-testid="auton-worker-stop"
           onClick={(event) => {
@@ -151,12 +159,7 @@ export function AutonWorkerPanel({
       aria-label="Workers"
     >
       <header className="flex items-center justify-between gap-2 border-border border-b px-3 py-2.5">
-        <div className="flex items-center gap-2">
-          <span className="flex size-5 items-center justify-center rounded-md bg-secondary text-secondary-foreground">
-            <Wrench className="size-3" />
-          </span>
-          <h2 className="text-ui-base font-semibold text-foreground">Workers</h2>
-        </div>
+        <h2 className="text-ui-base font-semibold text-foreground">Workers</h2>
         <span className="text-ui-sm text-foreground-subtlest" data-testid="auton-worker-count">
           {total}
         </span>
