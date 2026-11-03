@@ -16,3 +16,15 @@ Verificado con: `autonWorkersSidebar.test.tsx` (3), `autonAgentProjection.test.t
 (5), `projectSidebarViewPreference.test.ts` (2) y `projectSidebarNavigation.test.ts` (4); tsc y
 lint de `@zcode/ui` sin errores. La app del fork se arranca y se inspecciona con el panel por
 defecto.
+
+## 2026-11-03 — filas nativas y un solo chat por proyecto
+
+Qué: las filas de worker usan la estructura del panel de subagentes (icono de estado neutro,
+nombre, estado y tiempo) en vez de la llave y el badge verde; el proyecto se muestra con su logo y
+su nombre en la cabecera del panel, y la lista de proyectos deja un solo chat (el orquestador) por
+proyecto. El panel arranca en Workers.
+Por qué: el verde y la llave no pertenecían al lenguaje visual de ZCode y la lista de proyectos
+mostraba varios chats.
+Verificado con: `autonWorkersSidebar.test.tsx` (3), `projectSidebarNavigation.test.ts` (5),
+`autonSpaceLive.test.tsx` (2); tsc y lint de `@zcode/ui` sin errores; app del fork con el panel
+neutral.
