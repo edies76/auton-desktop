@@ -160,18 +160,45 @@ describe("evaluación pura de límites", () => {
 });
 
 describe("gobierno del despacho", () => {
-  it("sin límites versionados, un item no puede arrancar", async () => {
+  it("sin límites versionados el orquestador sigue al mando: despacha y el plan queda sin versión", async () => {
     const root = await workspace();
     const output = await autonPlanHandler(
       { action: "write", items: [{ id: "s1", title: "landing", status: "running" }] },
       context(root),
     );
 
-    expect(isFailure(output)).toBe(true);
-    if (isFailure(output)) {
-      expect(output.errorCode).toBe(42201);
-      expect(output.message).toMatch(/no evaluable/);
+    expect(isFailure(output)).toBe(false);
+    const plan = await readPlan(root);
+    expect(plan.limits).toBeUndefined();
+    expect(plan.items[0]?.status).toBe("running");
+    expect(plan.items[0]?.attempts).toBe(1);
+  });
+
+  it("la aprobación que escribió el orquestador se respeta aunque no haya límites", async () => {
+    const root = await workspace();
+    await autonPlanHandler(
+      { action: "write", items: [{ id: "s1", title: "borrar", status: "ready" }] },
+      context(root),
+    );
+
+    const blocked = await autonPlanHandler(
+      {
+        action: "write",
+        items: [
+          { id: "s1", title: "borrar", status: "running", needsApproval: ["deleteMove"] },
+        ],
+      },
+      context(root),
+    );
+
+    expect(isFailure(blocked)).toBe(true);
+    if (isFailure(blocked)) {
+      expect(blocked.errorCode).toBe(42203);
+      expect(blocked.message).toMatch(/aprobación humana/);
     }
+    const plan = await readPlan(root);
+    expect(plan.items[0]?.attempts).toBe(0);
+    expect(plan.items[0]?.status).toBe("ready");
   });
 
   it("los intentos los cuenta el plan y frenan al agotarse", async () => {

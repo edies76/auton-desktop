@@ -33,7 +33,6 @@ const MAX_AUTON_PLAN_MODEL_BYTES = 60_000;
 
 /** Fallos de gobierno: son resultado de negocio, no excepciones. */
 const AUTON_PLAN_ERROR = {
-  NotEvaluable: 42201,
   Exceeds: 42202,
   RequiresApproval: 42203,
   UnrecordedChange: 42204,
@@ -86,6 +85,10 @@ function failure(errorCode: number, message: string) {
  * Un despacho consume un intento. Los cuenta el plan para que el tope no
  * dependa de que el modelo lleve la cuenta: al agotar maxAttempts, el item
  * deja de arrancar y la decisión pasa al humano.
+ *
+ * Sin límites versionados el orquestador manda: el despacho se permite y el
+ * plan queda "sin versión". Solo se respeta la aprobación que él mismo puso en
+ * el item, porque esa es su propia regla, no una guardia genérica.
  */
 function consumirIntentos(
   items: readonly AutonPlanItem[],
@@ -117,18 +120,28 @@ function consumirIntentos(
       continue;
     }
 
+    if (!limits) {
+      const gate = item.needsApproval ?? [];
+      if (gate.length > 0) {
+        return {
+          failure: failure(
+            AUTON_PLAN_ERROR.RequiresApproval,
+            `el item ${item.id} pide aprobación humana (${gate.join(", ")}) según la regla que escribió el orquestador; déjalo en waiting con la pregunta`,
+          ),
+        };
+      }
+      value.push({ ...item, attempts: previousAttempts + 1 });
+      continue;
+    }
+
     const evaluation = evaluateDispatch({
       limits,
       item: { attempts: previousAttempts, needsApproval: item.needsApproval },
     });
 
     if (evaluation.kind === "not_evaluable") {
-      return {
-        failure: failure(
-          AUTON_PLAN_ERROR.NotEvaluable,
-          `el item ${item.id} ${describeEvaluation(evaluation)}. Escribe los límites versionados antes de despachar.`,
-        ),
-      };
+      value.push({ ...item, attempts: previousAttempts + 1 });
+      continue;
     }
     if (evaluation.kind === "requires_approval") {
       return {
@@ -241,7 +254,7 @@ Use \`action: "write"\` with the COMPLETE list of work items to replace the plan
 
 Limits: \`limits\` carries the versioned rules for what you may do without asking (version, maxAttempts, approval flags, unknownHandling). Every limit change must bump \`version\` and append one \`limitHistory\` entry per changed field (at, field, from/to, reason, approvedBy). Rewriting or shortening that history is rejected; the first version has no prior history. If a write omits \`limitHistory\` or \`limitReports\`, the stored ones are preserved.
 
-Dispatch is governed, not advisory: an item can move to \`running\` only if the plan has versioned limits, it still has attempts left (\`attempts\` is counted by the plan, one per dispatch, and can never go down), and every rule listed in its \`needsApproval\` has been resolved by the human. When you cannot judge, set the item to \`not_evaluable\` and put the exact question in \`questions\` (or explain the safest choice in \`detail\` when unknownHandling is safe_default): that item escalates to the human instead of continuing.
+Dispatch is governed by the rules you write: an item can move to \`running\` while it still has attempts left (\`attempts\` is counted by the plan, one per dispatch, and can never go down). With versioned \`limits\`, the plan also enforces \`maxAttempts\` and the approval flags you marked on the item. Without \`limits\` the plan is "unversioned": you still govern; the plan only counts attempts and respects the \`needsApproval\` you wrote yourself. When you cannot judge, set the item to \`not_evaluable\` and put the exact question in \`questions\` (or explain the safest choice in \`detail\` when unknownHandling is safe_default): that item escalates to the human instead of continuing.
 
 A worker can report a miscalibrated limit in \`limitReports\` (at, field, observed, expected, by). Only the orchestrator writes it; the report never changes the limit.
 

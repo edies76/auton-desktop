@@ -6,6 +6,7 @@ import { runtimeInputMetadata } from "../../agent/runtime-input-presentation.js"
 import type { AgentRuntimeInternal } from "../internal.js";
 import type { SealBackgroundTaskNotificationsInput } from "../types.js";
 import { shouldSuppressSealedSubagentBashNotification } from "../../runtime-task/notification-policy.js";
+import { getAutonLiveLoop } from "../../auton/live-loop.js";
 
 export function enqueueBackgroundTaskNotification(
   this: AgentRuntimeInternal,
@@ -29,6 +30,9 @@ export function enqueueBackgroundTaskNotification(
     return;
   }
   const task = notification.taskId ? this.runtimeTaskRegistry.get(notification.taskId) : undefined;
+  // Auton: cualquier mensaje vivo de un worker (pregunta, hallazgo, cierre)
+  // cuenta como noticia y reinicia el reloj del turno.
+  getAutonLiveLoop(String(this.sessionId))?.activity();
   const branchGeneration = task?.branchGeneration ?? this.branchGeneration;
   if (branchGeneration !== this.branchGeneration) {
     this.logger?.debug("Dropped stale-branch background task notification", {

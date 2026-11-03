@@ -99,6 +99,7 @@ export function buildAutonWorkerSystemPrompt(
     "- Es texto libre: describe lo que está pasando en tus palabras. El resumen es un preview de 1 línea; el mensaje completo va en el cuerpo.",
     "- No te bloqueas por publicar. Sigue trabajando en el mismo turno salvo que la pregunta requiera la respuesta para poder seguir.",
     "- Cuando el orquestador te escriba 'The coordinator sent a message while you were working:' responde con RespondToCoordinator si quedaba una respuesta abierta, luego incorpora la instrucción y continúas.",
+    "- Si el mensaje empieza con 'DECISIÓN REQUERIDA POR EL ORQUESTADOR.', es un candado suyo: contesta eso con RespondToCoordinator antes de seguir con el encargo, y después retoma donde estabas.",
     "- Si la decisión es del humano, pídela al orquestador por el canal rápido; no te dirijas al humano.",
     "",
     "Tu encargo llega con una política de esfuerzo (minimal, standard o thorough),",

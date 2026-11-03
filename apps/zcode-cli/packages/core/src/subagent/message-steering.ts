@@ -1,5 +1,6 @@
 import type { TraceContext, TurnSteerInput, TurnSteerResult } from "@zcode/contracts";
 import type { RuntimeTaskMessageSink } from "../runtime-task/registry.js";
+import { ANSWER_REQUIRED_HEADER } from "./answer-lock.js";
 
 interface SteerableRuntime {
   steerTurn(input: string | TurnSteerInput): Promise<TurnSteerResult>;
@@ -23,7 +24,13 @@ export function createSubagentMessageSink(
 async function steerSubagentMessage(
   runtime: SteerableRuntime,
   request: { traceContext: TraceContext },
-  message: { id: string; message: string; summary?: string; traceContext?: TraceContext },
+  message: {
+    id: string;
+    message: string;
+    summary?: string;
+    requiresAnswer?: boolean;
+    traceContext?: TraceContext;
+  },
 ): Promise<TurnSteerResult> {
   const input = formatSubagentCoordinatorMessage(message);
   for (let attempt = 0; attempt < 20; attempt++) {
@@ -48,10 +55,15 @@ async function steerSubagentMessage(
   });
 }
 
-function formatSubagentCoordinatorMessage(message: { message: string; summary?: string }): string {
+export function formatSubagentCoordinatorMessage(message: {
+  message: string;
+  summary?: string;
+  requiresAnswer?: boolean;
+}): string {
   const summary = message.summary?.trim();
-  if (!summary) return message.message;
-  return [summary, "", message.message].join("\n");
+  const body = summary ? [summary, "", message.message].join("\n") : message.message;
+  if (!message.requiresAnswer) return body;
+  return [ANSWER_REQUIRED_HEADER, "", body].join("\n");
 }
 
 function sleep(ms: number): Promise<void> {

@@ -88,24 +88,25 @@ describe("AutonPlan tool", () => {
     expect(read.plan.items.map((item) => item.status)).toEqual(["running", "waiting"]);
   });
 
-  it("rejects dispatch without limits and counts attempts up to maxAttempts", async () => {
+  it("allows dispatch on an unversioned plan and still counts attempts", async () => {
     const dir = await makeWorkspace();
-    const noLimits = (await autonPlanToolEntry.handler(
+    const allowed = (await autonPlanToolEntry.handler(
       {
         action: "write",
         items: [{ id: "s1", title: "Despacho sin gobierno", status: "running" }],
       },
       context(dir),
-    )) as { result?: boolean; errorCode?: number; message?: string };
-    expect(noLimits.result).toBe(false);
-    expect(noLimits.errorCode).toBe(42201);
+    )) as { result?: boolean; plan?: { limits?: unknown; items: { attempts: number }[] } };
+    expect(allowed.result).toBeUndefined();
+    expect(allowed.plan?.limits).toBeUndefined();
+    expect(allowed.plan?.items[0]?.attempts).toBe(1);
 
     await autonPlanToolEntry.handler(
       {
         action: "write",
         limits: {
           version: 1,
-          maxAttempts: 2,
+          maxAttempts: 3,
           approval: {
             deleteMove: true,
             outsideProject: true,
@@ -116,66 +117,68 @@ describe("AutonPlan tool", () => {
           unknownHandling: "wait",
         },
         limitHistory: [],
-        items: [{ id: "s1", title: "Contar intentos", status: "ready", attempts: 0 }],
+        items: [{ id: "s1", title: "Contar intentos", status: "ready", attempts: 1 }],
       },
       context(dir),
     );
     await autonPlanToolEntry.handler(
       {
         action: "write",
-        limits: { version: 1, maxAttempts: 2, unknownHandling: "wait" },
-        items: [{ id: "s1", title: "Contar intentos", status: "running", attempts: 0 }],
+        limits: { version: 1, maxAttempts: 3, unknownHandling: "wait" },
+        items: [{ id: "s1", title: "Contar intentos", status: "running", attempts: 1 }],
       },
       context(dir),
     );
     const first = (await autonPlanToolEntry.handler({ action: "read" }, context(dir))) as {
       plan: { items: { attempts: number; status: string }[] };
     };
-    expect(first.plan.items[0]?.attempts).toBe(1);
+    expect(first.plan.items[0]?.attempts).toBe(2);
     expect(first.plan.items[0]?.status).toBe("running");
 
     await autonPlanToolEntry.handler(
       {
         action: "write",
-        limits: { version: 1, maxAttempts: 2, unknownHandling: "wait" },
-        items: [{ id: "s1", title: "Contar intentos", status: "blocked", attempts: 1 }],
+        limits: { version: 1, maxAttempts: 3, unknownHandling: "wait" },
+        items: [{ id: "s1", title: "Contar intentos", status: "blocked", attempts: 2 }],
       },
       context(dir),
     );
     await autonPlanToolEntry.handler(
       {
         action: "write",
-        limits: { version: 1, maxAttempts: 2, unknownHandling: "wait" },
-        items: [{ id: "s1", title: "Contar intentos", status: "running", attempts: 1 }],
+        limits: { version: 1, maxAttempts: 3, unknownHandling: "wait" },
+        items: [{ id: "s1", title: "Contar intentos", status: "running", attempts: 2 }],
       },
       context(dir),
     );
     const second = (await autonPlanToolEntry.handler({ action: "read" }, context(dir))) as {
       plan: { limits?: { version: number }; items: { attempts: number; status: string }[] };
     };
-    expect(second.plan.items[0]?.attempts).toBe(2);
+    expect(second.plan.items[0]?.attempts).toBe(3);
 
     await autonPlanToolEntry.handler(
       {
         action: "write",
-        goal: { title: "Tercer intento" },
-        limits: { version: 1, maxAttempts: 2, unknownHandling: "wait" },
-        items: [{ id: "s1", title: "Contar intentos", status: "ready", attempts: 2 }],
+        goal: { title: "Cuarto intento" },
+        limits: { version: 1, maxAttempts: 3, unknownHandling: "wait" },
+        items: [{ id: "s1", title: "Contar intentos", status: "ready", attempts: 3 }],
       },
       context(dir),
     );
-    await autonPlanToolEntry.handler(
+    const exceeded = (await autonPlanToolEntry.handler(
       {
         action: "write",
-        limits: { version: 1, maxAttempts: 2, unknownHandling: "wait" },
-        items: [{ id: "s1", title: "Contar intentos", status: "running", attempts: 2 }],
+        limits: { version: 1, maxAttempts: 3, unknownHandling: "wait" },
+        items: [{ id: "s1", title: "Contar intentos", status: "running", attempts: 3 }],
       },
       context(dir),
-    );
-    const exceeded = (await autonPlanToolEntry.handler({ action: "read" }, context(dir))) as {
+    )) as { result?: boolean; errorCode?: number };
+    expect(exceeded.result).toBe(false);
+    expect(exceeded.errorCode).toBe(42202);
+    const after = (await autonPlanToolEntry.handler({ action: "read" }, context(dir))) as {
       plan: { items: { attempts: number; status: string }[] };
     };
-    expect(exceeded.plan.items[0]?.attempts).toBe(2);
+    expect(after.plan.items[0]?.attempts).toBe(3);
   });
 
   it("writes rejection carries an error code for unhandled dispatch", async () => {

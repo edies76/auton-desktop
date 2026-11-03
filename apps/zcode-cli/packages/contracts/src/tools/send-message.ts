@@ -21,6 +21,14 @@ export const SendMessageInputSchema = z
       .min(1)
       .max(SEND_MESSAGE_MAX_CONTENT_CHARS)
       .describe("Plain text message content"),
+    requires_answer: z
+      .boolean()
+      .optional()
+      .describe(
+        "Mark this message as a decision the worker must answer before continuing. " +
+          "This is your own lock, not a global guard: use it only when that front cannot " +
+          "advance without the answer, and mark its plan item waiting with the question.",
+      ),
   })
   .strict();
 
@@ -38,6 +46,8 @@ export const SendMessageOutputSchema = z
     message: z.string().optional(),
     outputFile: z.string().optional(),
     taskId: z.string().optional(),
+    /** El worker queda esperando la respuesta que pidió el orquestador. */
+    waitingForAnswer: z.boolean().optional(),
   })
   .strict();
 

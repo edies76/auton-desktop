@@ -5,6 +5,7 @@ import type { AgentRuntimeInternal } from "../internal.js";
 import type { EnqueueSubagentMessageInput } from "../types.js";
 import { runtimeInputMetadata } from "../../agent/runtime-input-presentation.js";
 import { escapeXml } from "../../runtime-task/notification.js";
+import { clearWaitingForAnswer } from "../../subagent/answer-lock.js";
 
 export function formatSubagentMessage(input: {
   agentId: string;
@@ -27,8 +28,7 @@ export function enqueueSubagentMessage(
   input: EnqueueSubagentMessageInput,
 ): undefined {
   const branchGeneration =
-    this.runtimeTaskRegistry.get(input.agentId)?.branchGeneration ?? this.branchGeneration;
-  if (branchGeneration !== this.branchGeneration) {
+    this.runtimeTaskRegistry.get(input.agentId)?.branchGeneration ?? this.branchGeneration;  if (branchGeneration !== this.branchGeneration) {
     this.logger?.debug("Dropped stale-branch subagent response", {
       ...traceContextToLogContext(input.traceContext),
       agentId: input.agentId,
@@ -71,6 +71,9 @@ export function enqueueSubagentMessage(
     summary: command.summary.slice(0, 200),
   });
   this.enqueueRuntimeCommand(command);
+  // El worker respondió: la pregunta que el orquestador marcó como decisión
+  // deja de estar pendiente. El candado era suyo y él lo levanta al recibir.
+  clearWaitingForAnswer(this.runtimeTaskRegistry, input.agentId);
   return undefined;
 }
 

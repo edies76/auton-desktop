@@ -56,6 +56,7 @@ import {
 } from "./worker-policy.js";
 import { EXPLORE_AGENT_ALLOWED_TOOLS } from "./explore-tools.js";
 import { formatLocalAgentTaskNotification } from "./completion-notification.js";
+import { markWaitingForAnswer } from "./answer-lock.js";
 import { AutonLiveLoop, formatHeartbeatMessage, registerAutonLiveLoop } from "../auton/live-loop.js";
 import { filterSubagentChildToolNames } from "./tool-policy.js";
 import {
@@ -970,17 +971,23 @@ async function deliverMessageToRunningAgent(
   task: RuntimeTaskSnapshot,
   message: RuntimeTaskPendingMessage,
 ): Promise<SubagentSendMessageResult> {
+  const markWaiting = (): void => {
+    markWaitingForAnswer(registry, task.taskId, message.requiresAnswer);
+  };
   if (task.messageSink) {
     try {
       const delivery = await task.messageSink.send(message);
+      markWaiting();
       return createSendMessageSuccess(task, message, delivery);
     } catch {
       registry.queueMessage(task.taskId, message);
+      markWaiting();
       return createSendMessageSuccess(task, message, "queued");
     }
   }
 
   registry.queueMessage(task.taskId, message);
+  markWaiting();
   return createSendMessageSuccess(task, message, "queued");
 }
 
@@ -1091,6 +1098,9 @@ async function resumeTerminalAgentInBackground(
   }
   // terminal 状态属于旧 snapshot，但 resume 输出路径属于新 lifecycle；
   // 旧 snapshot 的可选 outputFile 不能用于本次 provider-visible 结果。
+  if (message.requiresAnswer) {
+    markWaitingForAnswer(registry, lifecycle.agentId, true);
+  }
   return createSendMessageSuccess(
     { ...task, outputFile: lifecycle.outputFile },
     message,
@@ -1105,6 +1115,7 @@ function createRuntimeTaskPendingMessage(
     id: `msg_${crypto.randomUUID()}`,
     isMeta: true,
     message: request.message,
+    ...(request.requiresAnswer ? { requiresAnswer: true } : {}),
     origin: {
       kind: "coordinator",
       toolCallId: String(request.parentToolCallId),
@@ -1133,6 +1144,7 @@ function createSendMessageSuccess(
     agentId: task.agentId,
     taskId: task.taskId,
     outputFile: task.outputFile,
+    ...(message.requiresAnswer ? { waitingForAnswer: true } : {}),
     message: providerMessage,
   };
 }

@@ -27,6 +27,8 @@ export interface RuntimeTaskPendingMessage {
   id: string;
   isMeta?: boolean;
   message: string;
+  /** El orquestador pidió respuesta antes de continuar. */
+  requiresAnswer?: boolean;
   origin?: {
     kind: "coordinator";
     toolCallId?: string;
@@ -68,6 +70,12 @@ export interface RuntimeTaskSnapshot extends SubagentTaskSnapshot {
   traceContext?: TraceContext;
   turnId?: TurnId;
   usage?: RuntimeTaskUsageSnapshot;
+  /**
+   * El orquestador marcó una pregunta que este worker debe responder antes de
+   * seguir. Se limpia cuando llega su RespondToCoordinator. Es el candado que
+   * pone el orquestador con criterio, no una guardia global.
+   */
+  waitingForAnswer?: boolean;
 }
 
 export interface RuntimeTaskRegistry {

@@ -62,6 +62,8 @@ export interface SubagentSendMessageRequest {
   to: string;
   summary: string;
   message: string;
+  /** El orquestador marca el mensaje como decisión que el worker debe responder. */
+  requiresAnswer?: boolean;
   workingDirectory: string;
   workspaceRoot: string;
   trace: TraceContext;
@@ -80,6 +82,8 @@ export interface SubagentSendMessageResult {
   agentId?: string;
   taskId?: string;
   outputFile?: string;
+  /** El frente queda esperando la respuesta que el orquestador marcó como necesaria. */
+  waitingForAnswer?: boolean;
 }
 
 export type SubagentTaskStatus =
