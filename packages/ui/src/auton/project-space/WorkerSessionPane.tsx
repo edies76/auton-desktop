@@ -11,6 +11,8 @@ export interface AutonWorkerSessionPaneProps {
   workspacePath: string;
   workspaceIdentity?: string;
   isDesktop?: boolean;
+  /** El turno del orquestador que controla al worker; parar lo interrumpe. */
+  stopTaskId?: string;
   onBack?: () => void;
   canGoBack?: boolean;
 }
@@ -33,6 +35,7 @@ export function AutonWorkerSessionPane({
   workspacePath,
   workspaceIdentity,
   isDesktop = false,
+  stopTaskId,
   onBack,
   canGoBack = true,
 }: AutonWorkerSessionPaneProps) {
@@ -61,13 +64,30 @@ export function AutonWorkerSessionPane({
     if (openedWorkerId === taskId) return;
     useAutonWorkerFocusStore
       .getState()
-      .open(liveWorker ?? fallback, workspacePath, workspaceIdentity);
-  }, [fallback, liveWorker, openedWorkerId, taskId, workspaceIdentity, workspacePath]);
+      .open(liveWorker ?? fallback, workspacePath, workspaceIdentity, stopTaskId);
+  }, [
+    fallback,
+    liveWorker,
+    openedWorkerId,
+    stopTaskId,
+    taskId,
+    workspaceIdentity,
+    workspacePath,
+  ]);
+
+  // Al volver, se cierra el foco para que el shell caiga en el chat del
+  // orquestador y no vuelva a pintar el resumen del worker.
+  const handleBack = onBack
+    ? () => {
+        useAutonWorkerFocusStore.getState().close();
+        onBack();
+      }
+    : undefined;
 
   return (
     <AutonWorkerFocusPane
       isDesktop={isDesktop}
-      {...(onBack ? { onBack } : {})}
+      {...(handleBack ? { onBack: handleBack } : {})}
       canGoBack={canGoBack}
     />
   );

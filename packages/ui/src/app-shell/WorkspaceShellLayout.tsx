@@ -12,13 +12,14 @@ import { TID_APP_HEADER } from "@zcode/shared/test-ids";
 // 保活：workspace tab 真正关闭时，按 workspaceKey 回收 side pane terminal 的常驻 PTY/xterm。
 // 对称下侧 Terminal.tsx 的 openWorkspaceKeys 回收。
 import { sidePaneTerminalSessionRegistry } from "@/terminal/sidePaneTerminalSessionRegistry.js";
-import { AutonWorkerFocusPane } from "@/auton/project-space/WorkerFocusPane.js";
-import { AutonWorkerSessionPane } from "@/auton/project-space/WorkerSessionPane.js";
+import {
+  AutonWorkerSurface,
+  shouldRenderAutonWorkerSurface,
+} from "@/auton/project-space/WorkerSurface.js";
 import {
   closeWorkerFocusForWorkspace,
   useAutonWorkerFocusStore,
 } from "@/auton/project-space/workerFocusStore.js";
-import { isWorkerSessionTaskId } from "@/project-sidebar/projectConversation.js";
 import {
   isPublishedLegacyTask,
   isPublishedOrchestrator,
@@ -539,13 +540,13 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
   });
   const workspaceShellRef = useRef<HTMLDivElement | null>(null);
   const focusedWorker = useAutonWorkerFocusStore((state) => state.workerId);
+  const workerSurfaceActive = shouldRenderAutonWorkerSurface(activeTaskId, focusedWorker);
   const isProjectOrchestrator = useAutonProjectConversationStore((state) =>
     isPublishedOrchestrator(state, workspaceKey, activeTaskId),
   );
   const publishedOrchestratorId = useAutonProjectConversationStore((state) =>
     state.workspaceKey === workspaceKey ? state.orchestratorTaskId : null,
   );
-  const isWorkerSessionActive = isWorkerSessionTaskId(activeTaskId);
   const isLegacyTaskActive = useAutonProjectConversationStore((state) =>
     isPublishedLegacyTask(state, workspaceKey, activeTaskId),
   );
@@ -2648,28 +2649,24 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                         ) : (
                           <main className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden">
                             {renderChatFindDialog()}
-                            {activeTaskId && isWorkerSessionActive ? (
-                              <AutonWorkerSessionPane
-                                taskId={activeTaskId}
-                                title={activeTaskTitle}
-                                meta={resolvedActiveTaskMeta}
+                            {workerSurfaceActive ? (
+                              <AutonWorkerSurface
+                                activeTaskId={activeTaskId}
+                                activeTaskTitle={activeTaskTitle}
+                                activeTaskMeta={resolvedActiveTaskMeta}
                                 workspacePath={workspaceAbsPath}
                                 workspaceIdentity={workspaceIdentity}
                                 isDesktop={isDesktop === true}
-                                canGoBack={Boolean(publishedOrchestratorId)}
-                                {...(publishedOrchestratorId
-                                  ? {
-                                      onBack: () =>
-                                        handleSelectTask(
-                                          workspaceAbsPath,
-                                          publishedOrchestratorId,
-                                          workspaceIdentity,
-                                        ),
-                                    }
-                                  : {})}
+                                orchestratorTaskId={publishedOrchestratorId}
+                                onSelectOrchestrator={() => {
+                                  if (!publishedOrchestratorId) return;
+                                  handleSelectTask(
+                                    workspaceAbsPath,
+                                    publishedOrchestratorId,
+                                    workspaceIdentity,
+                                  );
+                                }}
                               />
-                            ) : focusedWorker ? (
-                              <AutonWorkerFocusPane isDesktop={isDesktop === true} />
                             ) : (
                             <ScopedErrorBoundary
                               scope="workspace-chat"

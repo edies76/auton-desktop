@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { act, cleanup, render, screen } from "@testing-library/react";
-import { forwardRef, type ReactNode, type Ref } from "react";
+import { forwardRef, Fragment, type ReactNode, type Ref } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProjectSidebarProps } from "@/project-sidebar/contract.js";
 import { ProjectSidebar } from "@/project-sidebar/index.js";
@@ -41,6 +41,7 @@ const fixture = vi.hoisted(() => ({
     timeline: [] as string[],
     pinned: [] as string[],
     grouped: [] as string[],
+    projectRows: {} as Record<string, string[]>,
   },
 }));
 
@@ -175,7 +176,34 @@ vi.mock("@/project-sidebar/TaskGroupedView.js", () => ({
   },
 }));
 vi.mock("@/project-sidebar/SortableProjects.js", () => ({ SortableProjects: () => null }));
-vi.mock("@/project-sidebar/ProjectSections.js", () => ({ ProjectSections: () => null }));
+vi.mock("@/project-sidebar/ProjectSections.js", () => ({
+  ProjectSections: ({
+    projects,
+    renderProject,
+  }: {
+    projects: Array<{ id: string }>;
+    renderProject: (project: { id: string }) => ReactNode;
+  }) => (
+    <div data-testid="project-sections">
+      {projects.map((project) => (
+        <Fragment key={project.id}>{renderProject(project)}</Fragment>
+      ))}
+    </div>
+  ),
+}));
+vi.mock("@/project-sidebar/ProjectSidebarNode.js", () => ({
+  ProjectSidebarNode: ({
+    project,
+    tasks,
+  }: {
+    project: { id: string };
+    tasks: Array<{ taskId: string }>;
+  }) => {
+    fixture.captured.projectRows[project.id] = tasks.map((task) => task.taskId);
+    return <div data-testid={`project-node-${project.id}`} />;
+  },
+  runProjectAction: (action: () => void) => action(),
+}));
 vi.mock("@/project-sidebar/ProjectCreation.js", () => ({ ProjectCreation: () => null }));
 vi.mock("@/project-sidebar/ProjectEditor.js", () => ({ ProjectEditor: () => null }));
 vi.mock("@/project-sidebar/RemoteProjectPicker.js", () => ({ RemoteProjectPicker: () => null }));
@@ -208,9 +236,10 @@ beforeEach(() => {
   fixture.captured.timeline = [];
   fixture.captured.pinned = [];
   fixture.captured.grouped = [];
+  fixture.captured.projectRows = {};
   fixture.tree.tasks = [
-    { ...task("orch1", "p1", 1, "Orquestador Lunar"), pinned: true },
-    { ...task("legacy1", "p1", 2, "Chat legado Lunar"), pinned: true },
+    task("orch1", "p1", 1, "Orquestador Lunar"),
+    task("legacy1", "p1", 2, "Chat legado Lunar"),
     task("sess_auton_agent_1", "p1", 3, "Worker Lunar"),
     task("sess_subagent_agent_1", "p1", 4, "Subagente Lunar"),
     task("orch2", "p2", 1, "Orquestador Otro"),
@@ -249,6 +278,11 @@ describe("vistas de tareas del proyecto", () => {
   });
 
   it("la sección fijada no muestra el chat legado fijado ni workers", () => {
+    fixture.tree.tasks = fixture.tree.tasks.map((entry) =>
+      entry.taskId === "orch1" || entry.taskId === "legacy1"
+        ? { ...entry, pinned: true }
+        : entry,
+    );
     const element = () => <ProjectSidebar {...props()} />;
     const { rerender } = render(element());
     act(() => {
@@ -257,5 +291,20 @@ describe("vistas de tareas del proyecto", () => {
     rerender(element());
 
     expect(fixture.captured.pinned).toEqual(["orch1"]);
+  });
+
+  it("cada fila de proyecto muestra solo su conversación de orquestador", () => {
+    const element = () => <ProjectSidebar {...props()} />;
+    const { rerender } = render(element());
+    act(() => {
+      fixture.view = "projects";
+    });
+    rerender(element());
+
+    expect(screen.getByTestId("project-sections")).toBeTruthy();
+    expect(fixture.captured.projectRows).toEqual({
+      p1: ["orch1"],
+      p2: ["orch2"],
+    });
   });
 });
