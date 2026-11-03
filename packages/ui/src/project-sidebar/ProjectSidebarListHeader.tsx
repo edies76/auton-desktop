@@ -3,6 +3,7 @@ import { Clock, Folder, Hash, LayoutDashboard, ListFilter, Search } from "lucide
 import type { ProjectSidebarProps, ProjectSidebarView } from "@/project-sidebar/contract.js";
 import { Button } from "@/components/ui/button.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
+import { ZCodeStartupLogoBadge } from "@/root/RootStartupLoading.js";
 import { formatCommandShortcutLabel } from "@/lib/keyboardShortcuts.js";
 import {
   DropdownMenu,
@@ -19,11 +20,15 @@ export function ProjectSidebarListHeader({
   view,
   onViewChange,
   groupedActionsRef,
+  projectName,
+  projectPath,
 }: {
   onOpenCommandCenter: ProjectSidebarProps["onOpenCommandCenter"];
   view: ProjectSidebarView;
   onViewChange(view: ProjectSidebarView): void;
   groupedActionsRef?: Ref<HTMLDivElement>;
+  projectName?: string;
+  projectPath?: string;
 }) {
   const { intl } = useZCodeIntl();
   return (
@@ -31,12 +36,33 @@ export function ProjectSidebarListHeader({
       className="flex min-w-0 shrink-0 items-center gap-1 px-2 pb-2"
       data-testid="sidebar-search-toolbar"
     >
-      <span
-        data-testid="sidebar-list-title"
-        className="min-w-0 flex-1 truncate px-2.5 text-ui-base font-medium text-foreground-subtle"
-      >
-        {intl.formatMessage({ id: "taskList.title" })}
-      </span>
+      {view === "workers" ? (
+        <button
+          type="button"
+          data-testid="auton-project-switcher"
+          className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1.5 py-1 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          onClick={() => onViewChange("projects")}
+        >
+          <ZCodeStartupLogoBadge size="titlebar" animated={false} />
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-ui-sm font-medium text-foreground">
+              {projectName ?? "Proyecto"}
+            </span>
+            {projectPath ? (
+              <span className="block truncate text-ui-xs text-foreground-subtlest">
+                {projectPath}
+              </span>
+            ) : null}
+          </span>
+        </button>
+      ) : (
+        <span
+          data-testid="sidebar-list-title"
+          className="min-w-0 flex-1 truncate px-2.5 text-ui-base font-medium text-foreground-subtle"
+        >
+          {intl.formatMessage({ id: "taskList.title" })}
+        </span>
+      )}
       <div
         ref={groupedActionsRef}
         className={view === "grouped" ? "flex items-center gap-1" : "hidden"}

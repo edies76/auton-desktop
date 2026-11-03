@@ -123,6 +123,9 @@ export function projectAutonWorkers(
   return subagents.map((row, index) => {
     const startedAt = timeOf(row.startedAt ?? row.createdAt, now);
     const endedAt = row.endedAt ? timeOf(row.endedAt, startedAt) : undefined;
+    const lastActivityAt = row.lastActivityAt
+      ? timeOf(row.lastActivityAt, startedAt)
+      : startedAt;
     const status = subagentStatus(row);
     const summary = row.summaryText.trim();
     return {
@@ -130,7 +133,9 @@ export function projectAutonWorkers(
       name: workerName(row, index),
       status,
       startedAt,
-      lastSignalAt: endedAt ?? startedAt,
+      lastSignalAt: endedAt ?? lastActivityAt,
+      kind: "subagent" as const,
+      engine: "zcode" as const,
       ...(summary ? { lastLine: summary } : {}),
       transcript: [
         ...(summary

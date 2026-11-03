@@ -94,6 +94,18 @@ describe("proyección del espacio desde filas reales", () => {
       "bloqueado",
       "terminado",
     ]);
+    expect(workers.every((worker) => worker.kind === "subagent")).toBe(true);
+    expect(workers.every((worker) => worker.engine === "zcode")).toBe(true);
+  });
+
+  it("usa la última señal real del subagente para el reloj y el silencio", () => {
+    const row = {
+      ...subagent(1, "running", "sigue con la landing"),
+      lastActivityAt: "2026-11-02T11:59:00.000Z",
+    } as unknown as ConversationRow;
+    const [worker] = projectAutonWorkers([row], Date.UTC(2026, 10, 2, 12, 0, 0));
+    expect(worker?.lastSignalAt).toBe(Date.parse("2026-11-02T11:59:00.000Z"));
+    expect(worker?.kind).toBe("subagent");
   });
 
   it("los tramos agrupan por encargo y cierran cuando todos cerraron", () => {

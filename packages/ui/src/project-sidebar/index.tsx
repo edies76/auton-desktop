@@ -2,7 +2,7 @@ import { SidebarTooltipProvider } from "@/ControlHintTooltip.js";
 export { readProjectSidebarView } from "@/project-sidebar/view-preference.js";
 import { SortableProjects } from "@/project-sidebar/SortableProjects.js";
 export { ArchiveManagement } from "@/project-sidebar/ArchiveManagement.js";
-import { memo, useCallback, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScrollFadeViewport } from "@/components/ui/scroll-fade-viewport.js";
 import { TID_SIDEBAR } from "@zcode/shared/test-ids";
 import { remoteHostIdFromWorkspaceIdentity } from "@/project-sidebar/contract.js";
@@ -101,6 +101,29 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     ),
   );
   const [remotePicker, setRemotePicker] = useState<RemoteProjectHost | null>(null);
+  const activeTaskId = useZCodeSessionStore(
+    (state) => state.getWorkspaceState(props.workspacePath, props.workspaceIdentity).activeTaskId,
+  );
+  const lastOrchestratorRef = useRef<string | null>(null);
+  // Al entrar a un proyecto, el panel muestra sus workers; el hilo del
+  // orquestador es el chat del centro y no vuelve a listarse como tarea.
+  useEffect(() => {
+    if (!activeTaskId || lastOrchestratorRef.current === activeTaskId) return;
+    lastOrchestratorRef.current = activeTaskId;
+    if (view !== "workers") setView("workers");
+  }, [activeTaskId, setView, view]);
+  const activeProject = useMemo(() => {
+    const activeProjectId = activeTaskId
+      ? tree.tasks.find((task) => task.taskId === activeTaskId)?.projectId
+      : null;
+    const latestProjectId = tree.tasks.find((task) => !task.archived)?.projectId;
+    return (
+      tree.projects.find((project) => project.id === activeProjectId) ??
+      tree.projects.find((project) => project.id === latestProjectId) ??
+      tree.projects[0] ??
+      null
+    );
+  }, [activeTaskId, tree.projects, tree.tasks]);
   const { openFiles, openTaskFiles } = useProjectFileTree(props, directory, remoteService);
   const remoteControlEnabled = useWebRemoteControlFeatureEnabled();
   const mobileStatus = useWebRemoteControlStatus({
@@ -239,6 +262,8 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
                   view={view}
                   onViewChange={setView}
                   groupedActionsRef={setGroupedToolbar}
+                  projectName={activeProject?.name}
+                  projectPath={activeProject?.roots[0]?.rootPath}
                 />
                 {/* 原因：仅设 overflow-y:auto 会让拖拽位移打开水平滚动；列表始终只允许纵向滚动。 */}
                 {/* 原因：项目侧栏迁移后普通滚动容器遗漏边缘渐隐；复用统一 mask，随实际滚动边界更新。 */}
@@ -253,7 +278,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
                           tasks={tree.tasks}
                           workspacePath={props.workspacePath}
                           workspaceIdentity={props.workspaceIdentity}
-                          onSelectTask={onSelectTask}
+                          workspaceRemoteSessionId={props.workspaceRemoteSessionId}
                         />
                       ) : view === "projects" ? (
                         <>

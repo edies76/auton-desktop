@@ -18,12 +18,13 @@ it("migrates the previous group selection and keeps a subsequent explicit choice
 it("maps the old project and timeline values, and tolerates invalid or blocked storage", () => {
   expect(readProjectSidebarView(storage(null, { organizeBy: "chronological" }))).toBe("timeline");
   expect(readProjectSidebarView(storage(null, { organizeBy: "project" }))).toBe("projects");
-  expect(readProjectSidebarView(storage(null, { organizeBy: "bad" }))).toBe("projects");
+  expect(readProjectSidebarView(storage(null, { organizeBy: "bad" }))).toBe("workers");
+  expect(readProjectSidebarView(storage(null, null))).toBe("workers");
   expect(
     readProjectSidebarView({
       getItem: () => {
         throw new Error("blocked");
       },
     }),
-  ).toBe("projects");
+  ).toBe("workers");
 });

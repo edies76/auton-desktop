@@ -7,6 +7,7 @@
 
 import type { ZCodeTaskMeta } from "@zcode/shared";
 import type {
+  AutonWorkerGroup,
   AutonWorkTramo,
   AutonWorkerView,
   AutonWorkerStatus,
@@ -72,8 +73,57 @@ export function projectAgentWorkers(
       lastSignalAt,
       lastLine: lastLineOf(task),
       transcript,
+      kind: "agent" as const,
+      engine: "zcode" as const,
     };
   });
+}
+
+/**
+ * Agrupa los canales del proyecto por motor/rol. El orquestador no entra aquí:
+ * él es el hilo, no un worker. Muse Code queda declarado aunque aún no tenga
+ * adaptador, para que el lugar exista en la UI.
+ */
+export function buildAutonWorkerGroups(params: {
+  agentWorkers: readonly AutonWorkerView[];
+  subagentWorkers: readonly AutonWorkerView[];
+  museWorkers?: readonly AutonWorkerView[];
+}): AutonWorkerGroup[] {
+  return [
+    {
+      kind: "agent",
+      label: "Agentes ZCode",
+      workers: [...params.agentWorkers],
+      canStop: true,
+    },
+    {
+      kind: "subagent",
+      label: "Subagentes",
+      workers: [...params.subagentWorkers],
+      canStop: false,
+    },
+    {
+      kind: "muse",
+      label: "Muse Code",
+      workers: [...(params.museWorkers ?? [])],
+      canStop: false,
+    },
+  ];
+}
+
+/**
+ * Agentes del proyecto sin el orquestador. El orquestador se excluye por su
+ * taskId (la sesión del humano), nunca por “el task más reciente”.
+ */
+export function projectProjectAgentWorkers(
+  tasks: readonly ZCodeTaskMeta[],
+  orchestratorTaskId: string | null,
+  now = Date.now(),
+): AutonWorkerView[] {
+  return projectAgentWorkers(
+    tasks.filter((task) => task.taskId !== orchestratorTaskId),
+    now,
+  );
 }
 
 /** Los agentes completos forman el tramo vivo del workspace. */

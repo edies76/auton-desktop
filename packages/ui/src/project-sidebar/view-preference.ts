@@ -21,5 +21,8 @@ export function readProjectSidebarView(
   // 原因：重构换了偏好 key；忽略旧 organizeBy 会让原本选分组的用户升级后跳回项目。
   // 只在没有有效新选择时迁移，不能在以后重启时覆盖用户的新选择。
   const legacy = read("zcode-sidebar-task-preferences").organizeBy;
-  return legacy === "grouped" ? "grouped" : legacy === "chronological" ? "timeline" : "projects";
+  if (legacy === "grouped") return "grouped";
+  if (legacy === "chronological") return "timeline";
+  if (legacy === "project") return "projects";
+  return "workers";
 }

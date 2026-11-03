@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { ZCodeTaskMeta } from "@zcode/shared";
-import { agentTramo, projectAgentWorkers } from "../src/auton/project-space/agentProjection.js";
+import {
+  agentTramo,
+  projectAgentWorkers,
+  projectProjectAgentWorkers,
+} from "../src/auton/project-space/agentProjection.js";
 
 const NOW = Date.UTC(2026, 10, 3, 12, 0, 0);
 
@@ -50,6 +54,21 @@ describe("workers = agentes completos de ZCode", () => {
     expect(workers[0]?.startedAt).toBe(NOW - 120_000);
     expect(workers[0]?.lastSignalAt).toBe(NOW - 90_000);
     expect(workers[0]?.transcript.length).toBeGreaterThan(0);
+    expect(workers.every((worker) => worker.kind === "agent")).toBe(true);
+    expect(workers.every((worker) => worker.engine === "zcode")).toBe(true);
+  });
+
+  it("excluye al orquestador por taskId, no por ser el más reciente", () => {
+    const workers = projectProjectAgentWorkers(
+      [
+        task("orch", "Hilo del humano", "running", -5_000),
+        task("s1", "Worker real", "running", -10_000),
+      ],
+      "orch",
+      NOW,
+    );
+    expect(workers.map((worker) => worker.id)).toEqual(["s1"]);
+    expect(workers[0]?.kind).toBe("agent");
   });
 
   it("sin tasks no inventa workers y el tramo agrupa a los agentes", () => {

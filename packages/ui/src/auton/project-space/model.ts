@@ -26,6 +26,9 @@ export interface AutonWorkerEvent {
   text: string;
 }
 
+export type AutonWorkerKind = "agent" | "subagent" | "muse";
+export type AutonWorkerEngine = "zcode" | "muse";
+
 export interface AutonWorkerView {
   id: string;
   name: string;
@@ -36,6 +39,17 @@ export interface AutonWorkerView {
   lastSignalAt: number;
   lastLine?: string;
   transcript: AutonWorkerEvent[];
+  /** Rol del canal: agente completo de ZCode, subagente o motor Muse. */
+  kind?: AutonWorkerKind;
+  engine?: AutonWorkerEngine;
+}
+
+export interface AutonWorkerGroup {
+  kind: AutonWorkerKind;
+  label: string;
+  workers: AutonWorkerView[];
+  /** Un subagente no se detiene desde este panel; su orquestador lo cierra. */
+  canStop?: boolean;
 }
 
 export interface AutonWorkTramo {

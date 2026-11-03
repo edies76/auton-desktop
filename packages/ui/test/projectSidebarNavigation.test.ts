@@ -90,3 +90,25 @@ it("SBV02: filter has project, group and recent update choices", async () => {
   fireEvent.click(await screen.findByTestId("sidebar-view-workers"));
   expect(onViewChange).toHaveBeenCalledWith("workers");
 });
+
+it("SBV03: en workers la cabecera muestra el logo, el proyecto y su ruta", () => {
+  const onViewChange = vi.fn();
+  render(
+    createElement(
+      TooltipProvider,
+      null,
+      createElement(ProjectSidebarListHeader, {
+        onOpenCommandCenter: vi.fn(),
+        view: "workers",
+        onViewChange,
+        projectName: "Lunar",
+        projectPath: "/workspace/lunar",
+      }),
+    ),
+  );
+  const switcher = screen.getByTestId("auton-project-switcher");
+  expect(switcher.textContent).toContain("Lunar");
+  expect(switcher.textContent).toContain("/workspace/lunar");
+  fireEvent.click(switcher);
+  expect(onViewChange).toHaveBeenCalledWith("projects");
+});
