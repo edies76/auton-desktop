@@ -151,3 +151,4 @@ orquestador; y las filas de proyecto no estaban ejercitadas por la prueba.
 Verificado con: `autonWorkerSurface.test.tsx` (4), `autonWorkerSessionPane.test.tsx` (3),
 `projectSidebarTaskVisibility.test.tsx` (4) y la suite de UI 75/75. Typecheck raíz 0 con 8 GB y lint
 raíz 0 errores/105 avisos.
+- Arranque limpio con estas correcciones (`launch-final2.png`, `launch-final2.log`): `Orquestador` + `WORKERS 9`, foco cerrado y compositor del orquestador; `Recently updated` solo con el chat del proyecto; cero excepciones de renderer.
