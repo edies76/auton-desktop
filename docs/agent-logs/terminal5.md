@@ -54,3 +54,13 @@ Verificado con: UI 24 pruebas (wake, hilo y bloque de agente) y `auton-orchestra
 (7). Deuda anotada: el layout sigue separando bloque de trabajo y respuesta; intercalarlos es el
 siguiente cambio de UI.
 
+## 2026-11-03 — el aviso del worker y la propuesta de chat intercalado
+
+Qué: el worker ya no aparece preguntando al humano. Su mensaje se marca en la proyección
+(`lastWorkerMessageAt`), se pinta como una fila de trabajo sin botón de responder y se limpia cuando
+el orquestador contesta; la pregunta al humano sigue en la tool nativa. Las filas pierden la píldora
+centrada y el color; la etiqueta `auton-worker` deja el azul. Terminología "worker" en UI y prompt.
+Por qué: el worker habla con el orquestador, no con el humano, y el estilo propio rompía ZCode.
+Verificado con: proyección 4, UI 29, core 20 archivos/108 pruebas y `v4ConversationTurnGroup` 102.
+Propuesta de layout en `context/UI-CHAT-INTERCALADO.md`, pendiente de aprobación.
+

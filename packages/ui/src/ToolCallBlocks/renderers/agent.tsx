@@ -222,11 +222,11 @@ export function AgentToolCallBlock(context: ToolCallBlockRenderContext) {
   const fallbackLabel = formatAgentMessage(intl, "chat.toolCall.agent.fallback", "SubAgent");
   const rawPrimaryText = getAgentPrimaryText(toolCall, fallbackLabel);
   const agentName = getAgentKindLabel(toolCall, "", context.authoritativeAgentType);
-  // En Auton el worker se llama Programador: el tipo interno no se muestra al humano.
+  // En Auton el worker se llama Worker: el tipo interno no se muestra al humano.
   const isAutonProgrammer = agentName === "auton-worker";
-  const kindLabel = isAutonProgrammer ? "Programador" : fallbackLabel;
+  const kindLabel = isAutonProgrammer ? "Worker" : fallbackLabel;
   const primaryText =
-    isAutonProgrammer && rawPrimaryText === "auton-worker" ? "Programador" : rawPrimaryText;
+    isAutonProgrammer && rawPrimaryText === "auton-worker" ? "Worker" : rawPrimaryText;
   const configuredAgentColor = useToolPresentationCapabilities().agentColor?.(agentName);
   const agentColor = agentName
     ? (configuredAgentColor ?? getAgentColor(toolCall) ?? resolveSubagentColorFromName(agentName))

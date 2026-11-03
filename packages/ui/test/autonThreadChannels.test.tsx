@@ -36,6 +36,7 @@ function subagentRow(input: {
   endedAt?: string;
   lastActivityAt?: string;
   waitingForAnswer?: boolean;
+  lastWorkerMessageAt?: string;
   summaryText: string;
 }): SubagentRow {
   return {
@@ -53,6 +54,7 @@ function subagentRow(input: {
     ...(input.waitingForAnswer !== undefined
       ? { waitingForAnswer: input.waitingForAnswer }
       : {}),
+    ...(input.lastWorkerMessageAt ? { lastWorkerMessageAt: input.lastWorkerMessageAt } : {}),
   } as unknown as SubagentRow;
 }
 
@@ -191,7 +193,7 @@ describe("hilo real con dos canales y eventos despertadores", () => {
         parentToolCallId: "tool-ask",
         status: "running",
         lastActivityAt: "2026-11-02T20:04:30.000Z",
-        waitingForAnswer: true,
+        lastWorkerMessageAt: START,
         summaryText: "¿uso la paleta nueva?",
       }),
       // Latido: worker en marcha sin señales desde hace más del umbral.
@@ -222,11 +224,11 @@ describe("hilo real con dos canales y eventos despertadores", () => {
     const question = wakes[0]!;
     const questionHtml = renderWake(question, () => {});
     expect(questionHtml).toContain('data-kind="question"');
-    expect(questionHtml).toContain("Programador");
-    expect(questionHtml).toContain("necesita una decisión");
-    expect(questionHtml).toContain("Responder");
-    // Sin acción (solo lectura) la pregunta sigue visible, sin botón.
-    expect(renderWake(question)).not.toContain("Responder");
+    expect(questionHtml).toContain("Worker");
+    expect(questionHtml).toContain("pregunta al orquestador");
+    // El aviso del worker no se responde desde el hilo: lo atiende el
+    // orquestador. La pregunta al humano usa la tool nativa.
+    expect(questionHtml).not.toContain("Responder");
 
     const heartbeat = wakes[1]!;
     expect(heartbeat.event.detail).toBe("05:00 sin noticia");
@@ -252,7 +254,7 @@ describe("hilo real con dos canales y eventos despertadores", () => {
         parentToolCallId: "tool-ask",
         status: "running",
         lastActivityAt: "2026-11-02T20:04:30.000Z",
-        waitingForAnswer: true,
+        lastWorkerMessageAt: START,
         summaryText: "¿uso la paleta nueva?",
       }),
       agentRow(2, "tool-silent", "running"),
@@ -298,7 +300,7 @@ describe("hilo real con dos canales y eventos despertadores", () => {
     expect(heartbeat ? wakeEventAction(heartbeat, ctx) : "missing").toBeUndefined();
 
     const question = wakes.find((item) => item.event.kind === "question");
-    expect(typeof (question ? wakeEventAction(question, ctx) : undefined)).toBe("function");
+    expect(question ? wakeEventAction(question, ctx) : "missing").toBeUndefined();
   });
 
   it("sin pregunta pendiente ni silencio suficiente no se inventan filas", () => {

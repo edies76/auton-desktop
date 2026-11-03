@@ -20,7 +20,7 @@ function row(overrides: Partial<SubagentRow> = {}): SubagentRow {
   } as SubagentRow;
 }
 
-describe("canal del programador en el hilo", () => {
+describe("canal del worker en el hilo", () => {
   it("formatea el reloj del canal", () => {
     expect(formatElapsed(0)).toBe("00:00");
     expect(formatElapsed(62_000)).toBe("01:02");
@@ -45,7 +45,7 @@ describe("canal del programador en el hilo", () => {
     expect(channelStatusLabel("cancelled")).toBe("detenido");
   });
 
-  it("mientras corre no hay fila de evento; al cerrar sale centrada con su estado", () => {
+  it("mientras corre no hay fila de evento; al cerrar sale como fila de evento con su estado", () => {
     expect(wakeEventForSubagent(row(), Date.parse("2026-11-02T20:01:00.000Z"), "Landing")).toBeNull();
 
     const closed = wakeEventForSubagent(

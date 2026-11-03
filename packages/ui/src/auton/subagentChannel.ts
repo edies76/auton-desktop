@@ -93,15 +93,17 @@ export function deriveWakeEvents(
   heartbeatMs: number = CHANNEL_HEARTBEAT_MS,
 ): WakeEventRowProps[] {
   if (row.status === "running") {
-    if (row.waitingForAnswer === true) {
+    // El worker escribió al orquestador y todavía no hay respuesta. Es un evento
+    // del trabajo: el humano no responde aquí; si hace falta su decisión, el
+    // orquestador usa la tool nativa de preguntas.
+    if (row.lastWorkerMessageAt !== undefined) {
       const detail = tail(row.summaryText);
       return [
         {
           kind: "question",
-          workerName: "Programador",
-          title: "necesita una decisión",
+          workerName: "Worker",
+          title: "pregunta al orquestador",
           ...(detail ? { detail } : {}),
-          actionLabel: "Responder",
         },
       ];
     }

@@ -66,8 +66,8 @@ function sendMessage(
   });
 }
 
-describe("proyección de la pregunta pendiente del worker", () => {
-  it("requires_answer marca la fila del subagente y la respuesta del worker la levanta", () => {
+describe("proyección del aviso del worker y del candado del orquestador", () => {
+  it("requires_answer deja el candado interno y la respuesta del worker lo levanta", () => {
     const { projection, apply } = fixture();
     spawn(apply);
 
@@ -83,6 +83,7 @@ describe("proyección de la pregunta pendiente del worker", () => {
     );
 
     expect(subagentRow(projection)?.waitingForAnswer).toBe(true);
+    expect(subagentRow(projection)?.lastWorkerMessageAt).toBeUndefined();
     expect(typeof subagentRow(projection)?.lastActivityAt).toBe("number");
     const activityBefore = subagentRow(projection)?.lastActivityAt ?? 0;
 
@@ -94,11 +95,32 @@ describe("proyección de la pregunta pendiente del worker", () => {
 
     const answered = subagentRow(projection);
     expect(answered?.waitingForAnswer).toBe(false);
+    expect(typeof answered?.lastWorkerMessageAt).toBe("number");
     expect(answered?.summaryText).toContain("Sí, uso la paleta nueva.");
     expect(answered?.lastActivityAt).toBeGreaterThan(activityBefore);
   });
 
-  it("un mensaje sin requires_answer no abre pregunta", () => {
+  it("el aviso del worker se limpia cuando el orquestador responde", () => {
+    const { projection, apply } = fixture();
+    spawn(apply);
+
+    apply(SessionEventType.SubagentMessage, {
+      agentId: "agent_1",
+      childSessionId: "child_1",
+      summaryText: "Encontré dos estados posibles; ¿cuál uso?",
+    });
+    expect(typeof subagentRow(projection)?.lastWorkerMessageAt).toBe("number");
+
+    sendMessage(
+      apply,
+      { to: "agent_1", summary: "respuesta", message: "usa el primero" },
+      "call-reply",
+    );
+
+    expect(subagentRow(projection)?.lastWorkerMessageAt).toBeUndefined();
+  });
+
+  it("un mensaje sin requires_answer no abre el candado", () => {
     const { projection, apply } = fixture();
     spawn(apply);
 
@@ -109,6 +131,7 @@ describe("proyección de la pregunta pendiente del worker", () => {
     );
 
     expect(subagentRow(projection)?.waitingForAnswer).toBeUndefined();
+    expect(subagentRow(projection)?.lastWorkerMessageAt).toBeUndefined();
   });
 
   it("el cierre del worker deja la pregunta resuelta", () => {
@@ -136,5 +159,6 @@ describe("proyección de la pregunta pendiente del worker", () => {
     const closed = subagentRow(projection);
     expect(closed?.status).toBe("success");
     expect(closed?.waitingForAnswer).toBe(false);
+    expect(closed?.lastWorkerMessageAt).toBeUndefined();
   });
 });

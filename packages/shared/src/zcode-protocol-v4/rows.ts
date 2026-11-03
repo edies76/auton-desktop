@@ -283,7 +283,10 @@ export const subagentRowSchema = z.object({
   endedAt: timestampSchema.optional(),
   // Ultima senal de vida del worker; sin senales, el hilo pinta el latido.
   lastActivityAt: timestampSchema.optional(),
-  // El orquestador pregunto y espera respuesta: el hilo pinta la pregunta.
+  // El worker escribio al orquestador y aun no recibio respuesta; el hilo lo
+  // muestra como evento del trabajo, nunca como pregunta al humano.
+  lastWorkerMessageAt: timestampSchema.optional(),
+  // El orquestador pregunto y espera respuesta del worker (estado interno).
   waitingForAnswer: z.boolean().optional(),
 });
 export type SubagentRow = z.infer<typeof subagentRowSchema>;

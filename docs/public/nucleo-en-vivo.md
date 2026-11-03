@@ -1,25 +1,26 @@
 # El núcleo en vivo
 
 Auton no responde por turnos cerrados: **narra mientras trabaja**. Mientras un
-programador está en marcha, el orquestador sigue disponible, cuenta lo que hace
+worker está en marcha, el orquestador sigue disponible, cuenta lo que hace
 por debajo y puede abrir más trabajo sin cerrar la conversación.
 
 ## Qué ves en el hilo
 
 Todo esto ocurre en **la misma conversación** donde hablas con el orquestador:
 no hay una pantalla aparte ni un panel nuevo que aprender. Las filas se
-intercalan con su narración y con el trabajo de los programadores.
+intercalan con su narración y con el trabajo de los workers.
 
-- **El canal del programador, en marcha**: su nombre, su estado y un reloj que
+- **El canal del worker, en marcha**: su nombre, su estado y un reloj que
   avanza mientras trabaja. Si trabajan dos, ves dos filas, cada una con su reloj.
-- **La pregunta**: si un programador necesita una decisión, aparece una fila
-  centrada con lo que pregunta y la acción **Responder**, que te lleva al mismo
-  compositor del chat para contestar.
-- **El cierre**: cuando un canal termina, aparece una fila centrada con su estado
-  final (`terminó`, `falló`, `detenido`), un resumen de lo que pasó, el tiempo
-  total y la acción para abrir su conversación.
+- **El aviso del worker**: cuando un worker necesita algo del orquestador, su
+  mensaje aparece como una fila más del trabajo. El orquestador decide si lo
+  responde él o te lo pregunta; si la decisión es tuya, usa el bloque nativo de
+  preguntas del chat.
+- **El cierre**: cuando un canal termina, aparece una fila de trabajo con su
+  estado final (`terminó`, `falló`, `detenido`), un resumen de lo que pasó, el
+  tiempo total y la acción para abrir su conversación.
 - **El latido**: si pasan noventa segundos sin noticias y hay trabajo vivo,
-  aparece una fila centrada de estado. Nunca te deja sin saber qué pasa.
+  aparece una fila de estado. Nunca te deja sin saber qué pasa.
 
 ## El turno no se cierra con trabajo vivo
 
@@ -29,17 +30,17 @@ cancela o pasa demasiado tiempo, se libera solo: nunca se queda colgado.
 
 ## El canal rápido
 
-Los programadores hablan con el orquestador **mientras trabajan**, y el
+Los workers hablan con el orquestador **mientras trabajan**, y el
 orquestador les responde sin cortarlos:
 
-- lo que el programador publica llega al orquestador como **mensaje del worker**,
+- lo que el worker publica llega al orquestador como **mensaje del worker**,
   no como si lo hubieras escrito tú;
-- lo que el orquestador le manda al programador entra en su siguiente paso, sin
+- lo que el orquestador le manda al worker entra en su siguiente paso, sin
   reiniciar el encargo.
 
 ## Deshacer
 
-Puedes pedir que se deshaga el trabajo de un programador: por programador, por
+Puedes pedir que se deshaga el trabajo de un worker: por worker, por
 item del plan o por archivos concretos. Los archivos vuelven **exactamente** como
 estaban, los que se crearon desde cero desaparecen, y un archivo que cambió
 después **no se pisa**: se reporta como conflicto. Repetir la orden no hace nada y

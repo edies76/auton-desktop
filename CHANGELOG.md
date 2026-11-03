@@ -4,6 +4,33 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases públicas.
 
+## [0.9.0] — 2026-11-03
+
+El aviso del worker deja de ser una pregunta al humano y se pinta como una fila
+de trabajo.
+
+### Añadido
+
+- **Propuesta de chat intercalado** en `context/UI-CHAT-INTERCALADO.md`: una sola
+  secuencia con narración, canales y eventos en orden, sin bloque global de
+  trabajo ni respuesta separada. Pendiente de aprobación.
+
+### Cambiado
+
+- **El worker no pregunta al humano**: su mensaje llega al orquestador como un
+  evento del trabajo, sin botón de responder. Si la decisión es del humano, el
+  orquestador usa la tool nativa de preguntas. La proyección marca el aviso y lo
+  limpia cuando el orquestador responde.
+- **Filas de evento sin píldora centrada**: mismo espaciado y tipografía que las
+  filas de trabajo de ZCode; el tipo se distingue por el icono.
+- **Terminología**: "worker" en la interfaz, el prompt y la documentación pública,
+  en lugar de "programador".
+
+### Conocido
+
+- El layout sigue separando bloque de trabajo y respuesta; la crónica intercalada
+  está documentada y espera el visto bueno.
+
 ## [0.8.0] — 2026-11-03
 
 El hilo vuelve al estilo de ZCode y el orquestador toma la iniciativa.

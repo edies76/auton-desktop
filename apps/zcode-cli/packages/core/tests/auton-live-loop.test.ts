@@ -96,9 +96,9 @@ describe("latido del turno vivo", () => {
   });
 
   it("formatea el mensaje de estado con reloj y número de workers", () => {
-    expect(formatHeartbeatMessage({ running: 1, silentForMs: 92_000 })).toContain("1 programador");
+    expect(formatHeartbeatMessage({ running: 1, silentForMs: 92_000 })).toContain("1 worker");
     expect(formatHeartbeatMessage({ running: 1, silentForMs: 92_000 })).toContain("01:32");
-    expect(formatHeartbeatMessage({ running: 3, silentForMs: 90_000 })).toContain("3 programadores");
+    expect(formatHeartbeatMessage({ running: 3, silentForMs: 90_000 })).toContain("3 workers");
   });
 
   it("waitForIdle espera al último cierre del canal", async () => {

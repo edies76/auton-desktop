@@ -2971,7 +2971,7 @@ describe("topic preparation flow membership", () => {
         summaryText: "¿uso la paleta nueva?",
         startedAt: "2026-11-02T20:00:00.000Z",
         lastActivityAt: "2026-11-02T20:00:00.000Z",
-        waitingForAnswer: true,
+        lastWorkerMessageAt: "2026-11-02T20:04:30.000Z",
       }),
       toolCallRow(4, "Agent", {
         description: "Segundo frente",
@@ -2994,12 +2994,13 @@ describe("topic preparation flow membership", () => {
     expect(html).toContain("en marcha");
     expect(html).toContain("terminó");
 
-    // Los eventos despertadores van centrados en ese mismo hilo, no en otra
-    // pantalla, y conservan su acción.
+    // Los eventos del worker van dentro de ese mismo hilo, como filas de
+    // trabajo; la pregunta al humano usa la tool nativa de preguntas.
     expect(html).toContain('data-testid="auton-wake-event"');
     expect(html).toContain('data-kind="question"');
     expect(html).toContain('data-kind="closed"');
-    expect(html).toContain("Responder");
+    expect(html).toContain("pregunta al orquestador");
+    expect(html).not.toContain("Responder");
     expect(html).toContain("Abrir");
   });
 });

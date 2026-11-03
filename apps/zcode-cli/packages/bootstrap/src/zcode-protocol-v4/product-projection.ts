@@ -3275,14 +3275,19 @@ export class ProductProjection {
           }),
         )
       : [];
-    // El orquestador marcó `requires_answer` y el envío salió: el worker queda
-    // esperando esa respuesta. El hilo pinta la pregunta leyendo la fila del
-    // subagente, así que el estado se escribe en la misma transacción.
-    const answerTarget = success ? answerRequestTarget(next) : undefined;
+    // El orquestador habló con el worker: si el envío salió, la pregunta del
+    // worker ya tiene respuesta. Con `requires_answer` además queda el candado
+    // interno del orquestador, que no se pinta como pregunta al humano.
+    const messageTarget = success ? sendMessageTarget(next) : undefined;
+    const requiresAnswer =
+      messageTarget !== undefined &&
+      typeof next.input === "object" &&
+      next.input !== null &&
+      (next.input as { requires_answer?: unknown }).requires_answer === true;
     const questionDelta =
-      answerTarget === undefined
+      messageTarget === undefined
         ? undefined
-        : this.setSubagentWaitingForAnswer(answerTarget, true);
+        : this.updateSubagentAfterOrchestratorMessage(messageTarget, requiresAnswer);
     return [
       { op: "row.upserted", row: next },
       ...(questionDelta ? [questionDelta] : []),
@@ -3290,14 +3295,22 @@ export class ProductProjection {
     ];
   }
 
-  private setSubagentWaitingForAnswer(
+  private updateSubagentAfterOrchestratorMessage(
     agentId: string,
-    waiting: boolean,
+    requiresAnswer: boolean,
   ): ConversationDelta | undefined {
     const row = this.findSubagentRow(agentId);
     if (!row || row.status !== "running") return undefined;
-    if ((row.waitingForAnswer === true) === waiting) return undefined;
-    return { op: "row.upserted", row: { ...row, waitingForAnswer: waiting } };
+    const updated: SubagentRow = { ...row };
+    if (requiresAnswer) updated.waitingForAnswer = true;
+    delete updated.lastWorkerMessageAt;
+    if (
+      updated.waitingForAnswer === row.waitingForAnswer &&
+      updated.lastWorkerMessageAt === row.lastWorkerMessageAt
+    ) {
+      return undefined;
+    }
+    return { op: "row.upserted", row: updated };
   }
 
   /**
@@ -4480,6 +4493,7 @@ export class ProductProjection {
         waitingForAnswer: false,
       };
       delete row.endedAt;
+      delete row.lastWorkerMessageAt;
       return [
         { op: "row.upserted", row },
         ...(resumedBackgroundWork ? [resumedBackgroundWork] : []),
@@ -4570,6 +4584,7 @@ export class ProductProjection {
       ...row,
       summaryText: `${row.summaryText}${append}`,
       lastActivityAt: this.ms(event),
+      lastWorkerMessageAt: this.ms(event),
       ...(row.waitingForAnswer === true ? { waitingForAnswer: false } : {}),
     };
     return [{ op: "row.upserted", row: updated }];
@@ -4619,6 +4634,7 @@ export class ProductProjection {
           ...(payload.background === true ? { workId: agentId } : {}),
           endedAt: this.ms(event),
         };
+    delete row.lastWorkerMessageAt;
     this.subagentRowIdByAgentId.set(agentId, row.rowId);
     return [{ op: existing ? "row.upserted" : "row.appended", row }];
   }
@@ -5861,16 +5877,12 @@ function toProtocolToolCallDisplay(
   }
 }
 
-/**
- * Destinatario de una decisión: `SendMessage` con `requires_answer` es la
- * marca real que pone el orquestador cuando el frente no puede avanzar.
- */
-function answerRequestTarget(row: ToolCallRow): string | undefined {
+/** Destinatario de un mensaje del orquestador a un worker. */
+function sendMessageTarget(row: ToolCallRow): string | undefined {
   if (row.toolName !== "SendMessage") return undefined;
   const input: unknown = row.input;
   if (typeof input !== "object" || input === null) return undefined;
-  const record = input as { to?: unknown; requires_answer?: unknown };
-  if (record.requires_answer !== true) return undefined;
+  const record = input as { to?: unknown };
   return typeof record.to === "string" && record.to.length > 0 ? record.to : undefined;
 }
 

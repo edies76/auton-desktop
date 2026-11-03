@@ -133,11 +133,16 @@ lo exija.
 
 ## 7. Estilo del hilo y proactividad
 
-- Las filas despertadoras usan el lenguaje visual de ZCode: borde, fondo
-  secundario y texto de la app. El tipo se distingue por el icono (pregunta,
-  cierre, latido), no por ámbar/verde. La etiqueta `auton-worker` deja el color
-  automático de la paleta de subagentes y se pinta en texto secundario; el resto
-  de agentes conserva su color.
+- Las filas de evento usan el lenguaje visual de ZCode y se pintan como una fila
+  más del trabajo: mismo espaciado y tipografía, sin píldora centrada, sin fondo
+  ni borde propios. El tipo se distingue por el icono (aviso, cierre, latido).
+- **El worker no pregunta al humano.** Su mensaje llega al orquestador como
+  `lastWorkerMessageAt`; la fila dice "pregunta al orquestador" y no tiene botón
+  de responder. El orquestador decide si contesta él o usa la tool nativa de
+  preguntas para traer la decisión al humano. La proyección limpia el aviso
+  cuando el orquestador responde.
+- La etiqueta `auton-worker` deja el color automático de la paleta de subagentes
+  y se pinta en texto secundario; el resto de agentes conserva su color.
 - **Proactividad**: el prompt pide saludar al abrir un proyecto, decir qué worker
   de lectura se mandó, invitar a contar la necesidad mientras tanto y ofrecer dos
   o tres caminos con recomendación. También propone el siguiente paso cuando el

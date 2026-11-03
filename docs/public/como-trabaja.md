@@ -16,7 +16,7 @@ Antes de escribir código, Auton conversa y planea como un ingeniero:
 - **Construye el plan**: resultados, prioridades, dependencias, encargos y cómo se comprueba cada entrega. Cada pieza lleva su "hecho cuando" observable.
 - **Lo mantiene vivo**: si algo cambia, actualiza el plan y explica qué cambió, sin empezar de cero.
 
-Antes de proponer, Auton ya sabe qué hay en tu proyecto. Al crearlo hace un **escaneo barato y sin modelo** (stack, tamaño, archivos clave) que queda en el registro del proyecto. En la primera petición real avisa, manda a un programador de solo lectura y guarda su resumen con rutas; después ya no lo pide otra vez.
+Antes de proponer, Auton ya sabe qué hay en tu proyecto. Al crearlo hace un **escaneo barato y sin modelo** (stack, tamaño, archivos clave) que queda en el registro del proyecto. En la primera petición real avisa, manda a un worker de solo lectura y guarda su resumen con rutas; después ya no lo pide otra vez.
 
 La proporción importa: cambiar el texto de un botón se resuelve con **un encargo sencillo**; replantear el modo de estudio de una app merece **una conversación y un plan más profundo**. Auton lo justifica en una línea: "es un archivo, así que un encargo".
 
@@ -28,9 +28,9 @@ Cuando la dirección del producto importa, el plan se te presenta para que lo ap
 
 ## 3. Reparte el trabajo
 
-Cada pieza lista se entrega a un programador con un encargo acotado: objetivo, criterio de hecho, archivos permitidos, restricciones y evidencia esperada.
+Cada pieza lista se entrega a un worker con un encargo acotado: objetivo, criterio de hecho, archivos permitidos, restricciones y evidencia esperada.
 
-Los programadores no hablan contigo. Le reportan al orquestador. Lo que tú ves es lo que el orquestador decide contarte.
+Los workers no hablan contigo. Le reportan al orquestador. Lo que tú ves es lo que el orquestador decide contarte.
 
 ## 4. Cuenta lo que pasa
 
@@ -43,15 +43,15 @@ Mientras el trabajo corre, Auton mantiene una crónica en el mismo hilo:
 
 El detalle técnico vive en el canal de cada pieza. El hilo conserva la historia que necesitas para dirigir.
 
-## 4.1. Los programadores hablan mientras trabajan
+## 4.1. Los workers hablan mientras trabajan
 
-Cada programador puede hablar con el orquestador a mitad del encargo, en texto libre: contar lo que encontró, pedir un dato, proponer otro enfoque, avisar un bloqueo o responder algo que el orquestador le preguntó.
+Cada worker puede hablar con el orquestador a mitad del encargo, en texto libre: contar lo que encontró, pedir un dato, proponer otro enfoque, avisar un bloqueo o responder algo que el orquestador le preguntó.
 
 Ese mensaje llega al orquestador como una interrupción de alta prioridad, por encima de los avisos de estado y por debajo de lo que escribes tú. El orquestador contesta por el mismo canal: da el dato, corrige el rumbo, pide evidencia o detiene la pieza y la relanza con un encargo mejor.
 
 La conversación se ve en el mismo hilo, dentro del bloque de esa pieza. No hace falta abrir nada ni cambiar de pestaña para seguirla.
 
-Cuando el orquestador necesita una decisión que el programador no puede tomar, marca el mensaje como **decisión requerida**: esa pieza se detiene antes de continuar y contesta. Las demás siguen su curso. Si la decisión es tuya, el orquestador te la trae y deja la pieza esperando mientras adelanta otro frente.
+Cuando el orquestador necesita una decisión que el worker no puede tomar, marca el mensaje como **decisión requerida**: esa pieza se detiene antes de continuar y contesta. Las demás siguen su curso. Si la decisión es tuya, el orquestador te la trae y deja la pieza esperando mientras adelanta otro frente.
 
 ## 5. Comprueba antes de cerrar
 

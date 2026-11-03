@@ -81,7 +81,6 @@ import {
 import type { ConversationCuaGroupEvent } from "@/v4/conversationCuaGroups.js";
 import { ConversationAgentToolCallRow, openSubagentSessionFromSummary } from "@/v4/ConversationAgentToolCallRow.js";
 import { WakeEventItem } from "@/auton/WakeEventItem.js";
-import { createQuestionRespondHandler } from "@/auton/respond.js";
 import { ConversationFileSummaryPanel } from "@/v4/ConversationFileSummaryPanel.js";
 import {
   WorkflowNotificationToolRow,
@@ -392,9 +391,8 @@ export function wakeEventAction(
   item: Extract<ConversationAssistantWorkRenderItem, { kind: "wakeEvent" }>,
   context: ConversationRowRenderContext,
 ): (() => void) | undefined {
-  if (item.event.kind === "question") {
-    return createQuestionRespondHandler();
-  }
+  // El aviso del worker lo atiende el orquestador, no el humano. La pregunta al
+  // humano usa la tool nativa de preguntas, no esta fila.
   if (item.event.kind !== "closed") return undefined;
   const childSessionId = item.subagentRow.childSessionId;
   if (!childSessionId) return undefined;

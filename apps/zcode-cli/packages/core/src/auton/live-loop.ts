@@ -49,8 +49,8 @@ export function formatHeartbeatMessage(info: LiveHeartbeatInfo): string {
   const clock = `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
   const workers =
     info.running === 1
-      ? "1 programador sigue trabajando"
-      : `${info.running} programadores siguen trabajando`;
+      ? "1 worker sigue trabajando"
+      : `${info.running} workers siguen trabajando`;
   return `[Auton] ${workers} (${clock} sin noticia). Nada requiere tu decisión; te aviso cuando cierre.`;
 }
 
