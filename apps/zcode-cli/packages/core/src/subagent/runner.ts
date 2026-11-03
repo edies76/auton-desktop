@@ -56,6 +56,7 @@ import {
 } from "./worker-policy.js";
 import { EXPLORE_AGENT_ALLOWED_TOOLS } from "./explore-tools.js";
 import { formatLocalAgentTaskNotification } from "./completion-notification.js";
+import { AutonLiveLoop, formatHeartbeatMessage } from "../auton/live-loop.js";
 import { filterSubagentChildToolNames } from "./tool-policy.js";
 import {
   ErrorPayloadRole,
@@ -457,6 +458,11 @@ export function createExploreSubagentPort(options: ExploreSubagentPortOptions): 
       const lifecycle = createSubagentLifecycle(options, request, profile);
       const startedAt = new Date(lifecycle.startedAt);
       const output = createAgentBackgroundedOutput(request, lifecycle);
+    autonLiveLoopFor(
+      String(request.sessionId),
+      lifecycle.runTraceContext,
+      options.enqueueParentTaskNotification,
+    ).dispatch();
 
       registry.register(
         createRuntimeTaskSnapshot({
@@ -1540,6 +1546,11 @@ async function finalizeBackgroundCompletion(
   const current = registry.get(lifecycle.agentId);
   if (current && isTerminalRuntimeTask(current)) return;
 
+  autonLiveLoopFor(
+    String(request.sessionId),
+    lifecycle.runTraceContext,
+    options.enqueueParentTaskNotification,
+  ).close();
   await writeCompletedAgentArtifacts(lifecycle, request, completed.output);
   const notification = formatLocalAgentTaskNotification({
     agentId: completed.output.agentId,
@@ -1622,6 +1633,11 @@ async function finalizeBackgroundFailure(
   // background runner 收到的通常是 Turn failure wrapper，直接读 message
   // 会把 provider 的 429 原文替换成通用的 “Turn execution failed”；这里只选择
   // wrapper 下的根因 message，不压缩空白或截断 provider 原文。
+  autonLiveLoopFor(
+    String(request.sessionId),
+    lifecycle.runTraceContext,
+    options.enqueueParentTaskNotification,
+  ).close();
   const errorMessage = error instanceof Error ? selectExecutionErrorMessage(error) : String(error);
   const completedAt = new Date();
   const totalDurationMs = Date.now() - lifecycle.startedAt;
@@ -1864,6 +1880,42 @@ async function emitRuntimeTaskSubagentStoppedEvent(
     },
   );
   await options.emitParentEvent(event, traceContext);
+}
+
+const autonLiveLoops = new Map<string, AutonLiveLoop>();
+const autonLiveLoopTraces = new Map<string, TraceContext>();
+
+/**
+ * Reloj del turno vivo por sesión del orquestador. Se alimenta desde el arranque
+ * y el cierre de cada worker; el latido entra por la misma cola que el aviso de
+ * cierre, así que despierta al orquestador sin abrir un mensaje del humano.
+ */
+function autonLiveLoopFor(
+  sessionId: string,
+  traceContext: TraceContext,
+  enqueue: EnqueueParentTaskNotification | undefined,
+): AutonLiveLoop {
+  const key = String(sessionId);
+  autonLiveLoopTraces.set(key, traceContext);
+  let loop = autonLiveLoops.get(key);
+  if (!loop) {
+    loop = new AutonLiveLoop({
+      onHeartbeat: ({ running, silentForMs }) => {
+        enqueue?.({
+          originMeta: {
+            backgroundSource: "subagent",
+            title: "Auton",
+            workId: `auton-heartbeat:${key}`,
+          },
+          taskId: `auton-heartbeat:${key}`,
+          text: formatHeartbeatMessage({ running, silentForMs }),
+          traceContext: autonLiveLoopTraces.get(key) ?? traceContext,
+        });
+      },
+    });
+    autonLiveLoops.set(key, loop);
+  }
+  return loop;
 }
 
 function enqueueBackgroundNotification(
