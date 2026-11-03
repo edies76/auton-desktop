@@ -7,6 +7,16 @@
 
 export const LIVE_HEARTBEAT_MS = 90_000;
 
+/**
+ * Umbral efectivo del latido. `AUTON_HEARTBEAT_MS` permite ajustarlo (pruebas y
+ * demos); nunca baja de 250 ms para no convertir el hilo en una consola.
+ */
+export function resolveLiveHeartbeatMs(): number {
+  const raw = Number(process.env.AUTON_HEARTBEAT_MS);
+  if (!Number.isFinite(raw) || raw <= 0) return LIVE_HEARTBEAT_MS;
+  return Math.max(250, raw);
+}
+
 export interface LiveHeartbeatInfo {
   running: number;
   silentForMs: number;
@@ -80,7 +90,7 @@ export class AutonLiveLoop {
   private readonly idleWaiters = new Set<() => void>();
 
   constructor(options: AutonLiveLoopOptions) {
-    this.heartbeatMs = options.heartbeatMs ?? LIVE_HEARTBEAT_MS;
+    this.heartbeatMs = options.heartbeatMs ?? resolveLiveHeartbeatMs();
     this.onHeartbeat = options.onHeartbeat;
     this.now = options.now ?? (() => Date.now());
     this.schedule = options.schedule ?? defaultSchedule;
