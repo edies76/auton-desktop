@@ -93,3 +93,33 @@ superficies separadas (hilo y panel de canales).
 
 **Qué la cambiaría**: que el costo de mantener el orquestador a la escucha rompa la latencia del chat;
 en ese caso se degrada primero el latido de estado, nunca la narración de despacho y cierre.
+
+## D6. Un orquestador por proyecto, y navegación de dos pantallas
+
+**Se decide** (Edi): **no hay un chat universal**. Cada **proyecto** tiene **su** orquestador y **su**
+conversación. Y la navegación es de dos pantallas:
+
+1. **Lista de proyectos** — los proyectos ordenados. Es la pantalla donde se elige en cuál trabajar.
+2. **Espacio del proyecto** — la conversación con el orquestador de ESE proyecto, y dentro, los canales de
+   trabajo anidados. **Aquí NO existe el panel lateral de ZCode** con su lista de proyectos y tareas.
+
+Para entrar a un proyecto: se sale del actual (**"atrás"**) y se elige otro. Todo lo de ese proyecto —
+su plan, sus workers, su evidencia, su gasto — vive ahí y no se mezcla con los demás.
+
+**Al crear un proyecto, el usuario pone dos cosas obligatorias**: el **nombre** y la **ruta** de la carpeta.
+Sin eso no se abre: es lo que evita que un proyecto herede cosas de otro.
+
+**Por qué**: con un chat único, el humano no sabe de qué proyecto le están hablando y los planes se
+mezclan. Con un orquestador por proyecto, cada conversación tiene su contrato, su tablero y su flota, y el
+humano siempre sabe dónde está.
+
+**Qué implica**, y hay que tenerlo claro:
+- **Es interfaz nueva**, la primera de verdad. Pero **no diseño nuevo**: se reutilizan los componentes,
+  los tokens y la tipografía de ZCode. Lo que se construye son **dos pantallas delgadas** (lista y
+  espacio) más las superficies anidadas (plan, trabajo, evidencia).
+- **Lo que se apaga de ZCode**: su panel lateral de proyectos y tareas dentro del espacio del proyecto.
+  Es parte de la poda.
+- **Lo que se gana**: el usuario nunca está perdido, y el chat **es** el espacio de trabajo.
+
+**Lo que la cambiaría**: que un proyecto necesite varias conversaciones a la vez (por ejemplo una por
+frente grande). Si eso pasa, se añade una segunda conversación **dentro** del proyecto, no un chat global.
