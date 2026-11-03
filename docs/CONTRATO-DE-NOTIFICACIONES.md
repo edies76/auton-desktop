@@ -169,7 +169,7 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
 | Turno que no cierra | `runtime/methods/turn-loop.ts` | `auton-live-turn-runtime.test.ts`, `auton-real-dispatch-runtime.test.ts` | `4714c3a3`, `5e03d9ca` |
 | Noticias del worker | `runtime/methods/background-notifications.ts` | `auton-real-dispatch-runtime.test.ts` | `07219f97` |
 | Canal con reloj | `ui/src/auton/subagentChannel.ts` | `autonSubagentChannel.test.ts` | `3491a3ca` |
-| Fila despertadora (3 tipos) | `ui/src/auton/subagentChannel.ts` (`deriveWakeEvents`), `ui/src/auton/WakeEventItem.tsx`, `v4/conversationAssistantWorkItems.ts` | `autonThreadChannels.test.tsx`, `autonWakeEventRow.test.tsx`, `auton-thread-question-projection.test.ts` | `b75b7042`, `3491a3ca`, esta entrega |
+| Fila despertadora (3 tipos) | `ui/src/auton/subagentChannel.ts` (`deriveWakeEvents`), `ui/src/auton/WakeEventItem.tsx`, `v4/conversationAssistantWorkItems.ts` | `autonThreadChannels.test.tsx`, `autonWakeEventRow.test.tsx`, `auton-thread-question-projection.test.ts` | `b75b7042`, `3491a3ca`, `b60d66a6` |
 | Canal rápido bidireccional | `subagent/coordinator-response.ts`, `message-steering.ts` | `auton-fast-channel-runtime.test.ts` | `b38bcbfa` |
 | Cuatro piezas y ensamblado | `auton/contextAuton.ts`, `context/builder.ts` | `auton-four-pieces.test.ts` | `a373592a` |
 
