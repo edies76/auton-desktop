@@ -18,8 +18,8 @@ documentación se separa en un árbol público y otro privado.
   no sabe juzgar; exige la pregunta o la decisión escrita y escala al humano.
 - **Reportes de calibración**: un worker puede reportar que un límite está mal
   puesto; el orquestador lo registra y el worker sigue sin poder cambiarlo.
-- **Documentación en dos árboles**: `docs/public/` (producto) y `docs/private/`
-  (implementación), con builds separados en `site/dist` y `site/private-dist`.
+- **Documentación en dos niveles**: una guía de producto para cualquiera y una
+  documentación interna con el detalle de implementación, con builds separados.
 
 ### Cambiado
 
