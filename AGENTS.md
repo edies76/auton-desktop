@@ -6,6 +6,27 @@
 producto, UI o prioridades, leelo. Si lo que vas a hacer contradice la vision, pregunta antes de
 escribir codigo.
 
+## ANTES DE TOCAR NADA (leer en este orden)
+
+Esto es lo que falta en el resto de la guia: **el contexto de lo que ya se decidio**. Son tres lecturas
+y no son opcionales:
+
+1. **[`docs/EMPIEZA-AQUI.md`](docs/EMPIEZA-AQUI.md)** — el punto de entrada unico: que es Auton en tres
+   lineas, que documentos importan y **cuales estan podados** (no los leas), el estado real de hoy y lo
+   que sigue en orden.
+2. **[`docs/REPARTO-DE-TRABAJO.md`](docs/REPARTO-DE-TRABAJO.md)** — quien hace que en las tres etapas,
+   con la definicion de "hecho" de cada pieza y las reglas no negociables.
+3. **[`docs/ARQUITECTURA-ORQUESTADOR.md`](docs/ARQUITECTURA-ORQUESTADOR.md)** — la spec de trabajo del
+   orquestador: bucle vivo, canales anidados, tres relojes, contexto por etapas, motor por sprint.
+
+**Regla dura: lo que no esta en el repositorio no existe.** Los acuerdos que se tomen por el buzon de
+agentes se copian aqui el mismo dia, en un commit o en un documento. Lo que solo vive en un chat, se
+perdio.
+
+**Lo que NO se toca**: la interfaz de ZCode (se reutiliza; si hace falta una pantalla nueva, se construye
+con sus componentes y sus tokens) y el motor de edicion de ZCode (funciona y esta intacto).
+
+
 ## Que es este repo y que no
 
 - **Auton Desktop es el producto** que se presenta en la hackathon de Meta (Global AI Developer
