@@ -11,7 +11,7 @@ export interface ProjectConversation {
   workerTaskIds: string[];
 }
 
-const KEY = "auton-project-conversation";
+const KEY = "auton-project-conversation-v2";
 
 function readAll(): Record<string, ProjectConversation> {
   try {
@@ -48,13 +48,25 @@ export function ensureProjectConversation(
   const all = readAll();
   const ids = new Set(tasks.map((task) => task.taskId));
   const current = all[key];
-  if (current && ids.has(current.orchestratorTaskId)) return current;
+  if (
+    current &&
+    ids.has(current.orchestratorTaskId) &&
+    !current.workerTaskIds.includes(current.orchestratorTaskId)
+  )
+    return current;
 
   const active =
     activeTaskId && ids.has(activeTaskId)
       ? tasks.find((task) => task.taskId === activeTaskId)
       : undefined;
-  const orchestrator = active ?? oldestTask(tasks);
+  // Sin sesión activa manda la última conversación del humano, nunca un task
+  // marcado como worker. La sesión activa siempre gana, aunque sea más vieja.
+  const workerIds = new Set(current?.workerTaskIds ?? []);
+  const candidates = tasks.filter((task) => !workerIds.has(task.taskId));
+  const latestConversation = [...candidates].sort(
+    (left, right) => right.updatedAt - left.updatedAt,
+  )[0];
+  const orchestrator = active ?? latestConversation ?? oldestTask(tasks);
   const next: ProjectConversation = {
     orchestratorTaskId: orchestrator?.taskId ?? "",
     legacyTaskIds: tasks

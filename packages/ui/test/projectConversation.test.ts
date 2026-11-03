@@ -34,9 +34,9 @@ describe("una conversación de orquestador por proyecto", () => {
     expect(conversation.workerTaskIds).toEqual([]);
   });
 
-  it("sin sesión activa usa la más antigua, no la más reciente", () => {
+  it("sin sesión activa usa la última conversación, no un worker más nuevo", () => {
     const tasks = [task("old", 1, 5), task("newer", 2, 99)];
-    expect(ensureProjectConversation("ws::p1", tasks).orchestratorTaskId).toBe("old");
+    expect(ensureProjectConversation("ws::p1", tasks).orchestratorTaskId).toBe("newer");
   });
 
   it("relegar el chat anterior al abrir otro y retirarlo de workers", () => {
