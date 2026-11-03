@@ -106,7 +106,13 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
   lo pinta en `v4/ConversationAgentToolCallRow.tsx` (canal con reloj mientras
   corre, fila centrada al cerrar). Prueba: `ui/test/autonSubagentChannel.test.ts`.
 - **Hecho — fila de evento despertador**: `packages/ui/src/auton/WakeEventRow.tsx`
-  (pregunta, cierre y latido, centrada, con acción). Prueba:
+  pinta la fila centrada y las **tres** clases salen del código que corre:
+  - **pregunta**: una fila real de `SendMessage` con `waitingForAnswer` se resuelve
+    como `QuestionWakeBlock` (`auton/question-wake.tsx`, en `resolveRenderer`);
+  - **cierre**: `wakeEventForSubagent` con el estado final del canal;
+  - **latido**: `heartbeatEventForSubagent` cuando el canal sigue en marcha y lleva
+    más de 90 s sin señal.
+  Pruebas: `ui/test/autonThreadChannels.test.tsx` (las tres por el mapeo real) y
   `ui/test/autonWakeEventRow.test.tsx`.
 - **Hecho — latido enganchado al runtime**: `core/src/auton/live-loop.ts` mantiene
   un reloj por sesión del orquestador, y el port de subagentes lo alimenta al
@@ -133,7 +139,7 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
 | Turno que no cierra | `runtime/methods/turn-loop.ts` | `auton-live-turn-runtime.test.ts`, `auton-real-dispatch-runtime.test.ts` | `4714c3a3`, `5e03d9ca` |
 | Noticias del worker | `runtime/methods/background-notifications.ts` | `auton-real-dispatch-runtime.test.ts` | `07219f97` |
 | Canal con reloj | `ui/src/auton/subagentChannel.ts` | `autonSubagentChannel.test.ts` | `3491a3ca` |
-| Fila despertadora | `ui/src/auton/WakeEventRow.tsx` | `autonWakeEventRow.test.tsx`, `autonThreadChannels.test.tsx` | `b75b7042`, `3491a3ca` |
+| Fila despertadora (3 tipos) | `ui/src/auton/WakeEventRow.tsx`, `question-wake.tsx` | `autonThreadChannels.test.tsx`, `autonWakeEventRow.test.tsx` | `b75b7042`, `3491a3ca`, esta entrega |
 | Canal rápido bidireccional | `subagent/coordinator-response.ts`, `message-steering.ts` | `auton-fast-channel-runtime.test.ts` | `b38bcbfa` |
 | Cuatro piezas y ensamblado | `auton/contextAuton.ts`, `context/builder.ts` | `auton-four-pieces.test.ts` | `a373592a` |
 

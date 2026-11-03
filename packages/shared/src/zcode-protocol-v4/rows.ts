@@ -230,6 +230,10 @@ export const toolCallRowSchema = z.object({
   workId: z.string().optional(),
   startedAt: timestampSchema.optional(),
   endedAt: timestampSchema.optional(),
+  // Ultima senal de vida del worker; sin senales, el hilo pinta el latido.
+  lastActivityAt: timestampSchema.optional(),
+  // El orquestador pregunto y espera respuesta: el hilo pinta la pregunta.
+  waitingForAnswer: z.boolean().optional(),
 });
 export type ToolCallRow = z.infer<typeof toolCallRowSchema>;
 
@@ -277,6 +281,10 @@ export const subagentRowSchema = z.object({
   workId: z.string().optional(),
   startedAt: timestampSchema.optional(),
   endedAt: timestampSchema.optional(),
+  // Ultima senal de vida del worker; sin senales, el hilo pinta el latido.
+  lastActivityAt: timestampSchema.optional(),
+  // El orquestador pregunto y espera respuesta: el hilo pinta la pregunta.
+  waitingForAnswer: z.boolean().optional(),
 });
 export type SubagentRow = z.infer<typeof subagentRowSchema>;
 

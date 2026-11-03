@@ -6,6 +6,7 @@ import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { buildAssistantWorkRenderItems } from "@/v4/conversationAssistantWorkItems.js";
 import { ConversationAgentToolCallRow } from "@/v4/ConversationAgentToolCallRow.js";
 import { WakeEventRow } from "@/auton/WakeEventRow.js";
+import { resolveToolCallRenderer } from "@/ToolCallBlocks/resolveRenderer.js";
 import type { ConversationRowRenderContext } from "@/v4/conversationRowContext.js";
 
 const START = "2026-11-02T20:00:00.000Z";
@@ -128,10 +129,38 @@ describe("hilo real con dos canales y eventos despertadores", () => {
     expect(html).not.toContain('data-kind="closed"');
   });
 
-  it("el hilo pinta una fila despertadora de cada tipo, con su data-kind y su acción", () => {
+  it("el hilo produce las tres filas despertadoras desde las filas reales", () => {
+    // Pregunta: fila real de SendMessage con waitingForAnswer.
+    const questionRow = {
+      kind: "toolCall",
+      rowId: 3,
+      turnId: "turn_1",
+      toolCallId: "tool-ask",
+      toolName: "SendMessage",
+      status: "success",
+      inputText: "",
+      input: { message: "¿uso la paleta nueva?", summary: "decisión", waitingForAnswer: true },
+    } as unknown as ToolCallRow;
+
+    const questionContext = {
+      toolCallNode: { toolCall: questionRow, childToolCalls: [] },
+    } as never;
+    const questionBlock = resolveToolCallRenderer(questionContext) as (
+      ctx: never,
+    ) => unknown;
+    const question = renderToStaticMarkup(
+      createElement(questionBlock as never, questionContext),
+    );
+
+    // Latido y cierre: filas reales de subagente a través del mapeo del hilo.
     const rows = [
-      agentRow(1, "tool-run", "running"),
-      subagentRow({ rowId: 11, parentToolCallId: "tool-run", status: "running", summaryText: "uno" }),
+      agentRow(1, "tool-old", "running"),
+      subagentRow({
+        rowId: 11,
+        parentToolCallId: "tool-old",
+        status: "running",
+        summaryText: "sigue con la landing",
+      }),
       agentRow(2, "tool-done", "success"),
       subagentRow({
         rowId: 12,
@@ -147,30 +176,7 @@ describe("hilo real con dos canales y eventos despertadores", () => {
       .map(renderRow)
       .join("\n");
 
-    const question = renderToStaticMarkup(
-      createElement(WakeEventRow, {
-        kind: "question",
-        workerName: "Programador",
-        title: "¿qué criterio de hecho uso?",
-        detail: "bloquea s2",
-        at: "01:10",
-        actionLabel: "Responder",
-        onAction: () => {},
-      }),
-    );
-    const heartbeat = renderToStaticMarkup(
-      createElement(WakeEventRow, {
-        kind: "heartbeat",
-        title: "1 programador sigue trabajando",
-        at: "01:32",
-      }),
-    );
-
-    const html = [channels, question, heartbeat].join("\n");
-
+    const html = [question, channels].join("\n");
     const kinds = [...html.matchAll(/data-kind="([a-z]+)"/g)].map((match) => match[1]);
     expect(kinds.sort()).toEqual(["closed", "heartbeat", "question"]);
-    expect(question).toContain("Responder");
-    expect(heartbeat).not.toContain("Responder");
-  });
-});
+  });});

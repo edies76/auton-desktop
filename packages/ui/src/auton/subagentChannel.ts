@@ -50,6 +50,33 @@ export function channelClock(row: SubagentRow, now: number): string | null {
   return elapsed === null ? null : formatElapsed(elapsed);
 }
 
+/** Umbral del latido en el hilo; el mismo que usa el runtime (90 s). */
+export const CHANNEL_HEARTBEAT_MS = 90_000;
+
+/**
+ * Latido del canal: un worker que sigue en marcha y lleva demasiado tiempo sin
+ * dar señales se pinta como fila centrada. Sin señales nuevas, el silencio es la
+ * señal.
+ */
+export function heartbeatEventForSubagent(
+  row: SubagentRow,
+  now: number,
+  thresholdMs: number = CHANNEL_HEARTBEAT_MS,
+): WakeEventRowProps | null {
+  if (row.status !== "running") return null;
+  const last = toMillis(
+    (row as { lastActivityAt?: unknown }).lastActivityAt ?? row.startedAt,
+  );
+  if (last === null) return null;
+  const silentFor = now - last;
+  if (silentFor < thresholdMs) return null;
+  return {
+    kind: "heartbeat",
+    title: "sigue trabajando",
+    detail: `${formatElapsed(silentFor)} sin noticia`,
+  };
+}
+
 /**
  * Cuando el canal cierra, el hilo pinta una fila centrada de evento despertador.
  * Mientras corre no hay fila: el canal ya se ve en marcha con su reloj.

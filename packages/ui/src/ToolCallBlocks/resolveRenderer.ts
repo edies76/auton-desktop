@@ -36,6 +36,7 @@ import {
 import { CuaToolCallBlock, isCuaToolCall } from "@/ToolCallBlocks/renderers/cua.js";
 import { CuaGroupToolCallBlock } from "@/ToolCallBlocks/renderers/cua-group.js";
 import { AutonPlanToolCallBlock, isAutonPlanToolCall } from "@/auton/plan-card.js";
+import { QuestionWakeBlock, isWaitingQuestionToolCall } from "@/auton/question-wake.js";
 import { GoalToolCallBlock } from "@/ToolCallBlocks/renderers/goal.js";
 import { NodeReplToolCallBlock } from "@/ToolCallBlocks/renderers/node-repl.js";
 import { McpToolCallBlock, readMcpToolPresentation } from "@/ToolCallBlocks/renderers/mcp.js";
@@ -57,6 +58,11 @@ import { resolveToolCallIdentity } from "@/lib/toolIdentity.js";
 import type { ToolCallBlockRenderContext } from "@/ToolCallBlocks/shared.js";
 
 export function resolveToolCallRenderer(context: ToolCallBlockRenderContext) {
+  // Una pregunta del orquestador que espera respuesta se pinta como fila
+  // centrada, no como tarjeta de herramienta.
+  if (isWaitingQuestionToolCall(context.toolCallNode.toolCall)) {
+    return QuestionWakeBlock;
+  }
   if (context.toolCallNode.toolCall.kind === "changesGroup") {
     return ChangesGroupToolCallBlock;
   }

@@ -7,7 +7,7 @@ import type { ConversationRowRenderContext } from "@/v4/conversationRowContext.j
 import { toolCallRowToLegacyNode } from "@/v4/toolCallRowAdapter.js";
 import { runUserAction } from "@/lib/userActionTelemetry.js";
 import { WakeEventRow } from "@/auton/WakeEventRow.js";
-import { channelClock, wakeEventForSubagent } from "@/auton/subagentChannel.js";
+import { channelClock, heartbeatEventForSubagent, wakeEventForSubagent } from "@/auton/subagentChannel.js";
 
 export function openSubagentSessionFromSummary({
   backgrounded: _backgrounded = false,
@@ -77,6 +77,7 @@ export function ConversationAgentToolCallRow({
   const wakeEvent = isAutonProgrammer
     ? wakeEventForSubagent(item.subagentRow, now, title)
     : null;
+  const heartbeat = isAutonProgrammer ? heartbeatEventForSubagent(item.subagentRow, now) : null;
   const agentSummaryAction = useMemo(
     () =>
       !isAutonProgrammer && canOpenChildSession && childSessionId
@@ -114,6 +115,7 @@ export function ConversationAgentToolCallRow({
           en marcha · {clock}
         </div>
       ) : null}
+      {heartbeat ? <WakeEventRow {...heartbeat} /> : null}
       {wakeEvent ? (
         <WakeEventRow {...wakeEvent} {...(canOpenChildSession ? { onAction: handleOpenChildSession } : {})} />
       ) : null}
