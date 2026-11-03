@@ -236,6 +236,11 @@ export function prepareCuaGroupFlowItems(
       handleAssistantMessage(item.row, "assistantWork", () => prepared.push(item));
       continue;
     }
+    if (item.kind === "assistantReasoning" || item.kind === "assistantLoopReasoning") {
+      closeGroup();
+      prepared.push(item);
+      continue;
+    }
 
     for (const row of item.rows) {
       if (row.kind === "toolCall" && isOfficialCuaToolCallRow(row)) {
@@ -274,6 +279,8 @@ export function prepareCuaGroups(
     else if (item.kind === "assistantHistory" || item.kind === "assistantWork") {
       flattened.push(...item.rows);
     } else if (item.kind === "assistantText") {
+      flattened.push(item.row);
+    } else if (item.kind === "assistantReasoning" || item.kind === "assistantLoopReasoning") {
       flattened.push(item.row);
     }
   }

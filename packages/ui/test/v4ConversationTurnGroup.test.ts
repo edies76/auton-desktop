@@ -3006,7 +3006,7 @@ describe("topic preparation flow membership", () => {
 
   it("la narración del orquestador se intercala con el trabajo", () => {
     const rows = [
-      turnHeader(),
+      turnHeader({ state: "running" }),
       userInputRow(2),
       assistantTextRow(3, { text: "Voy a revisar el README." }),
       toolCallRow(4, "Agent", {
@@ -3033,5 +3033,165 @@ describe("topic preparation flow membership", () => {
     expect(before).toBeGreaterThanOrEqual(0);
     expect(channel).toBeGreaterThan(before);
     expect(after).toBeGreaterThan(channel);
+  });
+
+  it("el loop se abre con su contador y se colapsa al terminar, con la narración fuera", () => {
+    const rowsFor = (state: "running" | "completedSuccess") =>
+      [
+        turnHeader({ state }),
+        userInputRow(2),
+        assistantTextRow(3, { text: "Voy a mandar un worker de lectura." }),
+        toolCallRow(4, "Agent", {
+          description: "Lectura del README",
+          subagent_type: "auton-worker",
+        }),
+        subagentRow(5, {
+          parentToolCallId: "tool-4",
+          subagentType: "auton-worker",
+          status: state === "running" ? "running" : "success",
+          summaryText: "leyendo",
+          startedAt: "2026-11-02T20:00:00.000Z",
+          lastActivityAt: "2026-11-02T20:00:00.000Z",
+        }),
+        assistantTextRow(6, {
+          text: "Ya lo mandé. ¿Qué quieres que haga cuando llegue?",
+        }),
+      ] as never[];
+
+    const [running] = buildConversationTurnRenderUnits(rowsFor("running"));
+    const runningHtml = renderUnit(running!, { locale: "en-US" });
+    const beforeLoop = runningHtml.indexOf("Voy a mandar un worker de lectura.");
+    const loopHeader = runningHtml.indexOf("chat-assistant-history-trigger");
+    const afterLoop = runningHtml.indexOf("Ya lo mandé.");
+    expect(beforeLoop).toBeGreaterThanOrEqual(0);
+    expect(loopHeader).toBeGreaterThan(beforeLoop);
+    expect(afterLoop).toBeGreaterThan(loopHeader);
+    expect(runningHtml).toContain('data-history-open="true"');
+    expect(runningHtml).toContain("Working for");
+    expect(runningHtml).toContain("Lectura del README");
+
+    const [completed] = buildConversationTurnRenderUnits(rowsFor("completedSuccess"));
+    const completedHtml = renderUnit(completed!, { locale: "en-US" });
+    expect(completedHtml).toContain('data-history-open="false"');
+    expect(completedHtml).toContain("Worked");
+    expect(completedHtml).toContain("Voy a mandar un worker de lectura.");
+    expect(completedHtml).toContain("Ya lo mandé.");
+  });
+
+  it("el reasoning de planificación y traducción va fuera del loop; el de la tool, dentro", () => {
+    const planning = {
+      ...reasoningRow(),
+      rowId: 3,
+      createdAtSeq: 3,
+      createdAt: 1_700_000_000_003,
+      text: "Voy a mandar un worker de lectura.",
+    };
+    const toolThinking = {
+      ...reasoningRow(),
+      rowId: 5,
+      createdAtSeq: 5,
+      createdAt: 1_700_000_000_005,
+      text: "Decido qué leer primero.",
+    };
+    const translation = {
+      ...reasoningRow(),
+      rowId: 7,
+      createdAtSeq: 7,
+      createdAt: 1_700_000_000_007,
+      text: "Te traduzco: el proyecto es pequeño.",
+    };
+    const rows = [
+      turnHeader({ state: "running" }),
+      userInputRow(2),
+      planning,
+      toolCallRow(4, "Agent", {
+        description: "Lectura del README",
+        subagent_type: "auton-worker",
+      }),
+      toolThinking,
+      subagentRow(6, {
+        parentToolCallId: "tool-4",
+        subagentType: "auton-worker",
+        status: "running",
+        summaryText: "leyendo",
+        startedAt: "2026-11-02T20:00:00.000Z",
+        lastActivityAt: "2026-11-02T20:00:00.000Z",
+      }),
+      translation,
+    ] as never[];
+
+    const [unit] = buildConversationTurnRenderUnits(rows);
+    const segment = unit!.workSegments![0]!;
+    const outsideReasoning = segment.flowItems
+      .filter((item) => item.kind === "assistantReasoning")
+      .map((item) => item.row.rowId);
+    expect(outsideReasoning).toEqual([3, 7]);
+    const loopReasoning = segment.flowItems
+      .filter((item) => item.kind === "assistantLoopReasoning")
+      .map((item) => item.row.rowId);
+    expect(loopReasoning).toEqual([5]);
+
+    const html = renderUnit(unit!, { messageStreamShowReasoning: true });
+    const planningIndex = html.indexOf('data-row-id="3"');
+    const headerIndex = html.indexOf('data-testid="chat-assistant-history-trigger');
+    const toolIndex = html.indexOf('data-row-id="5"');
+    const translationIndex = html.indexOf('data-row-id="7"');
+    expect(planningIndex).toBeGreaterThanOrEqual(0);
+    expect(headerIndex).toBeGreaterThanOrEqual(0);
+    expect(planningIndex).toBeLessThan(headerIndex);
+    expect(toolIndex).toBeGreaterThan(headerIndex);
+    expect(translationIndex).toBeGreaterThan(toolIndex);
+    // Los tres reasoning tienen su bloque visible (aunque el contenido se abra
+    // a mano): dos fuera del loop y uno dentro.
+    expect(html.match(/data-testid="chat-reasoning-trigger"/g) ?? []).toHaveLength(3);
+  });
+
+  it("un turno reanudado abre con lo que llegó, trabaja en el loop y traduce fuera", () => {
+    const rowsFor = (state: "running" | "completedSuccess") =>
+      [
+        turnHeader({
+          origin: "backgroundResult",
+          state,
+          originMeta: {
+            backgroundSource: "subagent",
+            title: "Reporte del worker",
+            workId: "worker-1",
+          },
+        }),
+        assistantTextRow(2, {
+          text: "Me llegó el reporte del worker; déjame verlo.",
+        }),
+        toolCallRow(3, "Agent", {
+          description: "Revisión del README",
+          subagent_type: "auton-worker",
+        }),
+        subagentRow(4, {
+          parentToolCallId: "tool-3",
+          subagentType: "auton-worker",
+          status: state === "running" ? "running" : "success",
+          summaryText: "revisado",
+          startedAt: "2026-11-02T20:00:00.000Z",
+          lastActivityAt: "2026-11-02T20:00:00.000Z",
+        }),
+        assistantTextRow(5, {
+          text: "Traduzco: el README está desactualizado.",
+        }),
+      ] as never[];
+
+    const [running] = buildConversationTurnRenderUnits(rowsFor("running"));
+    const runningHtml = renderUnit(running!, { locale: "en-US" });
+    const openingIndex = runningHtml.indexOf("Me llegó el reporte del worker");
+    const triggerIndex = runningHtml.indexOf("chat-assistant-history-trigger");
+    const translationIndex = runningHtml.indexOf("Traduzco: el README");
+    expect(openingIndex).toBeGreaterThanOrEqual(0);
+    expect(triggerIndex).toBeGreaterThan(openingIndex);
+    expect(translationIndex).toBeGreaterThan(triggerIndex);
+    expect(runningHtml).toContain('data-history-open="true"');
+    expect(runningHtml).toContain("Reporte del worker");
+
+    const [completed] = buildConversationTurnRenderUnits(rowsFor("completedSuccess"));
+    const completedHtml = renderUnit(completed!, { locale: "en-US" });
+    expect(completedHtml).toContain('data-history-open="false"');
+    expect(completedHtml).toContain("Traduzco: el README");
   });
 });

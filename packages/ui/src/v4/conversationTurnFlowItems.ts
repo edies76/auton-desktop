@@ -1,6 +1,7 @@
 import type {
   AssistantTextRow,
   ConversationRow,
+  ReasoningRow,
   TurnHeaderRow,
   UserInputRow,
 } from "@zcode/shared/zcode-protocol-v4";
@@ -12,6 +13,10 @@ export type ConversationTurnFlowItem =
   | { kind: "userInput"; row: UserInputRow }
   | { kind: "assistantHistory"; rows: AssistantWorkRow[] }
   | { kind: "assistantText"; row: AssistantTextRow; latest: boolean }
+  /** Reasoning de cara al humano: planear, decidir o traducir, fuera del loop. */
+  | { kind: "assistantReasoning"; row: ReasoningRow }
+  /** Reasoning atado a la ejecución: dentro del loop, con el trabajo. */
+  | { kind: "assistantLoopReasoning"; row: ReasoningRow }
   | { kind: "assistantWork"; rows: AssistantWorkRow[] }
   | ConversationCuaGroupRenderItem;
 
@@ -25,6 +30,14 @@ function isAssistantTextRow(row: ConversationRow): row is AssistantTextRow {
 
 function isAssistantWorkRow(row: ConversationRow): row is AssistantWorkRow {
   return row.kind !== "turnHeader" && row.kind !== "userInput";
+}
+
+function isReasoningRow(row: ConversationRow): row is ReasoningRow {
+  return row.kind === "reasoning";
+}
+
+function isLoopRow(row: ConversationRow): boolean {
+  return row.kind === "toolCall" || row.kind === "subagent" || row.kind === "artifact";
 }
 
 function appendGroupedAssistantFlowItem(
@@ -59,6 +72,16 @@ export function buildConversationFlowItems(options: {
   const historyRowIds = new Set(options.assistantHistoryRows.map((row) => row.rowId));
   const followingRowIds = new Set(options.assistantFollowingRows.map((row) => row.rowId));
   const tailRowIds = new Set(options.assistantTailRows.map((row) => row.rowId));
+  const loopRowIds = options.orderedRows.filter(isLoopRow).map((row) => row.rowId);
+  const firstLoopRowId = loopRowIds.at(0);
+  const lastLoopRowId = loopRowIds.at(-1);
+  // Fuera del loop: lo que ocurrió antes del primer tool o después del último.
+  // Es el reasoning con el que el orquestador planea, decide o te traduce.
+  const isUserFacingReasoning = (rowId: number): boolean =>
+    firstLoopRowId === undefined ||
+    lastLoopRowId === undefined ||
+    rowId < firstLoopRowId ||
+    rowId > lastLoopRowId;
   const items: ConversationTurnFlowItem[] = [];
 
   for (const row of options.orderedRows) {
@@ -78,6 +101,15 @@ export function buildConversationFlowItems(options: {
         kind: "assistantText",
         row,
         latest: row.rowId === options.latestAssistantTextRow?.rowId,
+      });
+      continue;
+    }
+    if (options.interleaveAssistantText && isReasoningRow(row)) {
+      items.push({
+        kind: isUserFacingReasoning(row.rowId)
+          ? "assistantReasoning"
+          : "assistantLoopReasoning",
+        row,
       });
       continue;
     }

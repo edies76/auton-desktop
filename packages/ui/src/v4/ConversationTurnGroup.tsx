@@ -810,9 +810,19 @@ function ConversationWorkSegmentFlow({
   }, [segment.assistantHistoryDefaultOpen, segment.key]);
 
   const shouldShowHistoryStatus = segment.workStatus !== undefined;
+  const firstLoopItemIndex = segment.flowItems.findIndex(
+    (item) =>
+      item.kind === "assistantHistory" ||
+      item.kind === "assistantWork" ||
+      item.kind === "assistantLoopReasoning" ||
+      (item.kind === "cuaGroup" && item.flowKind === "assistantHistory"),
+  );
   const firstAssistantFlowItemIndex = segment.flowItems.findIndex(
     (item) => item.kind !== "userInput",
   );
+  const headerItemIndex = segment.autonLoop
+    ? firstLoopItemIndex
+    : firstAssistantFlowItemIndex;
   let historyChunkIndex = 0;
   const open = segment.assistantHistoryDefaultOpen ? true : historyOpen;
 
@@ -830,9 +840,12 @@ function ConversationWorkSegmentFlow({
           segment.workStatus?.state === "running" &&
           index === segment.flowItems.length - 1 &&
           (item.kind === "assistantHistory" || item.kind === "assistantWork");
-        const showHistoryStatus = shouldShowHistoryStatus && index === firstAssistantFlowItemIndex;
+        const showHistoryStatus = shouldShowHistoryStatus && index === headerItemIndex;
         const itemKey =
-          item.kind === "userInput" || item.kind === "assistantText"
+          item.kind === "userInput" ||
+          item.kind === "assistantText" ||
+          item.kind === "assistantReasoning" ||
+          item.kind === "assistantLoopReasoning"
             ? `${item.kind}:${item.row.rowId}`
             : `${item.kind}:${item.rows[0]?.rowId ?? index}`;
         let content: React.ReactNode;
@@ -895,6 +908,26 @@ function ConversationWorkSegmentFlow({
               assistantCodeCommentProjectionEnabled={assistantCodeCommentProjectionEnabled}
             />
           );
+        } else if (item.kind === "assistantReasoning") {
+          // Reasoning de planificación o traducción: va fuera del loop, con la
+          // misma pieza visual que el resto del hilo.
+          content = <ConversationTurnRow row={item.row} context={context} />;
+        } else if (item.kind === "assistantLoopReasoning") {
+          // Reasoning atado a la tool: se queda dentro del loop, que lo abre y
+          // lo colapsa con el trabajo.
+          content = (
+            <CollapsibleContent
+              data-testid={testId(
+                TID_CHAT_ASSISTANT_HISTORY_CONTENT,
+                `${segment.key}:reasoning:${item.row.rowId}`,
+              )}
+              data-history-open={String(open)}
+            >
+              <div className="pt-5">
+                <ConversationTurnRow row={item.row} context={context} />
+              </div>
+            </CollapsibleContent>
+          );
         } else {
           content = (
             <ConversationAssistantWorkItems
@@ -921,7 +954,7 @@ function ConversationWorkSegmentFlow({
           </Fragment>
         );
       })}
-      {shouldShowHistoryStatus && firstAssistantFlowItemIndex < 0 ? (
+      {shouldShowHistoryStatus && headerItemIndex < 0 && !segment.autonLoop ? (
         <AssistantHistoryStatus
           segment={segment}
           sourceCommandIds={sourceCommandIds}
@@ -1219,6 +1252,16 @@ function ConversationBackgroundResultWork({
         }
       : undefined;
 
+  const historyTextRows = unit.assistantHistoryRows.filter(
+    (row) => row.kind === "assistantText",
+  );
+  const historyLoopRows = unit.assistantHistoryRows.filter(
+    (row) => row.kind !== "assistantText",
+  );
+  // Solo el turno Auton usa el loop colapsable; los background results de ZCode
+  // conservan su camino de historial plano.
+  const isAutonResume = hasAutonWorkerRows(unit.assistantWorkRows);
+
   return (
     <div className="flex flex-col gap-5">
       {workflowNotification ? (
@@ -1246,7 +1289,7 @@ function ConversationBackgroundResultWork({
           </div>
         </div>
       )}
-      {hasHistory ? (
+      {!isAutonResume && hasHistory ? (
         <div className="flex flex-col gap-2">
           <ConversationAssistantWorkItems
             rows={unit.assistantHistoryRows}
@@ -1254,6 +1297,39 @@ function ConversationBackgroundResultWork({
             assistantCodeCommentProjectionEnabled={assistantCodeCommentProjectionEnabled}
           />
         </div>
+      ) : null}
+      {isAutonResume && historyTextRows.length > 0 ? (
+        <ConversationAssistantWorkItems
+          rows={historyTextRows}
+          context={context}
+          assistantCodeCommentProjectionEnabled={assistantCodeCommentProjectionEnabled}
+        />
+      ) : null}
+      {isAutonResume && historyLoopRows.length > 0 ? (
+        <ConversationWorkSegmentFlow
+          segment={{
+            key: `${unit.key}:resume-loop`,
+            flowItems: [{ kind: "assistantHistory", rows: historyLoopRows }],
+            assistantWorkRows: historyLoopRows,
+            assistantHistoryRows: historyLoopRows,
+            assistantFollowingRows: [],
+            assistantHistoryDefaultOpen: unit.assistantHistoryDefaultOpen,
+            autonLoop: true,
+            ...(unit.workStatus ? { workStatus: unit.workStatus } : {}),
+          }}
+          sourceCommandIds={[]}
+          context={context}
+          onFork={onFork}
+          onRetry={onRetry}
+          editWorkspaceRewindAvailability={{ enabled: false, reason: "unavailable" }}
+          assistantCopyText={assistantCopyText}
+          assistantPreviewCards={[]}
+          assistantCodeCommentCards={assistantCodeCommentCards}
+          assistantCodeCommentProjectionEnabled={assistantCodeCommentProjectionEnabled}
+          canForkLatestAssistant={latestAssistantTextRow?.actions?.canFork === true}
+          canRetryLatestAssistant={latestAssistantTextRow?.actions?.canRetry === true}
+          highspeed={false}
+        />
       ) : null}
       {latestAssistantTextRow ? (
         <ConversationTurnRow

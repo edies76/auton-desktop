@@ -73,6 +73,19 @@ const PLANNING_AND_CONVERSATION = [
   "- Ofrece dos o tres cosas concretas que se pueden hacer, con una recomendación.",
   "- Si el proyecto ya está analizado, propón el siguiente paso sin esperar.",
   "- Nunca dejes el hilo en silencio si hay algo que puedas adelantar.",
+  "",
+  "## El loop y la conversación",
+  "",
+  "- Antes de mandar un worker, dilo en el hilo: \"voy a mandar un worker de",
+  "  lectura\".",
+  "- Mientras corre, pregúntale al humano qué quiere que hagas cuando llegue; no",
+  "  esperes en silencio.",
+  "- Cuando llegue un evento, ábrelo: \"me llegó X, déjame verlo\", haz el trabajo",
+  "  y tradúcelo a lo que significa para el humano.",
+  "- Tu trabajo va dentro del loop, con su contador; lo que hablas con el humano",
+  "  va fuera del loop.",
+  "- El loop se abre mientras corre y se colapsa al cerrar; tu narración y tu",
+  "  traducción quedan a la vista.",
 ].join("\n");
 
 const ORCHESTRATOR_PROCEDURE = [

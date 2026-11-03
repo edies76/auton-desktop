@@ -525,25 +525,28 @@ describe("buildConversationTurnRenderUnits", () => {
     expect(units[0]?.workSegments?.[0]?.assistantHistoryDefaultOpen).toBe(false);
   });
 
-  it("abre la crónica del turno Auton aunque exista respuesta final", () => {
-    const units = buildConversationTurnRenderUnits([
-      turnHeader(1, { state: "completedSuccess" }),
+  it("el loop Auton se abre mientras corre y se colapsa al terminar", () => {
+    const rows = (headerState: "running" | "completedSuccess") => [
+      turnHeader(1, { state: headerState }),
       userInput(2, "revisa el README"),
       toolCall(3, "Agent", {
         input: { subagent_type: "auton-worker", description: "Revisión del README" },
       }),
       subagent(4, {
         subagentType: "auton-worker",
-        status: "success",
+        status: headerState === "running" ? "running" : "success",
         summaryText: "README revisado",
       }),
       assistantText(5, "Listo: el README está desactualizado."),
-    ]);
+    ];
 
-    // El trabajo y la narración se ven desde el principio; no se esconden
-    // detrás de "Worked for" como en un turno normal de ZCode.
-    expect(units[0]?.assistantHistoryDefaultOpen).toBe(true);
-    expect(units[0]?.workSegments?.[0]?.assistantHistoryDefaultOpen).toBe(true);
+    const [running] = buildConversationTurnRenderUnits(rows("running"));
+    expect(running?.assistantHistoryDefaultOpen).toBe(true);
+    expect(running?.workSegments?.[0]?.assistantHistoryDefaultOpen).toBe(true);
+
+    const [completed] = buildConversationTurnRenderUnits(rows("completedSuccess"));
+    expect(completed?.assistantHistoryDefaultOpen).toBe(false);
+    expect(completed?.workSegments?.[0]?.assistantHistoryDefaultOpen).toBe(false);
   });
 
   it("不按 raw /compact 文本隐藏 CLI 标记为 visible 的 user input", () => {

@@ -264,9 +264,18 @@ function materializeDraftUnit(
     (row) => row.actions?.canFork === true || row.actions?.canRetry === true,
   );
   const lastFlowRow = flowRows.at(-1);
+  const browserTurnEndRowIds = new Set(browserTurnEndRows.map((row) => row.rowId));
+  const orderedBodyRows = visibleOrderedRows.filter(
+    // main 的 workSegments 会从 orderedRows 重建 flow；如果这里只从
+    // bodyRows 抽取截图，它仍会被塞回正文流并在轮尾再次渲染，造成重复和顺序错乱。
+    (row) => !leadingBoundaryRowIds.has(row.rowId) && !browserTurnEndRowIds.has(row.rowId),
+  );
+  const isAutonTurn = hasAutonWorkerRows(flowRows);
   const latestAssistantTextRow =
     actionAssistantTextRow ??
-    (!isRunning && lastFlowRow && isAssistantTextRow(lastFlowRow) ? lastFlowRow : undefined);
+    ((!isRunning || isAutonTurn) && lastFlowRow && isAssistantTextRow(lastFlowRow)
+      ? lastFlowRow
+      : undefined);
   const workDurationMs = resolveConversationTurnWorkDurationMs(draft.header, options, isRunning);
   const workStatus = resolveConversationTurnWorkStatus(
     draft.header,
@@ -274,12 +283,6 @@ function materializeDraftUnit(
     isRunning,
     workDurationMs,
     isInterrupted,
-  );
-  const browserTurnEndRowIds = new Set(browserTurnEndRows.map((row) => row.rowId));
-  const orderedBodyRows = visibleOrderedRows.filter(
-    // main 的 workSegments 会从 orderedRows 重建 flow；如果这里只从
-    // bodyRows 抽取截图，它仍会被塞回正文流并在轮尾再次渲染，造成重复和顺序错乱。
-    (row) => !leadingBoundaryRowIds.has(row.rowId) && !browserTurnEndRowIds.has(row.rowId),
   );
   const workSegments = buildConversationTurnWorkSegments({
     key: draft.key,
@@ -292,8 +295,10 @@ function materializeDraftUnit(
     isInterrupted,
     // En un turno Auton la crónica se ve desde el principio: el trabajo no se
     // esconde detrás de "Worked for". Los turnos de ZCode conservan su regla.
-    forceOpenHistory: forceOpenHistory || hasAutonWorkerRows(orderedBodyRows),
-    interleaveAssistantText: hasAutonWorkerRows(orderedBodyRows),
+    // El loop se abre mientras corre y se colapsa al terminar; la narración y
+    // el follow-up viven fuera del bloque.
+    forceOpenHistory: forceOpenHistory || (isAutonTurn && isRunning),
+    interleaveAssistantText: isAutonTurn,
     timelineOnly,
     nowMs: options.nowMs,
     ...(options.pluginUiPinResolver ? { pluginUiPinResolver: options.pluginUiPinResolver } : {}),
@@ -370,18 +375,19 @@ function normalizeRenderUnitPosition(
   const isLastTurn = index === total - 1;
   const forceOpenHistory = shouldForceOpenAbnormalHistory(unit.header, options.sessionPhase);
   const hasAutonWorker = hasAutonWorkerRows(unit.assistantWorkRows);
+  const autonLoopOpen = hasAutonWorker && unit.isRunning;
   const assistantHistoryDefaultOpen =
     unit.workSegments && unit.workSegments.length > 0
       ? !unit.timelineOnly &&
         (forceOpenHistory ||
-          hasAutonWorker ||
+          autonLoopOpen ||
           (isLastTurn && unit.workSegments.at(-1)?.workStatus?.state === "running") ||
           (unit.workSegments.length === 1 &&
             unit.latestAssistantTextRow === undefined &&
             unit.assistantWorkRows.length > 0))
       : !unit.timelineOnly &&
         (forceOpenHistory ||
-          hasAutonWorker ||
+          autonLoopOpen ||
           (isLastTurn && unit.workStatus?.state === "running") ||
           (unit.latestAssistantTextRow === undefined && unit.assistantWorkRows.length > 0));
   const workSegments = unit.workSegments?.map((segment, segmentIndex, segments) =>
@@ -391,7 +397,7 @@ function normalizeRenderUnitPosition(
           assistantHistoryDefaultOpen:
             !unit.timelineOnly &&
             (forceOpenHistory ||
-              hasAutonWorker ||
+              autonLoopOpen ||
               (isLastTurn && segment.workStatus?.state === "running") ||
               (segments.length === 1 &&
                 unit.latestAssistantTextRow === undefined &&

@@ -82,6 +82,15 @@ describe("el orquestador que sabe planear y conversar", () => {
     expect(staticSection).toContain("propón el siguiente paso sin esperar");
   });
 
+  it("el loop se anuncia, se pregunta mientras corre y se traduce al volver", () => {
+    expect(staticSection).toContain("## El loop y la conversación");
+    expect(staticSection).toContain("Antes de mandar un worker, dilo");
+    expect(staticSection).toContain("Mientras corre, pregúntale al humano");
+    expect(staticSection).toContain("me llegó X, déjame verlo");
+    expect(staticSection).toContain("va fuera del loop");
+    expect(staticSection).toContain("se colapsa al cerrar");
+  });
+
   it("el escaneo del proyecto entra en la sección y el análisis pendiente se anuncia", () => {
     const root = fixture();
     const section = buildOrchestratorSection({ workingDirectory: root }).content;
@@ -127,5 +136,7 @@ describe("el orquestador que sabe planear y conversar", () => {
     expect(text).toContain("Entender la intención");
     expect(text).toContain("Lo que ya sabes del proyecto");
     expect(text).toContain("Falta el análisis del proyecto");
+    expect(text).toContain("El loop y la conversación");
+    expect(text).toContain("Antes de mandar un worker, dilo");
   });
 });

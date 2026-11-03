@@ -31,6 +31,8 @@ export interface ConversationTurnWorkSegment {
   assistantHistoryRows: AssistantWorkRow[];
   assistantFollowingRows: AssistantWorkRow[];
   assistantHistoryDefaultOpen: boolean;
+  /** Auton: el header del loop se ancla al bloque de trabajo, no al primer texto. */
+  autonLoop?: boolean;
   workStatus?: ConversationTurnWorkStatus;
 }
 
@@ -234,6 +236,7 @@ export function buildConversationTurnWorkSegments(options: {
           (visualDrafts.length === 1 &&
             visibleAssistantTextRow === undefined &&
             segmentFlowRows.length > 0)),
+      autonLoop: options.interleaveAssistantText,
       ...(segmentWorkStatus ? { workStatus: segmentWorkStatus } : {}),
     };
   });

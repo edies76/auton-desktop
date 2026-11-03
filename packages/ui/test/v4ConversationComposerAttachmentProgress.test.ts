@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { createElement, type ComponentType, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
@@ -15,8 +16,6 @@ const attachmentState = vi.hoisted(() => ({
   hookOptions: [] as Array<Record<string, unknown>>,
   retryAttachment: vi.fn(),
 }));
-
-const cuaEntryProps = vi.hoisted(() => [] as Array<Record<string, unknown>>);
 
 vi.mock("@/ControlHintTooltip.js", async () => {
   const React = await import("react");
@@ -105,16 +104,6 @@ vi.mock("@/v4/composer/useComposerAttachments.js", () => ({
   },
 }));
 
-vi.mock("@/v4/composer/V4ComposerCuaEntry.js", async () => {
-  const React = await import("react");
-  return {
-    V4ComposerCuaEntry: (props: Record<string, unknown>) => {
-      cuaEntryProps.push(props);
-      return React.createElement("span", { "data-cua-entry": "true" });
-    },
-  };
-});
-
 vi.mock("@/v4/composer/V4ComposerToolbar.js", async () => {
   const React = await import("react");
   return {
@@ -149,7 +138,7 @@ function renderComposer(overrides: Record<string, unknown> = {}) {
 }
 
 describe("ConversationComposer attachment upload progress", () => {
-  it("只让聚焦且未禁用的 composer 监听 add-to-chat，并保留 CUA 常驻入口", () => {
+  it("solo deja escuchar add-to-chat al composer enfocado y ya no muestra Computer Use", () => {
     const html = renderComposer({
       disabled: true,
       isWebRemoteControl: true,
@@ -160,13 +149,17 @@ describe("ConversationComposer attachment upload progress", () => {
     expect(attachmentState.hookOptions.at(-1)).toMatchObject({
       listenAddToChatEvents: false,
     });
-    expect(html).toContain('data-cua-entry="true"');
-    expect(cuaEntryProps.at(-1)).toMatchObject({
-      currentSessionBusy: false,
-      isWebRemoteControl: true,
-      remoteSessionId: "remote-1",
-      workspacePath: "/workspace",
-    });
+    expect(html).not.toContain('data-cua-entry="true"');
+    expect(html).not.toContain("Computer Use");
+    expect(html).toContain(TID_V4_COMPOSER_SEND);
+  });
+
+  it("el composer conserva el input real y el envío", () => {
+    const source = readFileSync("packages/ui/src/v4/ConversationComposer.tsx", "utf8");
+    expect(source).toContain("TID_V4_COMPOSER_INPUT");
+    expect(source).toContain("TID_V4_COMPOSER_SEND");
+    expect(source).not.toContain("V4ComposerCuaEntry");
+    expect(source).not.toContain("computerUse");
   });
 
   it("图片显示上传圆环与百分比，未 ready 时发送按钮 disabled", () => {

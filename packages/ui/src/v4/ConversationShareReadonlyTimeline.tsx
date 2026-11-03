@@ -899,6 +899,8 @@ function ReadonlySegment({
               </div>
             </CollapsibleContent>
           );
+        } else if (item.kind === "assistantReasoning" || item.kind === "assistantLoopReasoning") {
+          content = <ReasoningPresentation row={item.row} />;
         } else {
           content = (
             <ReadonlyAssistantWorkItems
