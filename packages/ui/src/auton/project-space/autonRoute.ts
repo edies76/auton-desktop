@@ -3,5 +3,5 @@
  * `Root` sin montar el shell completo.
  */
 export function isAutonRoute(search: string): boolean {
-  return new URLSearchParams(search).get("auton") !== "zcode";
+  return new URLSearchParams(search).get("auton") === "projects";
 }
