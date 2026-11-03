@@ -30,7 +30,8 @@ Es **el espacio de un proyecto, y solo uno a la vez**. Se compone de tres zonas:
 
 ### 2.1 El hilo del orquestador (centro, lo principal)
 
-- Es **una conversación**, no un panel de control. Arriba del hilo, el nombre del proyecto.
+- Es **una conversación**, no un panel de control. Arriba del hilo, el nombre del proyecto y la etiqueta
+  **Orquestador**, que lo distingue de un worker.
 - Aquí vive **la narración del orquestador** y, **anidados en el hilo**, los **bloques de trabajo**.
 - **El humano solo escribe aquí.** No hay otro campo de texto en la pantalla.
 

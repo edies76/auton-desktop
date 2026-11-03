@@ -547,6 +547,13 @@ export function WorkspaceHeaderTitleSection({
         title={activeTaskTitle}
       >
         <span className="min-w-0 truncate">{activeTaskTitle}</span>
+        {/* El hilo central es el orquestador; el panel izquierdo son los workers. */}
+        <span
+          data-testid="auton-orchestrator-badge"
+          className="shrink-0 rounded-sm border border-border bg-secondary/40 px-1.5 py-0.5 text-ui-xs font-medium text-foreground-subtle"
+        >
+          Orquestador
+        </span>
         {/* {activeTaskChangeSummary ? (
           <>
             {activeTaskChangeSummary.added > 0 ? (

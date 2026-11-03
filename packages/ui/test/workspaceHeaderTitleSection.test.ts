@@ -251,7 +251,41 @@ describe("WorkspaceHeaderTitleSection", () => {
     expect(html).not.toContain(`data-testid="${TID_WORKSPACE_TITLE}"`);
     expect(html).not.toContain(`data-testid="${TID_WORKSPACE_PATH}"`);
     expect(html).not.toContain(`data-testid="${TID_WORKSPACE_MORE_BUTTON}"`);
+    expect(html).not.toContain('data-testid="auton-orchestrator-badge"');
     expect(capturedGitBranchSwitcherProps).toHaveLength(0);
+  });
+
+  it("labels the active task thread as Orquestador", async () => {
+    const { WorkspaceHeaderTitleSection } = await import("@/WorkspaceHeaderSections.js");
+
+    const html = renderToStaticMarkup(
+      createElement(WorkspaceHeaderTitleSection, {
+        workspaceAbsPath: "/workspace/zcode-cli",
+        projectName: "zcode-cli",
+        activeTaskTitle: "Hilo del proyecto",
+        activeTaskId: "task-1",
+        activeTraceId: "trace-1",
+        activeSessionId: "session-1",
+        activeTaskProvider: "glm",
+        gitSummary: { isRepository: false },
+        gitDirtyFileCount: 0,
+        sessionLogPath: null,
+        nativeSessionLogProvider: null,
+        nativeSessionLogPath: null,
+        nativeSessionLogExists: false,
+        nativeSessionLogLoading: false,
+        providerWorkspaceConfigPath: null,
+        providerWorkspaceConfigExists: false,
+        providerWorkspaceConfigLoading: false,
+        workspaceHeaderState: { selectedProvider: "glm" },
+        selectedEditor: null,
+        onRefreshGit: vi.fn(),
+      }),
+    );
+
+    const badgeAt = html.indexOf('data-testid="auton-orchestrator-badge"');
+    expect(badgeAt).toBeGreaterThan(html.indexOf(`data-testid="${TID_WORKSPACE_TITLE}"`));
+    expect(html).toContain("Orquestador");
   });
 
   it("places the workspace icon before the title and removes the inline branch in mobile mode", async () => {
