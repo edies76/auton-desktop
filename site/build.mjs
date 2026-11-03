@@ -15,6 +15,7 @@ const PUBLIC_PAGES = [
   { slug: "como-trabaja", file: "docs/public/como-trabaja.md", title: "Cómo trabaja", blurb: "El recorrido de un objetivo, de la idea al cierre con evidencia." },
   { slug: "limites-y-autonomia", file: "docs/public/limites-y-autonomia.md", title: "Límites y autonomía", blurb: "Cuándo decide solo y cuándo te consulta." },
   { slug: "datos-y-privacidad", file: "docs/public/datos-y-privacidad.md", title: "Datos y privacidad", blurb: "Dónde vive tu trabajo y qué sale de tu equipo." },
+  { slug: "nucleo-en-vivo", file: "docs/public/nucleo-en-vivo.md", title: "El núcleo en vivo", blurb: "Cómo narra, cómo se ven los canales y cómo se deshace el trabajo." },
   { slug: "preguntas-frecuentes", file: "docs/public/preguntas-frecuentes.md", title: "Preguntas frecuentes", blurb: "Dudas concretas sobre el producto." },
   { slug: "vision", file: "context/AUTON-VISION.md", title: "Visión del producto", blurb: "El documento central: problema, tesis y superficies." },
   { slug: "ARQUITECTURA-ORQUESTADOR", file: "context/ARQUITECTURA-ORQUESTADOR.md", title: "Arquitectura del orquestador", blurb: "El loop variable, los tres relojes y los canales dentro del hilo." },
@@ -41,6 +42,7 @@ const PRIVATE_PAGES = [
   { slug: "contrato-del-plan", file: "docs/private/contrato-del-plan.md", title: "Contrato del plan", blurb: "El archivo del plan, campo por campo." },
   { slug: "protocolo-de-reporte", file: "docs/private/protocolo-de-reporte.md", title: "Protocolo de reporte", blurb: "Qué puede un worker y cómo reporta un límite mal calibrado." },
   { slug: "verificacion-y-pruebas", file: "docs/private/verificacion-y-pruebas.md", title: "Verificación y pruebas", blurb: "Qué cubre cada suite y qué no se probó." },
+  { slug: "nucleo-bucle-vivo", file: "docs/private/nucleo-bucle-vivo.md", title: "Núcleo en vivo: implementación", blurb: "Bucle, latido, canales y canal rápido, con sus pruebas." },
   { slug: "deuda-y-riesgos", file: "docs/private/deuda-y-riesgos.md", title: "Deuda y riesgos", blurb: "Lo que falta y lo que puede romperse." },
 ];
 

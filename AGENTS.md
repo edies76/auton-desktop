@@ -45,6 +45,15 @@ argumentos) y copiar esa forma. Nada de estilo propio.
 **Y se deja constancia**: al cerrar el trabajo, se anota **en la terminal de la sesion** (el archivo de la
 sesion) que capacidad se anadio, con sus cuatro piezas y su prueba; y si falta alguna, **cual**.
 
+**Al cerrar un bloque de trabajo** (no en cada commit suelto), el mismo cambio actualiza:
+
+- la documentacion **privada** (`docs/private/`) con el detalle que permite continuar sin preguntar;
+- la documentacion **publica** (`docs/public/`) con lo que el producto promete ahora;
+- `VERSION` y `CHANGELOG.md` si el bloque cambia comportamiento;
+- la entrada en `docs/agent-logs/terminalN.md`.
+
+Si el bloque es grande y no se documenta, se considera **no terminado**, aunque el codigo funcione.
+
 **Prueba de que la regla se cumplio**: pedirle al orquestador que use esa capacidad y ver que la usa.
 
 **Regla dura: lo que no esta en el repositorio no existe.** Los acuerdos que se tomen por el buzon de

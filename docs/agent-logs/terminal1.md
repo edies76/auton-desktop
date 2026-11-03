@@ -33,3 +33,34 @@ Qué: D5 y `docs/CONTRATO-DE-NOTIFICACIONES.md`: el orquestador no cierra el tur
 tipos de salida y abre canales de ejecución dentro del hilo.
 Por qué: al delegar se pierde la presencia de ingeniero; el feedback constante es lo que la devuelve.
 Verificado con: revisión del documento contra `ARQUITECTURA-ORQUESTADOR.md`.
+
+## 2026-11-03 — REGLA DE LAS CUATRO PIEZAS aplicada al núcleo
+
+Capacidades revisadas y su estado de las cuatro piezas:
+
+1. **AutonPlan** — handler en \core/src/auton/plan-handler.ts\; registrada en
+   \uiltInTools\; línea de prompt en \contextAuton.ts\ ("Antes de despachar,
+   léelo con AutonPlan action:\"read\"", sección "El plan"); prueba en
+   \core/tests/auton-plan-tool.test.ts\ y \uton-four-pieces.test.ts\.
+2. **AutonRevert** — handler \core/src/auton/revert-handler.ts\; registrada en
+   \uiltInTools\; línea de prompt en \contextAuton.ts\ ("## Deshacer", cuándo
+   usarla y cómo: agentId, itemId, paths); pruebas \uton-revert.test.ts\,
+   \uton-revert-e2e.test.ts\, \dapters/tests/auton-revert-bytes.test.ts\.
+3. **Esfuerzo del worker** — parámetro \ffort\ de la tool Agent (contrato +
+   registro); línea en \contextOrchestrator.ts\ ("el esfuerzo va en el campo
+   effort de la tool"); prueba \uton-effort-param.test.ts\.
+4. **Datos de contexto** — el prompt ahora nombra \.auton/plan.json\,
+   \.auton/changes.jsonl\ y \.auton/reverts.jsonl\ (sección "Lo que queda
+   escrito"), y \uilder.ts\ incluye \uildAutonSection()\ y
+   \uildOrchestratorSection()\. Verificado por \uton-four-pieces.test.ts\.
+
+Prueba de la regla: \uton-four-pieces.test.ts\ comprueba registro, línea de
+prompt y ensamblado. La elección del modelo (que LLAME en vez de hacerlo a mano)
+queda como prueba 17 de \context/PRUEBAS-QUE-PROMETEMOS.md\, que necesita modelo
+real: no se ejecutó aquí.
+
+Pruebas de la etapa 2 añadidas a \context/PRUEBAS-QUE-PROMETEMOS.md\: 2, 3, 4, 8,
+14 y 17, con la tabla de cobertura automatizada.
+
+Documentación: pública \docs/public/nucleo-en-vivo.md\; privada
+\docs/private/nucleo-bucle-vivo.md\. Ambas registradas en \site/build.mjs\.

@@ -133,6 +133,30 @@ Esto es lo que hace que el multiagente **se sienta** y no se administre.
   izquierda **los workers**, clicables, **en vivo**, con **parada manual** y **sin campo de texto**; y se
   distingue **de un vistazo** qué habla el orquestador y qué hace un worker.
 
+### 17. El orquestador ELIGE la herramienta, no la reimplementa **[auto]**
+- **Qué prometemos**: lo que existe, se usa. Una capacidad sin línea en el prompt es código muerto.
+- **Cómo se prueba**: pedirle en una sesión real "deshaz el sprint 2" y, aparte, "escribe el plan".
+- **Qué tiene que verse**: la llamada a **AutonRevert** (con `itemId` del sprint) y a **AutonPlan** en el
+  hilo; el orquestador **no** intenta revertir a mano con `Bash` ni `Write`.
+- **Cómo se comprueba sin modelo**: `core/tests/auton-four-pieces.test.ts` verifica que la herramienta
+  está registrada, que su nombre aparece en la sección de prompt que se ensambla y que la sección está
+  incluida en el builder. La elección del modelo requiere la corrida con modelo real.
+
+---
+
+## Cobertura automatizada
+
+| Prueba | Archivo |
+| --- | --- |
+| 2. No termina respuestas | `core/tests/auton-live-loop.test.ts`, `auton-live-turn-runtime.test.ts` |
+| 3. Canales anidados | `ui/test/autonThreadChannels.test.tsx`, `ui/test/autonSubagentChannel.test.ts` |
+| 4. Canal rápido bidireccional | `core/tests/auton-fast-channel-runtime.test.ts` |
+| 8. Límites versionados y no relajables | `core/tests/auton-limits-guard.test.ts`, `auton-plan-tool.test.ts` |
+| 14. Deshacer devuelve los archivos idénticos | `core/tests/auton-revert.test.ts`, `auton-revert-e2e.test.ts`, `adapters/tests/auton-revert-bytes.test.ts` |
+| 17. El orquestador elige la herramienta | `core/tests/auton-four-pieces.test.ts` |
+
+Las pruebas 1, 5, 6, 7, 9, 10, 11, 12, 13, 15 y 16 siguen siendo corridas a mano con modelo real.
+
 ---
 
 ## Lo que estas pruebas protegen
