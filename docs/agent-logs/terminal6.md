@@ -64,3 +64,7 @@ muestran en su grupo cuando el runtime los marca en `workerTaskIds`.
   "Ver chat completo" usaron su conversación real sin compositor; parar la dejó Terminado.
   Capturas: `launch-full-worker.png`, `launch-full-worker-summary.png`,
   `launch-full-worker-chat.png`, `full-worker-stopped2.png`.
+
+- Segunda corrida completa: `Agentes ZCode 2` (un `auton-worker` terminado y otro trabajando) con el
+  hilo del orquestador abierto y fuera de la lista; captura `launch-full-worker-2.png`. La parada
+  del worker completo usa su propia sesión (worker 4 pasó a Terminado 01:25).
