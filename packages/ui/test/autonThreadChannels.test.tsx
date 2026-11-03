@@ -5,6 +5,7 @@ import type { SubagentRow, ToolCallRow } from "@zcode/shared/zcode-protocol-v4";
 import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { buildAssistantWorkRenderItems } from "@/v4/conversationAssistantWorkItems.js";
 import { ConversationAgentToolCallRow } from "@/v4/ConversationAgentToolCallRow.js";
+import { WakeEventRow } from "@/auton/WakeEventRow.js";
 import type { ConversationRowRenderContext } from "@/v4/conversationRowContext.js";
 
 const START = "2026-11-02T20:00:00.000Z";
@@ -125,5 +126,51 @@ describe("hilo real con dos canales y eventos despertadores", () => {
     expect(clocks).toHaveLength(2);
     // Sin filas de cierre mientras ambos siguen vivos.
     expect(html).not.toContain('data-kind="closed"');
+  });
+
+  it("el hilo pinta una fila despertadora de cada tipo, con su data-kind y su acción", () => {
+    const rows = [
+      agentRow(1, "tool-run", "running"),
+      subagentRow({ rowId: 11, parentToolCallId: "tool-run", status: "running", summaryText: "uno" }),
+      agentRow(2, "tool-done", "success"),
+      subagentRow({
+        rowId: 12,
+        parentToolCallId: "tool-done",
+        status: "success",
+        endedAt: "2026-11-02T20:02:14.000Z",
+        summaryText: "verificado",
+      }),
+    ] as never;
+
+    const channels = buildAssistantWorkRenderItems(rows, "hidden")
+      .filter((item) => item.kind === "agentToolCall")
+      .map(renderRow)
+      .join("\n");
+
+    const question = renderToStaticMarkup(
+      createElement(WakeEventRow, {
+        kind: "question",
+        workerName: "Programador",
+        title: "¿qué criterio de hecho uso?",
+        detail: "bloquea s2",
+        at: "01:10",
+        actionLabel: "Responder",
+        onAction: () => {},
+      }),
+    );
+    const heartbeat = renderToStaticMarkup(
+      createElement(WakeEventRow, {
+        kind: "heartbeat",
+        title: "1 programador sigue trabajando",
+        at: "01:32",
+      }),
+    );
+
+    const html = [channels, question, heartbeat].join("\n");
+
+    const kinds = [...html.matchAll(/data-kind="([a-z]+)"/g)].map((match) => match[1]);
+    expect(kinds.sort()).toEqual(["closed", "heartbeat", "question"]);
+    expect(question).toContain("Responder");
+    expect(heartbeat).not.toContain("Responder");
   });
 });
