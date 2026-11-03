@@ -198,7 +198,85 @@ partir un archivo en diez sprints.
 | Selector de modelo y rotación | Útil, no diferencial | Después |
 | Su interfaz y su forma de guardar datos | El desktop lo hace mejor | **No** |
 
-## 14. Orden de construcción
+## 16. La experiencia objetivo, escrita tal cual (esto es lo que se construye)
+
+```
+Tú:    Mejora el diseño del chat y arregla el error de inicio de sesión.
+
+Auton: Voy a trabajar los dos frentes. Un programador revisa el diseño
+       y otro investiga el inicio de sesión.
+
+       ┌ Trabajo · 02:14 · [expandir] ───────────────────────────────┐
+       │ Programador 1 — Diseño        · 02:14  ajustando el cuadro  │
+       │                                        de mensajes          │
+       │ Programador 2 — Inicio sesión · 01:58  la sesión no se      │
+       │                                        restaura bien       │
+       └─────────────────────────────────────────────────────────────┘
+
+Auton: El problema de sesión parece estar en la recuperación del usuario.
+       Le pedí que confirme la causa antes de tocarla.
+```
+
+Lo que hay que leer en esa escena, porque cada pieza es un requisito:
+- **Una sola conversación.** El humano no abre pestañas ni cambia de sesión.
+- **El bloque de trabajo es un canal anidado**: agrupa a los workers, se abre y se cierra sin límite,
+  y **cada uno lleva su reloj**.
+- **El reloj del bloque (02:14) es el del trabajo en curso**, no el total de la tarea.
+- El orquestador habla **arriba y abajo** del bloque: antes para decir qué va a hacer y con quién,
+  después para contar qué encontró y **qué decidió**. Sin huecos.
+- Los workers hablan con el orquestador, **no con el humano**; lo que el humano ve de ellos es lo que el
+  orquestador decide contar.
+
+## 17. Corrección de vocabulario: el sprint es del orquestador
+
+**Se decide** (corrección de Edi, aceptada): el **sprint pertenece al orquestador**. Es su unidad de
+trabajo: tiene dueño (él), criterio de hecho, reloj y evidencia. Lo que el worker recibe **no es un
+sprint**: es un **encargo** — el trozo de ese sprint que él puede hacer.
+
+```
+orquestador ──(sprint: criterio + reloj + evidencia)──► encargo ──► worker
+```
+
+Por qué importa: si el sprint fuera del worker, el orquestador sería un repartidor de tareas ajenas. Al
+ser suyo, **él sigue el sprint**, decide qué manda en cada momento, cuándo cambia de enfoque y cuándo lo
+cierra. Eso es dirigir.
+
+Consecuencia práctica: en el tablero, **el sprint es del orquestador**; debajo aparecen los encargos
+enviados, que son los que los workers ejecutan.
+
+## 18. El motor: qué es Muse Code, dónde vive y qué ganamos
+
+### Cómo se integra (y por qué no es una fusión de código)
+Muse Code, igual que el CLI de ZCode o el de Grok, es **un programa que se instala aparte**. Auton **no
+mete su código dentro**: lo **lanza, le da el encargo y lee su reporte**. Es exactamente lo que hace hoy
+el prototipo con los motores que ya soporta: los busca en el sistema, elige uno y lo ejecuta en la
+carpeta del worker.
+
+Por tanto:
+- **Sí hay que instalarlo aparte** (su CLI o su SDK, lo que ofrezca).
+- El código de Auton **no lo contiene**: lo usa como una herramienta más.
+- Y si algún día ofrece SDK embebible, se puede pasar a ese modo; eso se decide al verificar (punto 11).
+
+### Lo que NO es el uso
+No es que dos motores trabajen **sobre lo mismo a la vez**. Cada sprint corre en **un motor**, y el
+orquestador elige cuál al despachar. Dos motores corriendo en paralelo significa **dos encargos
+distintos**, no dos sobre el mismo archivo.
+
+### Lo que sí ganamos
+1. **El criterio de la hackathon**: usar herramientas de IA de Meta, de verdad y no de adorno.
+2. **Resiliencia**: si un motor no está disponible o es malo para algo, se cambia sin cambiar nada más.
+3. **Que se pueda añadir cualquier motor en el futuro.** Sí: **ese es el punto**. Auton es agnóstico del
+   motor; el motor es un enchufe. Hoy: el de casa (ZCode), Muse Code, y mañana el que salga.
+4. **Un duelo de motores**, opcional y honesto: el **mismo encargo**, dos motores, **dos entornos
+   separados**, y el revisor compara los dos resultados. No para trabajar juntos, sino para elegir el
+   mejor. Es una escena potente para la demo y no requiere nada nuevo: el reviewer ya existe.
+
+### El límite que hay que decir en voz alta
+Cada motor tiene **su propio sistema de permisos y aprobaciones**. Auton tiene que **mapear el suyo sobre
+el del motor** (o desactivarlo donde no lo necesite), y eso es trabajo por motor. No es imposible, pero
+tampoco es gratis, y prometerlo sin haberlo probado sería el mismo error que le criticamos a los packs de
+prompts.
+
 
 1. **Política de esfuerzo escrita en el encargo** de cada worker (regula la intensidad; hoy solo es
    recomendación). Es lo más pequeño y lo de más impacto.
