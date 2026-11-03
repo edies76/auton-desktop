@@ -100,6 +100,22 @@ describe("panel de workers", () => {
     expect(within(row).getByTestId("auton-worker-clock").textContent).toBe("01:15");
   });
 
+  it("el encabezado de Workers oculta y muestra la lista", () => {
+    renderUi(
+      <AutonWorkerPanel workers={WORKERS} now={NOW} onOpenWorker={vi.fn()} onStopWorker={vi.fn()} />,
+    );
+
+    const toggle = screen.getByTestId("auton-workers-toggle");
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryAllByTestId("auton-worker-row")).toHaveLength(0);
+
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getAllByTestId("auton-worker-row")).toHaveLength(5);
+  });
+
   it("un worker callado se ve callado, con parpadeo", () => {
     const silent = worker("w9", "trabajando", { lastSignalAt: NOW - 75_000 });
     const { container } = renderUi(
@@ -177,7 +193,6 @@ describe("espacio del proyecto", () => {
     const textboxes = container.querySelectorAll("textarea, input:not([type='button']), [contenteditable='true']");
     expect(textboxes).toHaveLength(1);
     expect(screen.getByTestId("auton-composer")).toBe(textboxes[0]);
-    expect(screen.getByTestId("auton-orchestrator-badge").textContent).toContain("Orquestador");
     expect(screen.getAllByTestId("auton-worker-row")[0]!.dataset.role).toBe("worker");
   });
 

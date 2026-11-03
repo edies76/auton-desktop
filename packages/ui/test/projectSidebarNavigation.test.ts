@@ -58,8 +58,7 @@ it.each([
   },
 );
 
-it("SBV02: filter has project, group and recent update choices", async () => {
-  const onViewChange = vi.fn();
+it("SBV02: la cabecera no ofrece las vistas nativas de ZCode", () => {
   render(
     createElement(
       TooltipProvider,
@@ -74,24 +73,19 @@ it("SBV02: filter has project, group and recent update choices", async () => {
         createElement(ProjectSidebarListHeader, {
           onOpenCommandCenter: vi.fn(),
           view: "projects",
-          onViewChange,
+          onViewChange: vi.fn(),
         }),
       ),
     ),
   );
-  const trigger = screen.getByTestId("sidebar-view-menu");
-  fireEvent.keyDown(trigger, { key: "ArrowDown" });
-  const choices = await screen.findAllByRole("menuitemradio");
-  expect(choices).toHaveLength(4);
-  expect(choices[0]?.getAttribute("aria-checked")).toBe("true");
-  fireEvent.click(screen.getByTestId("sidebar-view-timeline"));
-  expect(onViewChange).toHaveBeenCalledWith("timeline");
-  fireEvent.keyDown(trigger, { key: "ArrowDown" });
-  fireEvent.click(await screen.findByTestId("sidebar-view-workers"));
-  expect(onViewChange).toHaveBeenCalledWith("workers");
+
+  expect(screen.queryByTestId("sidebar-view-menu")).toBeNull();
+  expect(screen.queryByTestId("sidebar-view-projects")).toBeNull();
+  expect(screen.queryByTestId("sidebar-view-timeline")).toBeNull();
+  expect(screen.getByTestId("sidebar-list-title").textContent).toBe("project.projects");
 });
 
-it("SBV03: en workers la cabecera muestra el logo, el proyecto y su ruta", () => {
+it("SBV03: en workers la cabecera muestra el proyecto como fila nativa, sin logo ni ruta", () => {
   const onViewChange = vi.fn();
   render(
     createElement(
@@ -108,7 +102,9 @@ it("SBV03: en workers la cabecera muestra el logo, el proyecto y su ruta", () =>
   );
   const switcher = screen.getByTestId("auton-project-switcher");
   expect(switcher.textContent).toContain("Lunar");
-  expect(switcher.textContent).toContain("/workspace/lunar");
+  expect(switcher.textContent).not.toContain("/workspace/lunar");
+  expect(switcher.querySelector("[data-desktop-logo-badge]")).toBeNull();
+  expect(switcher.querySelector(".lucide-folder")).not.toBeNull();
   fireEvent.click(switcher);
   expect(onViewChange).toHaveBeenCalledWith("projects");
 });

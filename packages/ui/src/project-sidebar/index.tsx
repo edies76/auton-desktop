@@ -1,6 +1,5 @@
 import { SidebarTooltipProvider } from "@/ControlHintTooltip.js";
 export { readProjectSidebarView } from "@/project-sidebar/view-preference.js";
-import { SortableProjects } from "@/project-sidebar/SortableProjects.js";
 export { ArchiveManagement } from "@/project-sidebar/ArchiveManagement.js";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ScrollFadeViewport } from "@/components/ui/scroll-fade-viewport.js";
@@ -13,12 +12,6 @@ import type {
   Theme,
   RemoteProjectHost,
 } from "@/project-sidebar/contract.js";
-import { useProjectPinIntent } from "@/project-sidebar/useProjectPinIntent.js";
-import { ProjectTaskListContext } from "@/project-sidebar/ProjectTaskListContext.js";
-import { useWebRemoteControlStatus } from "@/hooks/useWebRemoteControlStatus.js";
-import { useProjectRemoteSync } from "@/project-sidebar/useProjectRemoteSync.js";
-import { useProjectConnectionDiagnostics } from "@/project-sidebar/useProjectConnectionDiagnostics.js";
-import { useWebRemoteControlFeatureEnabled } from "@/WebRemoteControlFeatureProvider.js";
 import { useProjectDirectory } from "@/project-sidebar/ProjectDirectoryProvider.js";
 export {
   ProjectDirectoryProvider,
@@ -26,6 +19,7 @@ export {
 } from "@/project-sidebar/ProjectDirectoryProvider.js";
 export { ProjectComposerMenu } from "@/project-sidebar/ProjectComposerMenu.js";
 import { AutonWorkersSidebar } from "@/project-sidebar/AutonWorkersSidebar.js";
+import { AutonProjectPicker } from "@/project-sidebar/AutonProjectPicker.js";
 import {
   claimProjectConversationCreation,
   ensureProjectConversation,
@@ -33,31 +27,14 @@ import {
   isPromotableProjectTask,
   projectConversationKey,
   rememberProjectOrchestrator,
-  resolveProjectTaskSelection,
   shouldOpenProjectOrchestrator,
 } from "@/project-sidebar/projectConversation.js";
 import { useAutonProjectConversationStore } from "@/project-sidebar/projectConversationStore.js";
-import { useAutonWorkerFocusStore } from "@/auton/project-space/workerFocusStore.js";
 import { useProjectTaskNavigation } from "@/project-sidebar/useProjectTaskNavigation.js";
-import { useProjectFileTree } from "@/project-sidebar/useProjectFileTree.js";
-import {
-  selectProjectRows,
-  selectSortedProjects,
-  projectKey,
-  projectHasUnread,
-  projectSourceServerId,
-} from "@/project-sidebar/view.js";
-import { TaskGroupedView } from "@/project-sidebar/TaskGroupedView.js";
-import { taskGroupKey } from "@/project-sidebar/grouped-view.js";
-import { ProjectTaskRows } from "@/project-sidebar/ProjectTaskRows.js";
-import {
-  ProjectSidebarNode,
-  runProjectAction as action,
-} from "@/project-sidebar/ProjectSidebarNode.js";
+import { selectSortedProjects, projectKey } from "@/project-sidebar/view.js";
 import { ProjectCreation } from "@/project-sidebar/ProjectCreation.js";
 import { ProjectEditor } from "@/project-sidebar/ProjectEditor.js";
 import { RemoteProjectPicker } from "@/project-sidebar/RemoteProjectPicker.js";
-import { ProjectSections } from "@/project-sidebar/ProjectSections.js";
 import { ProjectSidebarListHeader } from "@/project-sidebar/ProjectSidebarListHeader.js";
 import { ProjectSidebarNavigation } from "@/project-sidebar/ProjectSidebarNavigation.js";
 import { HomeOnlyWorkspaceRows } from "@/project-sidebar/HomeOnlyWorkspaceRows.js";
@@ -75,6 +52,9 @@ export type {
   ProjectSidebarProps,
 } from "@/project-sidebar/contract.js";
 
+const PROJECT_START_PROMPT =
+  "Arranca la conversación de este proyecto: preséntate en una frase como el orquestador, di que estás listo y pregunta qué quiere hacer el humano. No abras workers ni toques archivos hasta que responda.";
+
 // 右侧面板显隐曾让所有项目的菜单和 Tooltip 重渲染；只隔离无关父更新，保留目录/context 订阅。
 export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebarProps) {
   const {
@@ -87,21 +67,16 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     error,
     loading,
     preferences,
-    groups,
-    deviceNames,
   } = useProjectDirectory();
-  const { tree, pin } = useProjectPinIntent(authoritativeTree);
-  const remoteSync = useProjectRemoteSync(props, directory);
-  const diagnostics = useProjectConnectionDiagnostics(directory, props);
+  const tree = authoritativeTree;
   const onSelectTask = useProjectTaskNavigation(props, tree, remoteService);
   const { intl, localePreference, setLocalePreference } = useZCodeIntl();
   const tabStore = useTabStoreApi();
   const setTheme = useZCodeStore((state) => state.setTheme);
   const { openCodingPlanUpgrade } = useCodingPlanUpgradeDialog();
-  const { view, setView } = preferences;
+  const { view: storedView, setView } = preferences;
+  const view = storedView === "projects" ? "projects" : "workers";
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [groupedToolbar, setGroupedToolbar] = useState<HTMLDivElement | null>(null);
-  const [groupedSticky, setGroupedSticky] = useState<HTMLDivElement | null>(null);
   const [editor, setEditor] = useState<{ project: VirtualProject | null } | null>(null);
   const [creating, setCreating] = useState(false);
   // 当前任务只影响远端“创建项目”的默认设备；分组继承在点击时读，
@@ -117,22 +92,15 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     const workspaceKey = props.workspaceIdentity?.trim() || props.workspacePath;
     return state.workspaces[workspaceKey]?.activeTaskId ?? null;
   });
-  const lastOrchestratorRef = useRef<string | null>(null);
+  const workspaceKey = props.workspaceIdentity?.trim() || props.workspacePath;
   const forcedWorkersRef = useRef(false);
-  // El panel del proyecto arranca en workers, no en la lista de chats.
+  // Al abrir la app, el panel entra en workers; el selector de proyectos solo
+  // se abre cuando el humano lo pide.
   useEffect(() => {
     if (forcedWorkersRef.current) return;
     forcedWorkersRef.current = true;
-    if (view !== "workers") setView("workers");
+    if (view === "projects") setView("workers");
   }, [setView, view]);
-  // Al entrar a un proyecto, el panel muestra sus workers; el hilo del
-  // orquestador es el chat del centro y no vuelve a listarse como tarea.
-  useEffect(() => {
-    if (!activeTaskId || lastOrchestratorRef.current === activeTaskId) return;
-    lastOrchestratorRef.current = activeTaskId;
-    if (view !== "workers") setView("workers");
-  }, [activeTaskId, setView, view]);
-  const workspaceKey = props.workspaceIdentity?.trim() || props.workspacePath;
   const activeProject = useMemo(() => {
     const activeProjectId = activeTaskId
       ? tree.tasks.find((task) => task.taskId === activeTaskId)?.projectId
@@ -219,8 +187,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     props.onCreateTask({
       projectId: activeProject.id,
       taskGroupId: null,
-      initialPrompt:
-        "Arranca la conversación de este proyecto: preséntate en una frase como el orquestador, di que estás listo y pregunta qué quiere hacer el humano. No abras workers ni toques archivos hasta que responda.",
+      initialPrompt: PROJECT_START_PROMPT,
     });
   }, [
     activeConversation,
@@ -250,166 +217,32 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     if (!belongs) return;
     rememberProjectOrchestrator(activeConversation.key, activeTaskId);
   }, [activeConversation, activeProject, activeTaskId, tree.tasks]);
-  // Solo una acción del humano cambia la conversación del proyecto. Un chat
-  // legado reabre el orquestador y una sesión de worker se muestra en su panel
-  // de solo lectura; ninguno de los dos se promueve ni se edita como chat.
-  const selectTask = useCallback<ProjectSidebarProps["onSelectTask"]>(
-    (...args) => {
-      const task = tree.tasks.find((entry) => entry.taskId === args[1]);
-      if (!task?.projectId) {
-        onSelectTask(...args);
-        return;
-      }
-      const key = projectConversationKey(workspaceKey, task.projectId);
-      const projectTasks = tree.tasks.filter((entry) => entry.projectId === task.projectId);
-      const conversation = ensureProjectConversation(key, projectTasks, activeTaskId);
-      const selection = resolveProjectTaskSelection({
-        taskId: task.taskId,
-        orchestratorTaskId: conversation.orchestratorTaskId,
-        legacyTaskIds: conversation.legacyTaskIds,
-      });
-
-      if (selection.action === "worker") {
-        const worker = useAutonWorkerFocusStore
-          .getState()
-          .liveWorkers.find((entry) => entry.id === task.taskId);
-        if (worker) {
-          useAutonWorkerFocusStore
-            .getState()
-            .select(worker.id, task.workspacePath, task.workspaceIdentity);
-        }
-        return;
-      }
-
-      if (selection.action === "redirect-orchestrator") {
-        const orchestrator = tree.tasks.find(
-          (entry) => entry.taskId === conversation.orchestratorTaskId,
-        );
-        if (orchestrator) {
-          onSelectTask(
-            orchestrator.workspacePath,
-            orchestrator.taskId,
-            orchestrator.workspaceIdentity,
-          );
-        }
-        return;
-      }
-
-      if (selection.action === "promote-and-open") {
-        rememberProjectOrchestrator(key, task.taskId);
-      }
-      onSelectTask(...args);
-    },
-    [activeTaskId, onSelectTask, tree.tasks, workspaceKey],
-  );
-  const { openFiles, openTaskFiles } = useProjectFileTree(props, directory, remoteService);
-  const remoteControlEnabled = useWebRemoteControlFeatureEnabled();
-  const mobileStatus = useWebRemoteControlStatus({
-    enabled: Boolean(props.isDesktop && remoteControlEnabled),
-  });
-  const mobileView = mobileStatus.mobileConnected ? mobileStatus.mobileViewState : null;
-  const mobileActiveTaskKey =
-    mobileView?.activeWorkspaceKey && mobileView.activeTaskId
-      ? `${mobileView.activeWorkspaceKey}:${mobileView.activeTaskId}`
-      : null;
-  const taskPresentation = useMemo(
-    () => ({
-      isWebRemoteControl: props.isWebRemoteControl,
-      activeWorkspaceKey: props.workspaceIdentity?.trim() || props.workspacePath,
-      mobileActiveTaskKey,
-      onPin: pin,
-      onOpenTaskFiles: openTaskFiles,
-    }),
-    [
-      props.isWebRemoteControl,
-      props.workspacePath,
-      props.workspaceIdentity,
-      mobileActiveTaskKey,
-      pin,
-      openTaskFiles,
-    ],
-  );
-  const msg = (id: string) => intl.formatMessage({ id: `project.${id}` });
-  const start = async (projectId?: string, hostId?: string, taskGroupId?: string | null) => {
-    const activeTaskId = useZCodeSessionStore
-      .getState()
-      .getWorkspaceState(props.workspacePath, props.workspaceIdentity).activeTaskId;
-    const inheritedGroup =
-      view === "grouped" && !projectId && activeTaskId
-        ? (groups.parents.get(
-            taskGroupKey({
-              taskId: activeTaskId,
-              workspacePath: props.workspacePath,
-              workspaceIdentity: props.workspaceIdentity,
-            }),
-          ) ?? null)
-        : view === "grouped" && !projectId
-          ? (useZCodeSessionStore
-              .getState()
-              .getWorkspaceState(props.workspacePath, props.workspaceIdentity).draftTaskGroupId ??
-            null)
-          : null;
-    props.onCreateTask({
-      projectId: projectId ?? null,
-      taskGroupId: taskGroupId === undefined ? inheritedGroup : taskGroupId,
-      ...(hostId ? { hostId } : {}),
-    });
-  };
   const projects = preferences.sort(selectSortedProjects(tree));
-  const expandableProjects = projects.filter(
-    (project) => availability.get(projectKey(project))?.online !== false,
+  const selectProject = useCallback(
+    (project: VirtualProject) => {
+      const key = projectConversationKey(workspaceKey, project.id);
+      const projectTasks = tree.tasks.filter((task) => task.projectId === project.id);
+      const conversation = ensureProjectConversation(key, projectTasks, activeTaskId);
+      const orchestrator = tree.tasks.find(
+        (task) => task.taskId === conversation.orchestratorTaskId,
+      );
+      if (orchestrator) {
+        onSelectTask(
+          orchestrator.workspacePath,
+          orchestrator.taskId,
+          orchestrator.workspaceIdentity,
+        );
+      } else {
+        props.onCreateTask({
+          projectId: project.id,
+          taskGroupId: null,
+          initialPrompt: PROJECT_START_PROMPT,
+        });
+      }
+      setView("workers");
+    },
+    [activeTaskId, onSelectTask, props, setView, tree.tasks, workspaceKey],
   );
-  const hasExpandedProjects = expandableProjects.some(preferences.isExpanded);
-  const reorder = (active: string, over: string) => {
-    const source = projects.find((item) => projectKey(item) === active);
-    const target = projects.find((item) => projectKey(item) === over);
-    if (!source || !target || source.pinned !== target.pinned) return;
-    preferences.reorder(
-      projects.filter((item) => item.pinned === source.pinned),
-      active,
-      over,
-    );
-  };
-  const renderProject = (project: VirtualProject) => {
-    const projectTasks = selectProjectRows(visibleTree, {
-      kind: "project",
-      projectId: project.id,
-      hostId: project.hostId,
-    });
-    const conversation = ensureProjectConversation(
-      projectConversationKey(workspaceKey, project.id),
-      projectTasks,
-      activeTaskId,
-    );
-    const orchestratorTask = projectTasks.find(
-      (task) => task.taskId === conversation.orchestratorTaskId,
-    );
-    return (
-      <ProjectSidebarNode
-        key={projectKey(project)}
-        project={project}
-        deviceLabel={deviceNames.get(projectSourceServerId(project) ?? "")}
-        remoteHost={directory.hosts.find((host) => host.id === project.hostId)}
-        diagnostics={diagnostics.get(project.hostId)}
-        expanded={preferences.isExpanded(project)}
-        onExpandedChange={preferences.setExpanded}
-        hasUnread={projectHasUnread(authoritativeTree, project)}
-        availability={availability.get(projectKey(project))}
-        tasks={orchestratorTask ? [orchestratorTask] : []}
-        onSelect={selectTask}
-        refresh={refresh}
-        service={service}
-        remoteService={remoteService}
-        isDesktop={props.isDesktop}
-        isWebRemoteControl={props.isWebRemoteControl}
-        onCreateTask={props.onCreateTask}
-        onReconnectRemoteWorkspace={props.onReconnectRemoteWorkspace}
-        onEdit={setEditor}
-        onViewFiles={openFiles}
-        remoteActions={remoteSync.actions}
-      />
-    );
-  };
   const openSettings = useCallback(() => {
     tabStore.getState().openSettingsTab();
   }, [tabStore]);
@@ -428,8 +261,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
   // 手机远控 home-only 没有 base attachment，也就没有项目契约；改用 relay 层工作区列表与重连入口。
   const homeOnlySwitcher = service ? undefined : props.webRemoteControlWorkspaceSwitcher;
   return (
-    <ProjectTaskListContext.Provider value={taskPresentation}>
-      <SidebarTooltipProvider>
+    <SidebarTooltipProvider>
         <aside data-testid={TID_SIDEBAR} className="flex h-full min-h-0 flex-col overflow-hidden">
           <div
             className={`h-12 shrink-0 [app-region:drag] ${props.isWebRemoteControl ? "max-md:hidden" : ""}`}
@@ -450,19 +282,24 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
                   onOpenCommandCenter={props.onOpenCommandCenter}
                   view={view}
                   onViewChange={setView}
-                  groupedActionsRef={setGroupedToolbar}
                   projectName={activeProject?.name}
                   projectPath={activeProject?.roots[0]?.rootPath}
+                  onAddProject={service ? () => setCreating(true) : undefined}
                 />
                 {/* 原因：仅设 overflow-y:auto 会让拖拽位移打开水平滚动；列表始终只允许纵向滚动。 */}
                 {/* 原因：项目侧栏迁移后普通滚动容器遗漏边缘渐隐；复用统一 mask，随实际滚动边界更新。 */}
                 <div className="relative flex min-h-0 flex-1 flex-col">
-                  <div ref={setGroupedSticky} />
                   <ScrollFadeViewport ref={scrollRef} className="overflow-x-hidden">
                     <div className="flex flex-col gap-3 pb-3">
                       {homeOnlySwitcher ? (
                         <HomeOnlyWorkspaceRows switcher={homeOnlySwitcher} />
-                      ) : view === "workers" ? (
+                      ) : view === "projects" ? (
+                        <AutonProjectPicker
+                          projects={projects}
+                          activeProjectId={activeProject?.id ?? null}
+                          onSelect={selectProject}
+                        />
+                      ) : (
                         <AutonWorkersSidebar
                           tasks={visibleTree.tasks}
                           workspacePath={props.workspacePath}
@@ -472,70 +309,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
                             activeConversation?.conversation.orchestratorTaskId ?? null
                           }
                         />
-                      ) : view === "projects" ? (
-                        <>
-                          <ProjectTaskRows
-                            kind="pinned"
-                            tasks={selectProjectRows(visibleTree, { kind: "pinned" })}
-                            onSelect={selectTask}
-                            refresh={refresh}
-                          />
-                          <SortableProjects
-                            projects={projects.filter((project) => project.pinned)}
-                            renderProject={renderProject}
-                            onReorder={reorder}
-                          />
-                          <ProjectSections
-                            tree={visibleTree}
-                            projects={projects}
-                            directory={directory}
-                            renderProject={renderProject}
-                            onReorder={reorder}
-                            loading={loading}
-                            onSelect={selectTask}
-                            refresh={refresh}
-                            onCreate={() => action(() => start())}
-                            onAddProject={() => setCreating(true)}
-                            hasExpandedProjects={hasExpandedProjects}
-                            canToggleProjects={expandableProjects.length > 0}
-                            onToggleProjects={() =>
-                              preferences.setAllExpanded(expandableProjects, !hasExpandedProjects)
-                            }
-                          />
-                        </>
-                      ) : view === "grouped" ? (
-                        <>
-                          <ProjectTaskRows
-                            kind="pinned"
-                            tasks={selectProjectRows(visibleTree, { kind: "pinned" })}
-                            onSelect={selectTask}
-                            refresh={refresh}
-                          />
-                          <TaskGroupedView
-                            tasks={visibleTree.tasks}
-                            onSelect={selectTask}
-                            refresh={refresh}
-                            scrollRef={scrollRef}
-                            toolbarTarget={groupedToolbar}
-                            stickyTarget={groupedSticky}
-                            workspacePath={props.workspacePath}
-                            workspaceIdentity={props.workspaceIdentity}
-                            onOpenAutomations={props.onOpenAutomations}
-                            onCreate={(groupId) =>
-                              action(() => start(undefined, undefined, groupId))
-                            }
-                          />
-                        </>
-                      ) : (
-                        <ProjectTaskRows
-                          key="timeline"
-                          kind="timeline"
-                          tasks={selectProjectRows(visibleTree, { kind: view })}
-                          onSelect={selectTask}
-                          refresh={refresh}
-                        />
-                      )}
-                      {loading && !homeOnlySwitcher ? (
+                      )}                      {loading && !homeOnlySwitcher ? (
                         <p className="px-4 text-ui-sm text-foreground-subtle">
                           {intl.formatMessage({ id: "common.loading" })}
                         </p>
@@ -614,10 +388,8 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
               onDeleted={refresh}
             />
           ) : null}
-          {remoteSync.dialog}
         </aside>
       </SidebarTooltipProvider>
-    </ProjectTaskListContext.Provider>
   );
 });
 

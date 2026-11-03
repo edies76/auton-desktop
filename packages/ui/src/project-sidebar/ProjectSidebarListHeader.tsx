@@ -1,34 +1,28 @@
-import type { Ref } from "react";
-import { Clock, Folder, Hash, LayoutDashboard, ListFilter, Search } from "lucide-react";
+import { Folder, Plus, Search } from "lucide-react";
 import type { ProjectSidebarProps, ProjectSidebarView } from "@/project-sidebar/contract.js";
 import { Button } from "@/components/ui/button.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
-import { ZCodeStartupLogoBadge } from "@/root/RootStartupLoading.js";
 import { formatCommandShortcutLabel } from "@/lib/keyboardShortcuts.js";
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-} from "@/components/ui/dropdown-menu.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 
-/** 列表头部独立于导航和滚动内容，搜索与视图仍使用现有 owner。 */
+/**
+ * Cabecera del panel del proyecto. En workers muestra el proyecto activo como
+ * una fila nativa (icono de carpeta + nombre); no hay menú de vistas de ZCode.
+ */
 export function ProjectSidebarListHeader({
   onOpenCommandCenter,
   view,
   onViewChange,
-  groupedActionsRef,
   projectName,
   projectPath,
+  onAddProject,
 }: {
   onOpenCommandCenter: ProjectSidebarProps["onOpenCommandCenter"];
   view: ProjectSidebarView;
   onViewChange(view: ProjectSidebarView): void;
-  groupedActionsRef?: Ref<HTMLDivElement>;
   projectName?: string;
   projectPath?: string;
+  onAddProject?: () => void;
 }) {
   const { intl } = useZCodeIntl();
   return (
@@ -37,38 +31,41 @@ export function ProjectSidebarListHeader({
       data-testid="sidebar-search-toolbar"
     >
       {view === "workers" ? (
-        <button
-          type="button"
-          data-testid="auton-project-switcher"
-          className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-1.5 py-1 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-          onClick={() => onViewChange("projects")}
-        >
-          <ZCodeStartupLogoBadge size="titlebar" animated={false} />
-          <span className="min-w-0 flex-1">
-            <span className="block truncate text-ui-sm font-medium text-foreground">
-              {projectName ?? "Proyecto"}
-            </span>
-            {projectPath ? (
-              <span className="block truncate text-ui-xs text-foreground-subtlest">
-                {projectPath}
-              </span>
-            ) : null}
-          </span>
-        </button>
+        projectName ? (
+          <button
+            type="button"
+            data-testid="auton-project-switcher"
+            title={projectPath ?? projectName}
+            className="flex min-w-0 flex-1 items-center gap-2 rounded-lg bg-selected px-2.5 py-1 text-left text-ui-base text-foreground transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+            onClick={() => onViewChange("projects")}
+          >
+            <Folder className="size-4 shrink-0 text-foreground-subtle" aria-hidden="true" />
+            <span className="min-w-0 flex-1 truncate font-medium">{projectName}</span>
+          </button>
+        ) : (
+          <span className="min-w-0 flex-1" aria-hidden="true" />
+        )
       ) : (
         <span
           data-testid="sidebar-list-title"
           className="min-w-0 flex-1 truncate px-2.5 text-ui-base font-medium text-foreground-subtle"
         >
-          {intl.formatMessage({ id: "taskList.title" })}
+          {intl.formatMessage({ id: "project.projects" })}
         </span>
       )}
-      <div
-        ref={groupedActionsRef}
-        className={view === "grouped" ? "flex items-center gap-1" : "hidden"}
-      />
+      {view === "projects" && onAddProject ? (
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="shrink-0 text-foreground-subtle hover:text-foreground"
+          data-testid="sidebar-add-project"
+          aria-label={intl.formatMessage({ id: "project.create" })}
+          onClick={onAddProject}
+        >
+          <Plus className="size-3.5" />
+        </Button>
+      ) : null}
       <ControlHintTooltip
-        // 原因：快捷键拼入标题会继承标题样式；用独立 shortcut 复用标准键帽。
         title={intl.formatMessage({ id: "commandCenter.open" })}
         shortcut={formatCommandShortcutLabel("k")}
       >
@@ -83,52 +80,6 @@ export function ProjectSidebarListHeader({
           <Search className="size-3.5" />
         </Button>
       </ControlHintTooltip>
-      <DropdownMenu>
-        <ControlHintTooltip title={intl.formatMessage({ id: "project.view" })}>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              className="shrink-0 text-foreground-subtle hover:text-foreground"
-              data-testid="sidebar-view-menu"
-              aria-label={intl.formatMessage({ id: "project.view" })}
-            >
-              <ListFilter className="size-3.5" />
-            </Button>
-          </DropdownMenuTrigger>
-        </ControlHintTooltip>
-        <DropdownMenuContent align="end">
-          <DropdownMenuRadioGroup
-            value={view}
-            onValueChange={(value) => {
-              if (
-                value === "projects" ||
-                value === "grouped" ||
-                value === "timeline" ||
-                value === "workers"
-              )
-                onViewChange(value);
-            }}
-          >
-            <DropdownMenuRadioItem data-testid="sidebar-view-projects" value="projects">
-              <Folder className="size-4 text-foreground-subtle" aria-hidden="true" />
-              {intl.formatMessage({ id: "project.viewByProject" })}
-            </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem data-testid="sidebar-view-grouped" value="grouped">
-              <Hash className="size-4 text-foreground-subtle" aria-hidden="true" />
-              {intl.formatMessage({ id: "taskGroup.view" })}
-            </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem data-testid="sidebar-view-timeline" value="timeline">
-              <Clock className="size-4 text-foreground-subtle" aria-hidden="true" />
-              {intl.formatMessage({ id: "project.viewRecentlyUpdated" })}
-            </DropdownMenuRadioItem>
-            <DropdownMenuRadioItem data-testid="sidebar-view-workers" value="workers">
-              <LayoutDashboard className="size-4 text-foreground-subtle" aria-hidden="true" />
-              Workers
-            </DropdownMenuRadioItem>
-          </DropdownMenuRadioGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>
   );
 }

@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
-import { act, cleanup, render, screen } from "@testing-library/react";
-import { forwardRef, Fragment, type ReactNode, type Ref } from "react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { forwardRef, type ReactNode, type Ref } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProjectSidebarProps } from "@/project-sidebar/contract.js";
 import { ProjectSidebar } from "@/project-sidebar/index.js";
 
 const fixture = vi.hoisted(() => ({
-  view: "workers" as "workers" | "timeline" | "grouped" | "projects",
+  view: "workers" as "workers" | "projects",
   onSelectTask: vi.fn(),
   tree: {
     projects: [
@@ -36,12 +36,6 @@ const fixture = vi.hoisted(() => ({
       },
     ],
     tasks: [] as Array<Record<string, unknown>>,
-  },
-  captured: {
-    timeline: [] as string[],
-    pinned: [] as string[],
-    grouped: [] as string[],
-    projectRows: {} as Record<string, string[]>,
   },
 }));
 
@@ -95,26 +89,8 @@ vi.mock("@/project-sidebar/ProjectDirectoryProvider.js", () => ({
   }),
 }));
 
-vi.mock("@/project-sidebar/useProjectPinIntent.js", () => ({
-  useProjectPinIntent: () => ({ tree: fixture.tree, pin: vi.fn() }),
-}));
-vi.mock("@/project-sidebar/useProjectRemoteSync.js", () => ({
-  useProjectRemoteSync: () => ({ actions: [], dialog: null }),
-}));
-vi.mock("@/project-sidebar/useProjectConnectionDiagnostics.js", () => ({
-  useProjectConnectionDiagnostics: () => new Map(),
-}));
 vi.mock("@/project-sidebar/useProjectTaskNavigation.js", () => ({
   useProjectTaskNavigation: () => fixture.onSelectTask,
-}));
-vi.mock("@/project-sidebar/useProjectFileTree.js", () => ({
-  useProjectFileTree: () => ({ openFiles: vi.fn(), openTaskFiles: vi.fn() }),
-}));
-vi.mock("@/hooks/useWebRemoteControlStatus.js", () => ({
-  useWebRemoteControlStatus: () => ({ mobileConnected: false }),
-}));
-vi.mock("@/WebRemoteControlFeatureProvider.js", () => ({
-  useWebRemoteControlFeatureEnabled: () => false,
 }));
 vi.mock("@/i18n/IntlProvider.js", () => ({
   useZCodeIntl: () => ({
@@ -152,57 +128,7 @@ vi.mock("@/project-sidebar/ProjectSidebarNavigation.js", () => ({
   ProjectSidebarNavigation: () => null,
 }));
 vi.mock("@/project-sidebar/AutonWorkersSidebar.js", () => ({
-  AutonWorkersSidebar: () => null,
-}));
-vi.mock("@/project-sidebar/ProjectSidebarListHeader.js", () => ({
-  ProjectSidebarListHeader: () => <div data-testid="list-header" />,
-}));
-vi.mock("@/project-sidebar/ProjectTaskRows.js", () => ({
-  ProjectTaskRows: ({
-    kind,
-    tasks,
-  }: {
-    kind: "timeline" | "pinned";
-    tasks: Array<{ taskId: string }>;
-  }) => {
-    fixture.captured[kind] = tasks.map((entry) => entry.taskId);
-    return <div data-testid={`task-rows-${kind}`} />;
-  },
-}));
-vi.mock("@/project-sidebar/TaskGroupedView.js", () => ({
-  TaskGroupedView: ({ tasks }: { tasks: Array<{ taskId: string }> }) => {
-    fixture.captured.grouped = tasks.map((entry) => entry.taskId);
-    return <div data-testid="grouped-view" />;
-  },
-}));
-vi.mock("@/project-sidebar/SortableProjects.js", () => ({ SortableProjects: () => null }));
-vi.mock("@/project-sidebar/ProjectSections.js", () => ({
-  ProjectSections: ({
-    projects,
-    renderProject,
-  }: {
-    projects: Array<{ id: string }>;
-    renderProject: (project: { id: string }) => ReactNode;
-  }) => (
-    <div data-testid="project-sections">
-      {projects.map((project) => (
-        <Fragment key={project.id}>{renderProject(project)}</Fragment>
-      ))}
-    </div>
-  ),
-}));
-vi.mock("@/project-sidebar/ProjectSidebarNode.js", () => ({
-  ProjectSidebarNode: ({
-    project,
-    tasks,
-  }: {
-    project: { id: string };
-    tasks: Array<{ taskId: string }>;
-  }) => {
-    fixture.captured.projectRows[project.id] = tasks.map((task) => task.taskId);
-    return <div data-testid={`project-node-${project.id}`} />;
-  },
-  runProjectAction: (action: () => void) => action(),
+  AutonWorkersSidebar: () => <div data-testid="workers-panel-placeholder" />,
 }));
 vi.mock("@/project-sidebar/ProjectCreation.js", () => ({ ProjectCreation: () => null }));
 vi.mock("@/project-sidebar/ProjectEditor.js", () => ({ ProjectEditor: () => null }));
@@ -233,78 +159,58 @@ beforeEach(() => {
   localStorage.clear();
   fixture.view = "workers";
   fixture.onSelectTask.mockClear();
-  fixture.captured.timeline = [];
-  fixture.captured.pinned = [];
-  fixture.captured.grouped = [];
-  fixture.captured.projectRows = {};
   fixture.tree.tasks = [
     task("orch1", "p1", 1, "Orquestador Lunar"),
     task("legacy1", "p1", 2, "Chat legado Lunar"),
     task("sess_auton_agent_1", "p1", 3, "Worker Lunar"),
-    task("sess_subagent_agent_1", "p1", 4, "Subagente Lunar"),
     task("orch2", "p2", 1, "Orquestador Otro"),
     task("legacy2", "p2", 2, "Chat legado Otro"),
-    task("suelto", null, 3, "Chat sin proyecto"),
   ];
 });
 
-afterEach(() => {
-  cleanup();
-});
+afterEach(cleanup);
 
-describe("vistas de tareas del proyecto", () => {
-  it("timeline no muestra chats legados ni sesiones de worker", () => {
-    const element = () => <ProjectSidebar {...props()} />;
-    const { rerender } = render(element());
-    act(() => {
-      fixture.view = "timeline";
-    });
-    rerender(element());
+describe("panel del proyecto", () => {
+  it("workers por defecto: proyecto como fila y sin chats ni menú nativo", () => {
+    render(<ProjectSidebar {...props()} />);
 
-    expect(screen.getByTestId("task-rows-timeline")).toBeTruthy();
-    expect(fixture.captured.timeline.sort()).toEqual(["orch1", "orch2"]);
+    expect(screen.getByTestId("workers-panel-placeholder")).toBeTruthy();
+    expect(screen.queryByTestId("auton-project-picker")).toBeNull();
+    expect(screen.queryByTestId("sidebar-view-menu")).toBeNull();
+    expect(screen.queryByText("Chat legado Lunar")).toBeNull();
+    expect(screen.queryByText("Orquestador Lunar")).toBeNull();
+
+    const switcher = screen.getByTestId("auton-project-switcher");
+    expect(switcher.textContent).toContain("Lunar");
+    expect(switcher.textContent).not.toContain("/workspace/lunar");
+    expect(switcher.querySelector("[data-desktop-logo-badge]")).toBeNull();
   });
 
-  it("grouped no muestra chats legados ni sesiones de worker", () => {
-    const element = () => <ProjectSidebar {...props()} />;
-    const { rerender } = render(element());
-    act(() => {
-      fixture.view = "grouped";
-    });
-    rerender(element());
+  it("el selector de proyectos no lista chats, tareas ni crear tarea", () => {
+    fixture.view = "projects";
+    render(<ProjectSidebar {...props()} />);
 
-    expect(screen.getByTestId("grouped-view")).toBeTruthy();
-    expect([...fixture.captured.grouped].sort()).toEqual(["orch1", "orch2"]);
+    expect(screen.getByTestId("auton-project-picker")).toBeTruthy();
+    expect(screen.getByRole("option", { name: /Lunar/ })).toBeTruthy();
+    expect(screen.getByRole("option", { name: /Otro/ })).toBeTruthy();
+    expect(screen.queryByText("Orquestador Lunar")).toBeNull();
+    expect(screen.queryByText("Chat legado Lunar")).toBeNull();
+    expect(screen.queryByText("taskList.title")).toBeNull();
+    expect(screen.queryByText("New task")).toBeNull();
+    expect(screen.queryByTestId("virtual-project-create-task")).toBeNull();
   });
 
-  it("la sección fijada no muestra el chat legado fijado ni workers", () => {
-    fixture.tree.tasks = fixture.tree.tasks.map((entry) =>
-      entry.taskId === "orch1" || entry.taskId === "legacy1"
-        ? { ...entry, pinned: true }
-        : entry,
+  it("elegir el proyecto abre su orquestador y vuelve a workers", () => {
+    fixture.view = "projects";
+    render(<ProjectSidebar {...props()} />);
+
+    fireEvent.click(screen.getByRole("option", { name: /Lunar/ }));
+
+    expect(fixture.onSelectTask).toHaveBeenCalledWith(
+      "/workspace/lunar",
+      "orch1",
+      undefined,
     );
-    const element = () => <ProjectSidebar {...props()} />;
-    const { rerender } = render(element());
-    act(() => {
-      fixture.view = "grouped";
-    });
-    rerender(element());
-
-    expect(fixture.captured.pinned).toEqual(["orch1"]);
-  });
-
-  it("cada fila de proyecto muestra solo su conversación de orquestador", () => {
-    const element = () => <ProjectSidebar {...props()} />;
-    const { rerender } = render(element());
-    act(() => {
-      fixture.view = "projects";
-    });
-    rerender(element());
-
-    expect(screen.getByTestId("project-sections")).toBeTruthy();
-    expect(fixture.captured.projectRows).toEqual({
-      p1: ["orch1"],
-      p2: ["orch2"],
-    });
+    expect(fixture.view).toBe("workers");
   });
 });
