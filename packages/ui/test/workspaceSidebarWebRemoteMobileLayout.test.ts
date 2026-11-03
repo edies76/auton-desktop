@@ -10,6 +10,7 @@ import type {
 import { TooltipProvider } from "@/components/ui/tooltip.js";
 import { WorkspaceSidebar } from "@/WorkspaceSidebar.js";
 import { ProjectDirectoryProvider } from "@/project-sidebar/ProjectDirectoryProvider.js";
+import { useAutonHomeStore } from "@/auton/project-space/homeStore.js";
 const Sidebar = (props: ProjectSidebarProps) =>
   createElement(
     TooltipProvider,
@@ -89,6 +90,13 @@ vi.mock("@/store/StoreProvider.js", () => ({
 }));
 vi.mock("@/v4/useWorkspaceSessionsIndexItems.js", () => ({
   useWorkspaceSessionsIndexItems: () => ({ items: [] }),
+}));
+vi.mock("@/v4/V4ConversationContext.js", () => ({
+  V4PaneConversationProvider: ({ children }: { children: unknown }) => children,
+  useV4Conversation: () => ({ layer: { acquire: () => ({ release: () => undefined }) } }),
+}));
+vi.mock("@/v4/useConversationProjection.js", () => ({
+  useConversationProjection: () => ({ snapshot: { rows: { window: [] } } }),
 }));
 vi.mock("@/i18n/IntlProvider.js", () => ({
   useZCodeIntl: () => ({
@@ -182,6 +190,7 @@ function remoteHost(online: boolean) {
   };
 }
 beforeEach(() => {
+  useAutonHomeStore.setState({ homeVisible: false });
   fixture.local = { projects: [], tasks: [] };
   fixture.remote = { projects: [], tasks: [] };
   fixture.directory = { hosts: [], entries: [] };
@@ -212,7 +221,11 @@ describe("virtual-project sidebar on desktop and mobile", () => {
     fireEvent.click(plugins);
     expect(onOpenPluginStore).toHaveBeenCalledOnce();
   });
-  it("inherits current organization at the top entry and keeps section new-task unclassified", () => {
+  // El árbol de proyectos con menús de Host se reemplazó por el picker de la
+  // pantalla de entrada. Estos casos cubrían ProjectNode/ProjectSections, que
+  // ya no se montan; proyecto y ruta se cubren en AutonProjectList y en la
+  // pantalla de entrada.
+  it.skip("inherits current organization at the top entry and keeps section new-task unclassified", () => {
     const onCreateTask = vi.fn();
     render(createElement(Sidebar, props({ onCreateTask })));
     fireEvent.click(screen.getByText("New task"));
@@ -249,7 +262,7 @@ describe("virtual-project sidebar on desktop and mobile", () => {
     await waitFor(() => expect(screen.queryByText("common.loading")).toBeNull());
     expect(screen.queryByRole("button", { name: "webRemoteControl.switchDevice" })).toBeNull();
   });
-  it("routes a retained remote project's new task to that Host", async () => {
+  it.skip("routes a retained remote project's new task to that Host", async () => {
     remoteHost(true);
     const onCreateTask = vi.fn();
     render(createElement(Sidebar, props({ onCreateTask })));
@@ -263,7 +276,7 @@ describe("virtual-project sidebar on desktop and mobile", () => {
     });
     expect(fixture.sourceManagement).not.toHaveBeenCalled();
   });
-  it("connects a retained Host through the narrow connection port", async () => {
+  it.skip("connects a retained Host through the narrow connection port", async () => {
     remoteHost(false);
     render(createElement(Sidebar, props()));
     await screen.findByText("Remote project");
@@ -272,7 +285,7 @@ describe("virtual-project sidebar on desktop and mobile", () => {
     await waitFor(() => expect(fixture.connectHost).toHaveBeenCalledWith("remote:server:s"));
     expect(fixture.sourceManagement).not.toHaveBeenCalled();
   });
-  it("keeps an online remote project menu aligned with local projects", async () => {
+  it.skip("keeps an online remote project menu aligned with local projects", async () => {
     remoteHost(true);
     render(createElement(Sidebar, props()));
     await screen.findByText("Remote project");
@@ -281,7 +294,7 @@ describe("virtual-project sidebar on desktop and mobile", () => {
     expect(screen.queryByRole("menuitem", { name: "project.removeEntry" })).toBeNull();
     expect(screen.queryByRole("menuitem", { name: "project.addRemoteProject" })).toBeNull();
   });
-  it("removes only the offline project entry without removing its Host", async () => {
+  it.skip("removes only the offline project entry without removing its Host", async () => {
     remoteHost(false);
     render(createElement(Sidebar, props()));
     await screen.findByText("Remote project");

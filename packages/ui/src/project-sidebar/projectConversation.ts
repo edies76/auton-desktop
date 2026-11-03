@@ -1,4 +1,5 @@
 import { isWorkerSessionTaskId } from "@/auton/index.js";
+export { isWorkerSessionTaskId };
 
 /** Lo mínimo que la conversación necesita de una tarea del proyecto. */
 export interface ProjectConversationTask {

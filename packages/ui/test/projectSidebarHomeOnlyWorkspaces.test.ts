@@ -10,6 +10,7 @@ import type { ProjectSidebarProps } from "@/project-sidebar/contract.js";
 import { TooltipProvider } from "@/components/ui/tooltip.js";
 import { WorkspaceSidebar } from "@/WorkspaceSidebar.js";
 import { ProjectDirectoryProvider } from "@/project-sidebar/ProjectDirectoryProvider.js";
+import { useAutonHomeStore } from "@/auton/project-space/homeStore.js";
 
 const Sidebar = (props: ProjectSidebarProps) =>
   createElement(
@@ -180,6 +181,7 @@ const row = (label: string) =>
   screen.getByText(label).closest("[data-home-only-workspace]") as HTMLButtonElement;
 
 beforeEach(() => {
+  useAutonHomeStore.setState({ homeVisible: false });
   fixture.hasProjectService = false;
 });
 afterEach(() => {
