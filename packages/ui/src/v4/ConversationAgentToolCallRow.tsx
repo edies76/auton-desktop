@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TID_V4_ROW, TID_V4_SUBAGENT_OPEN_SIDE_PANE, testId } from "@zcode/shared/test-ids";
 import { ToolCallBlock } from "@/ToolCallBlocks.js";
 import { getAgentPrimaryText } from "@/ToolCallBlocks/renderers/agentHelpers.js";
@@ -6,6 +6,8 @@ import type { ConversationAssistantWorkRenderItem } from "@/v4/conversationAssis
 import type { ConversationRowRenderContext } from "@/v4/conversationRowContext.js";
 import { toolCallRowToLegacyNode } from "@/v4/toolCallRowAdapter.js";
 import { runUserAction } from "@/lib/userActionTelemetry.js";
+import { WakeEventRow } from "@/auton/WakeEventRow.js";
+import { channelClock, wakeEventForSubagent } from "@/auton/subagentChannel.js";
 
 export function openSubagentSessionFromSummary({
   backgrounded: _backgrounded = false,
@@ -61,6 +63,20 @@ export function ConversationAgentToolCallRow({
     });
   }, [childSessionId, context, subagentType, title]);
   const isAutonProgrammer = subagentType === "auton-worker";
+
+  // Reloj del canal: mientras el programador corre, la fila muestra el tiempo.
+  const [now, setNow] = useState(() => Date.now());
+  const running = item.subagentRow.status === "running";
+  useEffect(() => {
+    if (!running) return;
+    const timer = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [running]);
+
+  const clock = channelClock(item.subagentRow, now);
+  const wakeEvent = isAutonProgrammer
+    ? wakeEventForSubagent(item.subagentRow, now, title)
+    : null;
   const agentSummaryAction = useMemo(
     () =>
       !isAutonProgrammer && canOpenChildSession && childSessionId
@@ -93,6 +109,14 @@ export function ConversationAgentToolCallRow({
         agentSummaryAction={agentSummaryAction}
         authoritativeAgentType={subagentType}
       />
+      {isAutonProgrammer && running && clock ? (
+        <div className="px-1 pt-0.5 text-ui-xs text-foreground-subtlest">
+          en marcha · {clock}
+        </div>
+      ) : null}
+      {wakeEvent ? (
+        <WakeEventRow {...wakeEvent} {...(canOpenChildSession ? { onAction: handleOpenChildSession } : {})} />
+      ) : null}
     </div>
   );
 }
