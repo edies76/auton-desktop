@@ -60,13 +60,32 @@ function subagentRow() {
     turnId: "turn_1",
     parentToolCallId: "tool-1",
     childSessionId: "sub-1",
-    subagentType: "auton-worker",
+    subagentType: "Explore",
+    title: "Explorar login",
     status: "running",
     summaryText: "Revisando el login",
     startedAt: NOW - 3_000,
     lastActivityAt: NOW - 1_000,
     createdAt: NOW - 3_000,
     createdAtSeq: 1,
+  };
+}
+
+function fullWorkerRow() {
+  return {
+    kind: "subagent",
+    rowId: 12,
+    turnId: "turn_1",
+    parentToolCallId: "tool-2",
+    childSessionId: "auton-1",
+    subagentType: "auton-worker",
+    title: "Agente completo",
+    status: "running",
+    summaryText: "Revisando el README",
+    startedAt: NOW - 2_000,
+    lastActivityAt: NOW - 1_000,
+    createdAt: NOW - 2_000,
+    createdAtSeq: 2,
   };
 }
 
@@ -94,15 +113,16 @@ afterEach(() => {
 });
 
 describe("sidebar de workers del proyecto", () => {
-  it("separa agentes de subagentes y excluye al orquestador", () => {
-    state.rows = [subagentRow()];
+  it("separa agentes completos de subagentes y excluye al orquestador", () => {
+    state.rows = [subagentRow(), fullWorkerRow()];
     renderSidebar();
 
     expect(document.querySelector('[data-worker-id="orch"]')).toBeNull();
     expect(screen.getByTestId("auton-worker-group-agent").textContent).toContain("Arreglar login");
-    expect(screen.getByTestId("auton-worker-group-subagent").textContent).toContain("worker 1");
+    expect(screen.getByTestId("auton-worker-group-agent").textContent).toContain("Agente completo");
+    expect(screen.getByTestId("auton-worker-group-subagent").textContent).toContain("Explore 1");
     expect(screen.getByTestId("auton-worker-group-muse").textContent).toContain("Próximamente");
-    expect(screen.getAllByTestId("auton-worker-row")).toHaveLength(2);
+    expect(screen.getAllByTestId("auton-worker-row")).toHaveLength(3);
   });
 
   it("abre el worker en la interfaz del orquestador, no dentro del panel", () => {
@@ -141,3 +161,16 @@ describe("sidebar de workers del proyecto", () => {
     });
   });
 });
+
+  it("para un agente completo auton-worker en su propia sesión", () => {
+    state.rows = [fullWorkerRow()];
+    renderSidebar();
+
+    const agentGroup = screen.getByTestId("auton-worker-group-agent");
+    const row = agentGroup.querySelector('[data-worker-id="auton-1"]') as HTMLElement;
+    fireEvent.click(within(row).getByTestId("auton-worker-stop"));
+    expect(state.stopGeneration).toHaveBeenCalledWith({
+      taskId: "auton-1",
+      workspacePath: "/workspace/lunar",
+    });
+  });

@@ -71,20 +71,24 @@ function AutonWorkersSidebarContents({
     return () => next.release();
   }, [layer, orchestratorId]);
 
-  const groups = useMemo(
-    () =>
-      buildAutonWorkerGroups({
-        agentWorkers: projectProjectAgentWorkers(
-          workerTaskIds === undefined
-            ? projectTasks
-            : projectTasks.filter((task) => workerTaskIds.includes(task.taskId)),
-          orchestratorId,
-          now,
-        ),
-        subagentWorkers: projectAutonWorkers(rows, now),
-      }),
-    [now, orchestratorId, projectTasks, rows, workerTaskIds],
-  );
+  const groups = useMemo(() => {
+    const conversationWorkers = projectAutonWorkers(rows, now);
+    const fullWorkers = conversationWorkers.filter((worker) => worker.kind === "agent");
+    const subagents = conversationWorkers.filter((worker) => worker.kind !== "agent");
+    const agentWorkers = projectProjectAgentWorkers(
+      workerTaskIds === undefined
+        ? projectTasks
+        : projectTasks.filter((task) => workerTaskIds.includes(task.taskId)),
+      orchestratorId,
+      now,
+    );
+    const byId = new Map(agentWorkers.map((worker) => [worker.id, worker]));
+    for (const worker of fullWorkers) byId.set(worker.id, worker);
+    return buildAutonWorkerGroups({
+      agentWorkers: [...byId.values()],
+      subagentWorkers: subagents,
+    });
+  }, [now, orchestratorId, projectTasks, rows, workerTaskIds]);
 
   const openWorker = useCallback(
     (workerId: string) => {

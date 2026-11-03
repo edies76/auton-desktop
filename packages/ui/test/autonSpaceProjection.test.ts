@@ -94,8 +94,18 @@ describe("proyección del espacio desde filas reales", () => {
       "bloqueado",
       "terminado",
     ]);
-    expect(workers.every((worker) => worker.kind === "subagent")).toBe(true);
+    expect(workers.every((worker) => worker.kind === "agent")).toBe(true);
     expect(workers.every((worker) => worker.engine === "zcode")).toBe(true);
+  });
+
+  it("separa el agente completo auton-worker del subagente de compatibilidad", () => {
+    const full = subagent(1, "running", "revisar README");
+    const sub: ConversationRow = {
+      ...subagent(2, "running", "explorar"),
+      subagentType: "Explore",
+    } as ConversationRow;
+    const workers = projectAutonWorkers([full, sub], Date.UTC(2026, 10, 2, 12, 0, 0));
+    expect(workers.map((worker) => worker.kind)).toEqual(["agent", "subagent"]);
   });
 
   it("usa la última señal real del subagente para el reloj y el silencio", () => {
@@ -105,7 +115,7 @@ describe("proyección del espacio desde filas reales", () => {
     } as unknown as ConversationRow;
     const [worker] = projectAutonWorkers([row], Date.UTC(2026, 10, 2, 12, 0, 0));
     expect(worker?.lastSignalAt).toBe(Date.parse("2026-11-02T11:59:00.000Z"));
-    expect(worker?.kind).toBe("subagent");
+    expect(worker?.kind).toBe("agent");
   });
 
   it("los tramos agrupan por encargo y cierran cuando todos cerraron", () => {

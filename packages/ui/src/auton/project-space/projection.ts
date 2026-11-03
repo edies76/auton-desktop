@@ -105,10 +105,18 @@ function subagentStatus(row: SubagentRow): AutonWorkerStatus {
 }
 
 function workerName(row: SubagentRow, index: number): string {
-  if (row.subagentType === "auton-worker" || row.subagentType.startsWith("auton-")) {
+  if (row.subagentType === "auton-worker") {
+    return row.title?.trim() || `worker ${index + 1}`;
+  }
+  if (row.subagentType.startsWith("auton-")) {
     return `worker ${index + 1}`;
   }
   return `${row.subagentType || "worker"} ${index + 1}`;
+}
+
+/** `auton-worker` es el agente completo de ZCode; el resto son subagentes. */
+function workerKind(row: SubagentRow): "agent" | "subagent" {
+  return row.subagentType === "auton-worker" ? "agent" : "subagent";
 }
 
 /**
@@ -134,7 +142,7 @@ export function projectAutonWorkers(
       status,
       startedAt,
       lastSignalAt: endedAt ?? lastActivityAt,
-      kind: "subagent" as const,
+      kind: workerKind(row),
       engine: "zcode" as const,
       ...(summary ? { lastLine: summary } : {}),
       transcript: [
