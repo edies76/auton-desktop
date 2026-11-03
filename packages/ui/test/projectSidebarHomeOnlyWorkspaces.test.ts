@@ -389,7 +389,7 @@ describe("ProjectSidebar home-only workspace list", () => {
     await waitFor(() =>
       expect(onSelectTask).toHaveBeenCalledWith(
         "/workspace/lunar",
-        "legacy-newer",
+        "orchestrator-old",
         undefined,
       ),
     );

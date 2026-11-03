@@ -27,7 +27,9 @@ export {
 export { ProjectComposerMenu } from "@/project-sidebar/ProjectComposerMenu.js";
 import { AutonWorkersSidebar } from "@/project-sidebar/AutonWorkersSidebar.js";
 import {
+  claimProjectConversationCreation,
   ensureProjectConversation,
+  isLegacyProjectTask,
   projectConversationKey,
   rememberProjectOrchestrator,
 } from "@/project-sidebar/projectConversation.js";
@@ -144,17 +146,22 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     const projectTasks = tree.tasks.filter((task) => task.projectId === activeProject.id);
     return {
       key,
-      conversation: ensureProjectConversation(key, projectTasks),
+      conversation: ensureProjectConversation(key, projectTasks, activeTaskId),
     };
-  }, [activeProject, tree.tasks, workspaceKey]);
+  }, [activeProject, activeTaskId, tree.tasks, workspaceKey]);
   const autoOpenedRef = useRef<string | null>(null);
-  const createdConversationRef = useRef(false);
+  const createdConversationRef = useRef<Set<string>>(new Set());
   // Al abrir la app, el proyecto abre directo su única conversación de
   // orquestador. No hay bienvenida con input en el centro.
   useEffect(() => {
     const orchestratorId = activeConversation?.conversation.orchestratorTaskId;
     if (orchestratorId) {
       if (activeTaskId === orchestratorId || autoOpenedRef.current === orchestratorId) return;
+      // La sesión activa manda salvo que sea un chat legado del proyecto; en
+      // ese caso se abre la conversación persistida del orquestador.
+      if (activeTaskId && !isLegacyProjectTask(activeConversation?.key ?? "", activeTaskId)) {
+        return;
+      }
       const orchestrator = tree.tasks.find((task) => task.taskId === orchestratorId);
       if (!orchestrator) return;
       autoOpenedRef.current = orchestratorId;
@@ -167,8 +174,9 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     }
     // Proyecto sin conversación: se crea su chat principal y el orquestador
     // arranca el hilo con una presentación proactiva, sin bienvenida aparte.
-    if (!activeProject || createdConversationRef.current) return;
-    createdConversationRef.current = true;
+    if (!activeProject) return;
+    const key = projectConversationKey(workspaceKey, activeProject.id);
+    if (!claimProjectConversationCreation(createdConversationRef.current, key)) return;
     props.onCreateTask({
       projectId: activeProject.id,
       taskGroupId: null,
@@ -182,7 +190,20 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     onSelectTask,
     props,
     tree.tasks,
+    workspaceKey,
   ]);
+  // Una sesión nueva del proyecto (no legada) pasa a ser la conversación del
+  // orquestador; así sigue habiendo un solo chat.
+  useEffect(() => {
+    if (!activeTaskId || !activeConversation || !activeProject) return;
+    if (activeConversation.conversation.orchestratorTaskId === activeTaskId) return;
+    if (isLegacyProjectTask(activeConversation.key, activeTaskId)) return;
+    const belongs = tree.tasks.some(
+      (task) => task.taskId === activeTaskId && task.projectId === activeProject.id,
+    );
+    if (!belongs) return;
+    rememberProjectOrchestrator(activeConversation.key, activeTaskId);
+  }, [activeConversation, activeProject, activeTaskId, tree.tasks]);
   // Solo una acción del humano cambia la conversación del proyecto: el chat
   // anterior queda como legado y deja de mostrarse como worker.
   const selectTask = useCallback<ProjectSidebarProps["onSelectTask"]>(
@@ -275,6 +296,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     const conversation = ensureProjectConversation(
       projectConversationKey(workspaceKey, project.id),
       projectTasks,
+      activeTaskId,
     );
     const orchestratorTask = projectTasks.find(
       (task) => task.taskId === conversation.orchestratorTaskId,
@@ -366,7 +388,6 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
                           orchestratorTaskId={
                             activeConversation?.conversation.orchestratorTaskId ?? null
                           }
-                          workerTaskIds={activeConversation?.conversation.workerTaskIds ?? []}
                         />
                       ) : view === "projects" ? (
                         <>

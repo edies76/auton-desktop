@@ -2,8 +2,9 @@
 import type { ProjectTask } from "@zcode/services";
 import { beforeEach, describe, expect, it } from "vitest";
 import {
+  claimProjectConversationCreation,
   ensureProjectConversation,
-  markWorkerTask,
+  isLegacyProjectTask,
   rememberProjectOrchestrator,
 } from "../src/project-sidebar/projectConversation.js";
 
@@ -26,37 +27,40 @@ beforeEach(() => {
 });
 
 describe("una conversación de orquestador por proyecto", () => {
-  it("la conversación que abre el humano manda aunque sea más vieja", () => {
-    const tasks = [task("old-active", 1, 10), task("new-worker", 2, 99)];
-    expect(ensureProjectConversation("ws::p1", tasks).orchestratorTaskId).toBe("new-worker");
-    const conversation = rememberProjectOrchestrator("ws::p1", "old-active");
-    expect(conversation?.orchestratorTaskId).toBe("old-active");
-    expect(conversation?.legacyTaskIds).toContain("new-worker");
-    expect(conversation?.workerTaskIds).toEqual([]);
-    expect(ensureProjectConversation("ws::p1", tasks).orchestratorTaskId).toBe("old-active");
+  it("la sesión activa manda aunque sea más vieja que otra", () => {
+    const tasks = [task("old-active", 1, 10), task("new-chat", 2, 99)];
+    const conversation = ensureProjectConversation("ws::p1", tasks, "old-active");
+    expect(conversation.orchestratorTaskId).toBe("old-active");
+    expect(conversation.legacyTaskIds).toEqual(["new-chat"]);
+    expect(isLegacyProjectTask("ws::p1", "new-chat")).toBe(true);
   });
 
-  it("sin conversación previa usa la última, nunca un worker marcado", () => {
+  it("sin sesión activa usa la más antigua, no la más actualizada", () => {
     const tasks = [task("old", 1, 5), task("newer", 2, 99)];
-    expect(ensureProjectConversation("ws::p1", tasks).orchestratorTaskId).toBe("newer");
-  });
-
-  it("relegar el chat anterior al abrir otro y retirarlo de workers", () => {
-    const tasks = [task("old", 1, 5), task("newer", 2, 99)];
-    ensureProjectConversation("ws::p1", tasks);
-    markWorkerTask("ws::p1", "newer");
-    const next = rememberProjectOrchestrator("ws::p1", "old");
-    expect(next?.orchestratorTaskId).toBe("old");
-    expect(next?.legacyTaskIds).toContain("newer");
-    expect(next?.workerTaskIds).toContain("newer");
     expect(ensureProjectConversation("ws::p1", tasks).orchestratorTaskId).toBe("old");
   });
 
-  it("las tareas que no son la conversación no se inventan como workers", () => {
+  it("relegar el chat anterior al abrir otro", () => {
     const tasks = [task("old", 1, 5), task("newer", 2, 99)];
-    const conversation = ensureProjectConversation("ws::p1", tasks);
-    expect(conversation.orchestratorTaskId).toBe("newer");
-    expect(conversation.workerTaskIds).toEqual([]);
-    expect(conversation.legacyTaskIds).toEqual(["old"]);
+    ensureProjectConversation("ws::p1", tasks, "old");
+    const next = rememberProjectOrchestrator("ws::p1", "newer");
+    expect(next?.orchestratorTaskId).toBe("newer");
+    expect(next?.legacyTaskIds).toContain("old");
+    expect(next?.legacyTaskIds).not.toContain("newer");
+  });
+
+  it("la conversación persistida gana frente a una sesión activa legada", () => {
+    const tasks = [task("old", 1, 5), task("newer", 2, 99)];
+    ensureProjectConversation("ws::p1", tasks, "newer");
+    // La sesión activa es el chat legado; la persistida sigue siendo la única.
+    expect(ensureProjectConversation("ws::p1", tasks, "old").orchestratorTaskId).toBe("newer");
+    expect(isLegacyProjectTask("ws::p1", "old")).toBe(true);
   });
 });
+
+  it("la creación de la conversación se reclama una vez por proyecto", () => {
+    const created = new Set<string>();
+    expect(claimProjectConversationCreation(created, "ws::p1")).toBe(true);
+    expect(claimProjectConversationCreation(created, "ws::p2")).toBe(true);
+    expect(claimProjectConversationCreation(created, "ws::p1")).toBe(false);
+  });

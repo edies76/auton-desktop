@@ -3,6 +3,7 @@ import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { logger } from "@/logger.js";
 import { V4ChatPane } from "@/v4/V4ChatPane.js";
 import { Button } from "@/components/ui/button.js";
+import { useAutonClock } from "./clock.js";
 import {
   AUTON_WORKER_STATUS_META,
   formatClock,
@@ -10,7 +11,7 @@ import {
   isWorkerSilent,
   workerElapsed,
 } from "./model.js";
-import { useAutonWorkerFocusStore } from "./workerFocusStore.js";
+import { focusedWorker, useAutonWorkerFocusStore } from "./workerFocusStore.js";
 
 export interface AutonWorkerFocusPaneProps {
   isDesktop?: boolean;
@@ -21,7 +22,7 @@ export interface AutonWorkerFocusPaneProps {
  * chat completo de solo lectura; el compositor del orquestador no se toca.
  */
 export function AutonWorkerFocusPane({ isDesktop = false }: AutonWorkerFocusPaneProps) {
-  const worker = useAutonWorkerFocusStore((state) => state.worker);
+  const worker = useAutonWorkerFocusStore(focusedWorker);
   const workspacePath = useAutonWorkerFocusStore((state) => state.workspacePath);
   const workspaceIdentity = useAutonWorkerFocusStore((state) => state.workspaceIdentity);
   const stopTaskId = useAutonWorkerFocusStore((state) => state.stopTaskId);
@@ -30,9 +31,9 @@ export function AutonWorkerFocusPane({ isDesktop = false }: AutonWorkerFocusPane
   const close = useAutonWorkerFocusStore((state) => state.close);
   const services = useBaseWorkspaceServices();
 
+  const now = useAutonClock();
   if (!worker) return null;
   const meta = AUTON_WORKER_STATUS_META[worker.status];
-  const now = Date.now();
   const silent = isWorkerSilent(worker, now);
 
   const stop = () => {

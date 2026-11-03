@@ -1,9 +1,6 @@
 import type { ProjectTask } from "@zcode/services";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  buildAutonWorkerGroups,
-  projectProjectAgentWorkers,
-} from "@/auton/project-space/agentProjection.js";
+import { buildAutonWorkerGroups } from "@/auton/project-space/agentProjection.js";
 import { useAutonClock } from "@/auton/project-space/clock.js";
 import { projectAutonWorkers } from "@/auton/project-space/projection.js";
 import { AutonWorkerPanel } from "@/auton/project-space/WorkerPanel.js";
@@ -24,7 +21,6 @@ export interface AutonWorkersSidebarProps {
   workspaceIdentity?: string;
   workspaceRemoteSessionId?: string;
   orchestratorTaskId?: string | null;
-  workerTaskIds?: readonly string[];
 }
 
 function AutonWorkersSidebarContents({
@@ -32,7 +28,6 @@ function AutonWorkersSidebarContents({
   workspacePath,
   workspaceIdentity,
   orchestratorTaskId,
-  workerTaskIds,
 }: AutonWorkersSidebarProps) {
   const activeTaskId = useZCodeSessionStore((state) => {
     const workspaceKey = workspaceIdentity?.trim() || workspacePath;
@@ -73,22 +68,17 @@ function AutonWorkersSidebarContents({
 
   const groups = useMemo(() => {
     const conversationWorkers = projectAutonWorkers(rows, now);
-    const fullWorkers = conversationWorkers.filter((worker) => worker.kind === "agent");
-    const subagents = conversationWorkers.filter((worker) => worker.kind !== "agent");
-    const agentWorkers = projectProjectAgentWorkers(
-      workerTaskIds === undefined
-        ? projectTasks
-        : projectTasks.filter((task) => workerTaskIds.includes(task.taskId)),
-      orchestratorId,
-      now,
-    );
-    const byId = new Map(agentWorkers.map((worker) => [worker.id, worker]));
-    for (const worker of fullWorkers) byId.set(worker.id, worker);
     return buildAutonWorkerGroups({
-      agentWorkers: [...byId.values()],
-      subagentWorkers: subagents,
+      agentWorkers: conversationWorkers.filter((worker) => worker.kind === "agent"),
+      subagentWorkers: conversationWorkers.filter((worker) => worker.kind !== "agent"),
     });
-  }, [now, orchestratorId, projectTasks, rows, workerTaskIds]);
+  }, [now, rows]);
+
+  useEffect(() => {
+    useAutonWorkerFocusStore
+      .getState()
+      .setLiveWorkers(groups.flatMap((group) => group.workers));
+  }, [groups]);
 
   const openWorker = useCallback(
     (workerId: string) => {
@@ -112,9 +102,8 @@ function AutonWorkersSidebarContents({
 
   const stopWorker = useCallback(
     (workerId: string) => {
-      const task = projectTasks.find((entry) => entry.taskId === workerId);
-      // Un subagente no tiene task propia: se detiene interrumpiendo el turno
-      // del orquestador que lo abrió.
+      // Un subagente no tiene sesión propia: se detiene interrumpiendo el turno
+      // del orquestador. Un auton-worker sí tiene su propia sesión.
       const isSubagent = groups.some(
         (group) =>
           group.kind === "subagent" && group.workers.some((worker) => worker.id === workerId),
@@ -124,14 +113,12 @@ function AutonWorkersSidebarContents({
       void service
         .stopGeneration({
           taskId: isSubagent ? (orchestratorId ?? workerId) : workerId,
-          workspacePath: task?.workspacePath ?? workspacePath,
-          ...(task?.workspaceIdentity ?? workspaceIdentity
-            ? { workspaceIdentity: task?.workspaceIdentity ?? workspaceIdentity }
-            : {}),
+          workspacePath,
+          ...(workspaceIdentity ? { workspaceIdentity } : {}),
         })
         .catch((error: unknown) => logger.warn("auton.worker.stop.failed", error));
     },
-    [groups, orchestratorId, projectTasks, services, workspaceIdentity, workspacePath],
+    [groups, orchestratorId, services, workspaceIdentity, workspacePath],
   );
 
   return (

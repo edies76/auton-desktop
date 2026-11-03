@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { AutonWorkerView } from "../src/auton/project-space/model.js";
 import { AutonWorkerFocusPane } from "../src/auton/project-space/WorkerFocusPane.js";
 import { useAutonWorkerFocusStore } from "../src/auton/project-space/workerFocusStore.js";
 
@@ -17,6 +18,16 @@ vi.mock("@/hooks/useWorkspaceServices.js", () => ({
   useBaseWorkspaceServices: () => ({ zcodeTaskService: { stopGeneration } }),
 }));
 
+const WORKER: AutonWorkerView = {
+  id: "worker-1",
+  name: "Arreglar login",
+  status: "trabajando",
+  startedAt: NOW - 60_000,
+  lastSignalAt: NOW - 2_000,
+  lastLine: "Revisa la restauración de sesión",
+  transcript: [{ id: "e1", at: NOW - 50_000, kind: "message", text: "Empiezo por el login" }],
+};
+
 afterEach(() => {
   cleanup();
   stopGeneration.mockClear();
@@ -25,20 +36,7 @@ afterEach(() => {
 
 describe("resumen del worker en el área del orquestador", () => {
   it("muestra estado y resumen, y abre el chat completo de solo lectura", () => {
-    useAutonWorkerFocusStore.getState().open(
-      {
-        id: "worker-1",
-        name: "Arreglar login",
-        status: "trabajando",
-        startedAt: NOW - 60_000,
-        lastSignalAt: NOW - 2_000,
-        lastLine: "Revisa la restauración de sesión",
-        transcript: [
-          { id: "e1", at: NOW - 50_000, kind: "message", text: "Empiezo por el login" },
-        ],
-      },
-      "/workspace/lunar",
-    );
+    useAutonWorkerFocusStore.getState().open(WORKER, "/workspace/lunar");
     render(<AutonWorkerFocusPane />);
 
     expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Trabajando");
@@ -53,22 +51,26 @@ describe("resumen del worker en el área del orquestador", () => {
     expect(screen.getByTestId("auton-worker-summary")).toBeTruthy();
 
     fireEvent.click(screen.getByTestId("auton-worker-focus-back"));
-    expect(useAutonWorkerFocusStore.getState().worker).toBeNull();
+    expect(useAutonWorkerFocusStore.getState().workerId).toBeNull();
+  });
+
+  it("se actualiza con la proyección viva: estado y reloj no quedan congelados", () => {
+    useAutonWorkerFocusStore.getState().open(WORKER, "/workspace/lunar");
+    render(<AutonWorkerFocusPane />);
+    expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Trabajando");
+
+    act(() => {
+      useAutonWorkerFocusStore.getState().setLiveWorkers([
+        { ...WORKER, status: "terminado", lastSignalAt: NOW },
+      ]);
+    });
+
+    expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Terminado");
+    expect(screen.getByTestId("auton-worker-summary").textContent).not.toContain("Trabajando");
   });
 
   it("parar llama a la operación real de la sesión", () => {
-    useAutonWorkerFocusStore.getState().open(
-      {
-        id: "worker-1",
-        name: "Arreglar login",
-        status: "trabajando",
-        startedAt: NOW - 60_000,
-        lastSignalAt: NOW - 2_000,
-        lastLine: "Trabajando",
-        transcript: [],
-      },
-      "/workspace/lunar",
-    );
+    useAutonWorkerFocusStore.getState().open(WORKER, "/workspace/lunar");
     render(<AutonWorkerFocusPane />);
 
     fireEvent.click(screen.getByTestId("auton-worker-focus-stop"));

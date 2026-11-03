@@ -33,19 +33,13 @@ vi.mock("@/store/zcodeSessionStore.js", () => ({
     selector({ workspaces: { "/workspace/lunar": { activeTaskId: "orch" } } }),
 }));
 
-function task(
-  taskId: string,
-  title: string,
-  status: ProjectTask["status"],
-  createdAt: number,
-  updatedAt: number,
-): ProjectTask {
+function task(taskId: string, title: string): ProjectTask {
   return {
     taskId,
     title,
-    status,
-    createdAt,
-    updatedAt,
+    status: "running",
+    createdAt: NOW - 5_000,
+    updatedAt: NOW - 200,
     workspacePath: "/workspace/lunar",
     projectId: "p1",
     hostId: "local",
@@ -89,10 +83,7 @@ function fullWorkerRow() {
   };
 }
 
-const TASKS = [
-  task("orch", "Orquestador", "running", NOW - 1_000, NOW - 100),
-  task("worker-1", "Arreglar login", "running", NOW - 5_000, NOW - 200),
-];
+const TASKS = [task("orch", "Orquestador"), task("legacy", "Chat legado")];
 
 function renderSidebar() {
   return render(
@@ -100,7 +91,6 @@ function renderSidebar() {
       tasks={TASKS}
       workspacePath="/workspace/lunar"
       orchestratorTaskId="orch"
-      workerTaskIds={["worker-1"]}
     />,
   );
 }
@@ -113,42 +103,45 @@ afterEach(() => {
 });
 
 describe("sidebar de workers del proyecto", () => {
-  it("separa agentes completos de subagentes y excluye al orquestador", () => {
+  it("los agentes completos salen de la proyección viva y los subagentes se separan", () => {
     state.rows = [subagentRow(), fullWorkerRow()];
     renderSidebar();
 
     expect(document.querySelector('[data-worker-id="orch"]')).toBeNull();
-    expect(screen.getByTestId("auton-worker-group-agent").textContent).toContain("Arreglar login");
     expect(screen.getByTestId("auton-worker-group-agent").textContent).toContain("Agente completo");
+    expect(screen.getByTestId("auton-worker-group-agent").textContent).not.toContain(
+      "Arreglar login",
+    );
     expect(screen.getByTestId("auton-worker-group-subagent").textContent).toContain("Explore 1");
     expect(screen.getByTestId("auton-worker-group-muse").textContent).toContain("Próximamente");
-    expect(screen.getAllByTestId("auton-worker-row")).toHaveLength(3);
+    expect(screen.getAllByTestId("auton-worker-row")).toHaveLength(2);
   });
 
-  it("abre el worker en la interfaz del orquestador, no dentro del panel", () => {
-    state.rows = [subagentRow()];
+  it("abre el worker completo en la interfaz del orquestador", () => {
+    state.rows = [fullWorkerRow()];
     renderSidebar();
 
     fireEvent.click(
       within(screen.getByTestId("auton-worker-group-agent")).getByTestId("auton-worker-open"),
     );
-    expect(useAutonWorkerFocusStore.getState().worker?.id).toBe("worker-1");
+    expect(useAutonWorkerFocusStore.getState().workerId).toBe("auton-1");
     expect(useAutonWorkerFocusStore.getState().mode).toBe("summary");
   });
 
-  it("para un agente con la operación real de la sesión", () => {
+  it("para un agente completo en su propia sesión", () => {
+    state.rows = [fullWorkerRow()];
     renderSidebar();
 
     fireEvent.click(
       within(screen.getByTestId("auton-worker-group-agent")).getByTestId("auton-worker-stop"),
     );
     expect(state.stopGeneration).toHaveBeenCalledWith({
-      taskId: "worker-1",
+      taskId: "auton-1",
       workspacePath: "/workspace/lunar",
     });
   });
 
-  it("los subagentes también se pueden parar desde su fila", () => {
+  it("un subagente se para interrumpiendo el turno del orquestador", () => {
     state.rows = [subagentRow()];
     renderSidebar();
 
@@ -161,16 +154,3 @@ describe("sidebar de workers del proyecto", () => {
     });
   });
 });
-
-  it("para un agente completo auton-worker en su propia sesión", () => {
-    state.rows = [fullWorkerRow()];
-    renderSidebar();
-
-    const agentGroup = screen.getByTestId("auton-worker-group-agent");
-    const row = agentGroup.querySelector('[data-worker-id="auton-1"]') as HTMLElement;
-    fireEvent.click(within(row).getByTestId("auton-worker-stop"));
-    expect(state.stopGeneration).toHaveBeenCalledWith({
-      taskId: "auton-1",
-      workspacePath: "/workspace/lunar",
-    });
-  });

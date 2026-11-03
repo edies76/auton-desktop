@@ -111,21 +111,6 @@ export function buildAutonWorkerGroups(params: {
   ];
 }
 
-/**
- * Agentes del proyecto sin el orquestador. El orquestador se excluye por su
- * taskId (la sesión del humano), nunca por “el task más reciente”.
- */
-export function projectProjectAgentWorkers(
-  tasks: readonly ZCodeTaskMeta[],
-  orchestratorTaskId: string | null,
-  now = Date.now(),
-): AutonWorkerView[] {
-  return projectAgentWorkers(
-    tasks.filter((task) => task.taskId !== orchestratorTaskId),
-    now,
-  );
-}
-
 /** Los agentes completos forman el tramo vivo del workspace. */
 export function agentTramo(workers: readonly AutonWorkerView[]): AutonWorkTramo | null {
   if (workers.length === 0) return null;

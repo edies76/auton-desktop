@@ -1,17 +1,16 @@
 import type { ProjectTask } from "@zcode/services";
 
 /**
- * Cada proyecto tiene UNA conversación de orquestador. Los chats anteriores que
- * no son esa conversación quedan como legado (no se muestran como workers); los
- * workers se marcan explícitamente cuando el runtime crea una sesión completa.
+ * Cada proyecto tiene UNA conversación de orquestador. Las sesiones que no son
+ * esa conversación quedan como legado (no se muestran como workers). Los
+ * workers reales son las sesiones `auton-worker` de la proyección viva.
  */
 export interface ProjectConversation {
   orchestratorTaskId: string;
   legacyTaskIds: string[];
-  workerTaskIds: string[];
 }
 
-const KEY = "auton-project-conversation-v3";
+const KEY = "auton-project-conversation-v4";
 
 function readAll(): Record<string, ProjectConversation> {
   try {
@@ -43,32 +42,25 @@ function oldestTask(tasks: readonly ProjectTask[]): ProjectTask | undefined {
 export function ensureProjectConversation(
   key: string,
   tasks: readonly ProjectTask[],
+  activeTaskId?: string | null,
 ): ProjectConversation {
   const all = readAll();
   const ids = new Set(tasks.map((task) => task.taskId));
   const current = all[key];
-  if (
-    current &&
-    ids.has(current.orchestratorTaskId) &&
-    !current.workerTaskIds.includes(current.orchestratorTaskId)
-  )
-    return current;
+  if (current && ids.has(current.orchestratorTaskId)) return current;
 
-  // La primera vez manda la última conversación del humano, nunca un task
-  // marcado como worker. Cuando el humano abre otra, `remember...` la fija y
-  // esa identidad gana en los siguientes arranques.
-  const workerIds = new Set(current?.workerTaskIds ?? []);
-  const candidates = tasks.filter((task) => !workerIds.has(task.taskId));
-  const latestConversation = [...candidates].sort(
-    (left, right) => right.updatedAt - left.updatedAt,
-  )[0];
-  const orchestrator = latestConversation ?? oldestTask(tasks);
+  // La sesión del humano manda. Si no hay una, la conversación persistida o la
+  // más antigua del proyecto; nunca se elige por “lo último actualizado”.
+  const active =
+    activeTaskId && ids.has(activeTaskId)
+      ? tasks.find((task) => task.taskId === activeTaskId)
+      : undefined;
+  const orchestrator = active ?? oldestTask(tasks);
   const next: ProjectConversation = {
     orchestratorTaskId: orchestrator?.taskId ?? "",
     legacyTaskIds: tasks
       .filter((task) => task.taskId !== orchestrator?.taskId)
       .map((task) => task.taskId),
-    workerTaskIds: current?.workerTaskIds.filter((id) => ids.has(id)) ?? [],
   };
   all[key] = next;
   writeAll(all);
@@ -84,21 +76,20 @@ export function rememberProjectOrchestrator(key: string, taskId: string): Projec
     legacyTaskIds: [...new Set([...current.legacyTaskIds, current.orchestratorTaskId])].filter(
       (id) => id !== taskId,
     ),
-    workerTaskIds: current.workerTaskIds.filter((id) => id !== taskId),
   };
   all[key] = next;
   writeAll(all);
   return next;
 }
 
-export function markWorkerTask(key: string, taskId: string): void {
-  const all = readAll();
-  const current = all[key];
-  if (!current || current.workerTaskIds.includes(taskId)) return;
-  all[key] = { ...current, workerTaskIds: [...current.workerTaskIds, taskId] };
-  writeAll(all);
+export function isLegacyProjectTask(key: string, taskId: string | null): boolean {
+  if (!taskId) return false;
+  return readAll()[key]?.legacyTaskIds.includes(taskId) ?? false;
 }
 
-export function isProjectWorkerTask(key: string, taskId: string): boolean {
-  return readAll()[key]?.workerTaskIds.includes(taskId) ?? false;
+/** Reclama la creación una sola vez por proyecto, no una vez por app. */
+export function claimProjectConversationCreation(created: Set<string>, key: string): boolean {
+  if (created.has(key)) return false;
+  created.add(key);
+  return true;
 }

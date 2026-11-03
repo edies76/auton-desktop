@@ -13,7 +13,10 @@ import { TID_APP_HEADER } from "@zcode/shared/test-ids";
 // 对称下侧 Terminal.tsx 的 openWorkspaceKeys 回收。
 import { sidePaneTerminalSessionRegistry } from "@/terminal/sidePaneTerminalSessionRegistry.js";
 import { AutonWorkerFocusPane } from "@/auton/project-space/WorkerFocusPane.js";
-import { useAutonWorkerFocusStore } from "@/auton/project-space/workerFocusStore.js";
+import {
+  closeWorkerFocusForWorkspace,
+  useAutonWorkerFocusStore,
+} from "@/auton/project-space/workerFocusStore.js";
 import { V4ChatPane } from "@/v4/V4ChatPane.js";
 import { V4WorkspaceChatArea } from "@/v4/V4WorkspaceChatArea.js";
 import { V4SplitPaneEntryProvider } from "@/v4/splitPaneEntryContext.js";
@@ -528,7 +531,10 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
     onSessionMissing: () => handleStartDraftInWorkspace(workspaceAbsPath, workspaceIdentity),
   });
   const workspaceShellRef = useRef<HTMLDivElement | null>(null);
-  const focusedWorker = useAutonWorkerFocusStore((state) => state.worker);
+  const focusedWorker = useAutonWorkerFocusStore((state) => state.workerId);
+  useEffect(() => {
+    closeWorkerFocusForWorkspace(workspaceAbsPath);
+  }, [workspaceAbsPath]);
   const workspaceSidebarPanelElementRef = useRef<HTMLDivElement | null>(null);
   const conversationPanelElementRef = useRef<HTMLDivElement | null>(null);
   const conversationAutoCollapseStateRef = useRef({
