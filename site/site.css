@@ -205,7 +205,7 @@ footer {
 .docs-nav a { color: var(--muted); }
 .docs-nav a:hover, .docs-nav a[aria-current="page"] { color: var(--text); }
 
-.doc { min-width: 0; }
+.doc { min-width: 0; overflow-wrap: break-word; }
 .doc h1 { font-size: 34px; letter-spacing: -0.03em; margin: 0 0 20px; line-height: 1.15; }
 .doc h2 { font-size: 22px; margin: 40px 0 12px; }
 .doc h3 { font-size: 17px; margin: 28px 0 8px; }
@@ -246,3 +246,21 @@ footer {
   main { padding: 0 18px 56px; }
   .hero { padding: 56px 0 40px; }
 }
+
+/* Aviso del árbol privado: el build público no lo incluye. */
+.private-banner {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  padding: 8px 32px;
+  background: var(--warn);
+  color: #1a1300;
+  font: 600 12.5px/1.4 var(--sans);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+body.private .nav { top: 33px; }
+@media (max-width: 760px) { .private-banner { padding: 8px 18px; } body.private .nav { top: 33px; } }
+.doc table { display: block; max-width: 100%; overflow-x: auto; }
+.doc pre { min-width: 0; max-width: 100%; }
+@media (max-width: 760px) { .docs-layout { grid-template-columns: minmax(0, 1fr); padding: 24px 18px 72px; } .nav nav { gap: 14px; font-size: 13px; } .doc h1 { font-size: 28px; } .doc h2 { font-size: 20px; } }

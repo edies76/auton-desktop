@@ -77,3 +77,4 @@ __pycache__/
 .zcode-runtime
 
 site/dist/
+site/private-dist/

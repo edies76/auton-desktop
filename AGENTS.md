@@ -104,14 +104,38 @@ merge sangriento:
 - Antes de anunciar una versión, verifica el número **en el archivo**, no en el mensaje del commit.
 - Con varias sesiones, lee `VERSION` antes de tocarlo: otra persona pudo haberlo subido.
 
-## Documentación
+## Documentación pública y privada
 
-- `README.md` es la cara pública; `docs/` es el trabajo interno. `AUTON-VISION.md` manda en
-  producto.
-- No actualices docs en cada commit: **acumula** y propón un sprint de docs cuando el acumulado
-  importe. Las docs internas valen más que las públicas.
-- El sitio (`site/`) se genera con `node site/build.mjs` y se publica en S3; nunca lleva
-  credenciales.
+Hay dos documentaciones y no se mezclan. La pública da confianza y explica el producto; la privada
+permite trabajar en él sin preguntar.
+
+| | Público | Privado |
+| --- | --- | --- |
+| Dónde | `docs/public/*.md`, `README.md`, visión, arquitectura y contrato de notificaciones | `docs/private/*.md` y los documentos internos listados en `site/README.md` |
+| Build | `site/dist/` | `site/private-dist/` |
+| Contenido | qué es, cómo trabaja, cómo se gobierna la autonomía, dónde viven los datos, FAQ | rutas, símbolos, esquemas, códigos de fallo, invariantes, pruebas, deuda, riesgos, reparto y decisiones |
+| Prohibido | rutas de implementación, nombres de archivos internos, códigos de error, deuda técnica, estrategia competitiva | — |
+
+Reglas:
+
+- Una página de producto va en `docs/public/` y se registra en `PUBLIC_PAGES` (`site/build.mjs`).
+- Un detalle de implementación va en `docs/private/` y se registra en `PRIVATE_PAGES`.
+- `node site/build.mjs` genera los dos árboles en una corrida. El build público **nunca** lee
+  `docs/private/` ni los documentos internos.
+- `site/private-dist/` no se sincroniza al bucket público. Su publicación exige un destino
+  autenticado; el repositorio no lleva credenciales.
+- La documentación privada lleva el detalle que un compañero necesita para continuar sin preguntar:
+  rutas, contratos, invariantes, pruebas ejecutadas y lo que falta. "Con lujo de detalle" es el
+  estándar, no la excepción.
+- La documentación pública se escribe para alguien que no conoce el repo: sin jerga interna y sin
+  prometer lo que no está verificado.
+- Se actualiza cuando cambia el comportamiento, no en cada commit de estilo.
+- `AUTON-VISION.md` manda en producto; si una página pública lo contradice, se corrige la página.
+- Lo que solo vive en el chat no existe: un acuerdo o un detalle relevante se escribe en uno de los
+  dos árboles el mismo día.
+
+- `README.md` es la cara pública; `docs/` es el trabajo interno.
+- El sitio se publica en S3; nunca lleva credenciales.
 
 ## Deber de verificación de esta guía
 
