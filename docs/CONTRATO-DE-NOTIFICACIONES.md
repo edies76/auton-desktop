@@ -115,6 +115,11 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
   que el aviso de cierre, así que despierta al orquestador sin abrir un mensaje
   del humano. Pruebas: `core/tests/auton-live-loop.test.ts` (6) y
   `core/tests/auton-live-loop-wiring.test.ts` (3).
+- **Hecho — canal rápido bidireccional**: el worker publica a mitad de encargo por
+  el port de coordinación y el orquestador lo recibe como `<subagent-message>`
+  (nunca como mensaje del humano); el orquestador instruye al worker en curso con
+  el sink real y la instrucción entra en la siguiente petición del worker. Prueba:
+  `core/tests/auton-fast-channel-runtime.test.ts`.
 - **Hecho — turno que no se cierra**: `runtime/methods/turn-loop.ts` espera con
   `waitForAutonIdle` antes de cerrar (30 min, abortable), y cualquier notificación
   de worker reinicia el reloj (`background-notifications.ts` → `activity()`).
