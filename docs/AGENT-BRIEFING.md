@@ -47,8 +47,12 @@ app nueva. Regla de oro:
 | Aislamiento de datos | hecho: la app y el runtime del agente usan `~/.auton` (vía `AUTON_STORAGE_DIR`), no `~/.zcode` |
 | Plugin `restore-legacy-sessions` | eliminado del bundle (importaba sesiones del ZCode viejo) |
 | Motor de edición de ZCode | **intacto** (CAS con `expectedRevision`, matchers tolerantes, apply-patch con rollback, escritura atómica, checkpoints). No tocarlo |
-| Sprint Board (UI) | **pendiente**: es el primer cambio visible |
-| Política en el brief del programador | **pendiente**: hoy vive en la skill, falta inyectarla por sprint |
+| Sprint Board (UI) | en curso (`feat/sprint-board`), vista "Plan" sobre `TaskList` |
+| Esfuerzo del programador | **hecho**: viaja como campo `effort` de la tool `Agent`, no en el brief |
+| Reversión del trabajo de un programador | **hecho**: `AutonRevert` + diario `.auton/changes.jsonl`, byte a byte, con rastro en `.auton/reverts.jsonl` |
+| Panel de programadores | **hecho**: se abre al primer despacho, filas con estado y "Open" |
+| Tarjeta del plan | **hecha**: objetivo, restricciones, detalle, archivos, pruebas y preguntas |
+| Web de documentación | publicada en S3 (`site/`) |
 | Despertador de mailbox | funcionando (ver §6) |
 
 ## 4. Cómo se trabaja aquí
@@ -70,6 +74,30 @@ app nueva. Regla de oro:
    correrlo después a mano y decirlo.
 7. **Verificar el host antes de prometer.** Este fork corre sobre ZCode: si dices que algo "despierta
    una sesión", tienes que haberlo probado en este host y esta versión.
+
+## 4 bis. Varias personas a la vez (2 amigos, sin pisarse)
+
+El repositorio lo tocan varias manos al mismo tiempo. Reglas para que eso no cueste
+un merge sangriento:
+
+1. **Una rama por persona y tema**: `feat/<nombre>/<tema>` (`feat/ana/sprint-board`).
+   Nadie trabaja directo en `auton-desktop`.
+2. **Un dueño por archivo.** Antes de tocar un archivo que no es tuyo, avisa en el
+   chat/buzón y espera el OK. Los archivos calientes hoy son:
+   `packages/ui/src/project-sidebar/ProjectSidebarNavigation.tsx`,
+   `packages/ui/src/app-shell/WorkspaceShellLayout.tsx`,
+   `apps/zcode-cli/packages/core/src/context/sections/auton.ts`,
+   `apps/zcode-cli/packages/core/src/tool/handlers/{write,edit,agent}.ts`.
+3. **Rebase antes de empujar**: `git pull --rebase auton auton-desktop`. Nunca
+   `--force` sobre una rama compartida.
+4. **Cambios pequeños y seguidos**: una pieza por PR/commit, no "todo el módulo".
+   Un cambio de 600 líneas bloquea a los otros dos.
+5. **Si dos necesitan el mismo archivo**, se parte por función o se turna: uno
+   escribe la interfaz y el otro la implementación, nunca en paralelo.
+6. **El que rompe, arregla**: si tu cambio deja el árbol en rojo, lo arreglas antes
+   de pedir merge.
+7. **Los documentos nuevos van en archivos nuevos** (`docs/...`): así se integran
+   sin conflicto. Editar un doc existente es avisar.
 
 ## 5. Las cinco superficies (Visión 2.0 §17)
 
@@ -97,9 +125,11 @@ cerebro orquesta.
 
 ## 7. Prioridades ahora mismo
 
-1. **Compilar el CLI** (`pnpm dev:local-cli`) para que el plugin eliminado deje de existir de verdad
-   (el watcher de la app no cubre `apps/zcode-cli`).
-2. **Política en el brief**: que el orquestador escriba `minimal|standard|thorough` al despachar.
-3. **Sprint Board**: el primer cambio que el humano **ve**.
-4. **Adaptador de Muse Code** como backend de programmers: es el 25 % de la nota de la hackathon
-   (uso de herramientas de IA de Meta).
+1. **Orquestador continuo**: que no cierre el turno y notifique de verdad. La regla
+   está en [`CONTRATO-DE-NOTIFICACIONES.md`](./CONTRATO-DE-NOTIFICACIONES.md) y el
+   cambio de fondo en [`ARQUITECTURA-ORQUESTADOR.md`](./ARQUITECTURA-ORQUESTADOR.md).
+2. **Sprint Board**: la primera pantalla que el humano ve.
+3. **Adaptador de Muse Code** como backend de programmers: es el 25 % de la nota de
+   la hackathon (uso de herramientas de IA de Meta).
+4. **Scorecard**: ver [`SCORECARD.md`](./SCORECARD.md); es lo que convierte "listo"
+   en un veredicto con evidencia.

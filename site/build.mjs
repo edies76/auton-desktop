@@ -14,6 +14,8 @@ const PAGES = [
   { slug: "intro", file: "README.md", title: "Introducción", blurb: "Qué es Auton Desktop y qué funciona hoy." },
   { slug: "vision", file: "AUTON-VISION.md", title: "Visión del producto", blurb: "El documento central: problema, tesis y superficies." },
   { slug: "scorecard", file: "docs/SCORECARD.md", title: "Scorecard", blurb: "El goal con creces: juicio del orquestador sobre su trabajo." },
+  { slug: "CONTRATO-DE-NOTIFICACIONES", file: "docs/CONTRATO-DE-NOTIFICACIONES.md", title: "Contrato de notificaciones", blurb: "Cómo habla el orquestador mientras trabaja: cuatro salidas y su cadencia." },
+  { slug: "ARQUITECTURA-ORQUESTADOR", file: "docs/ARQUITECTURA-ORQUESTADOR.md", title: "Arquitectura del orquestador", blurb: "El loop variable, los tres relojes y los canales dentro del hilo." },
   { slug: "POR-QUE-AUTON-GANA", file: "docs/POR-QUE-AUTON-GANA.md", title: "Por qué Auton gana", blurb: "El artículo de DeepSeek contrastado con Auton: qué validamos y qué hacemos distinto." },
   { slug: "INTERNO", file: "docs/INTERNO.md", title: "Estado interno", blurb: "Dónde estamos, decisiones y deuda." },
   { slug: "PODA-MVP", file: "docs/PODA-MVP.md", title: "Poda para el MVP", blurb: "Qué se quita, en qué orden y qué no se toca." },

@@ -74,3 +74,22 @@ ruta y commit**. El prototipo **se commitea** o sus capacidades quedan marcadas 
 
 **Por qué**: es la regla que nos puso el revisor externo y es la que evita el clásico "lo hicimos y
 funciona" que un jurado técnico desmonta en una pregunta.
+
+## D5. El orquestador no termina respuestas: feedback constante y canales dentro del hilo
+
+**Se decide**: el orquestador deja de usar el modelo de dos canales de ZCode (una respuesta final y un
+loop de ejecución que se cierra al terminar). Su loop es **variable**: puede hablar, lanzar trabajo,
+recibir reportes y volver a hablar sin cerrar el turno. Los programadores corren en canales que se
+abren **en medio de una respuesta** y siguen vivos aunque el humano escriba.
+
+**Por qué**: al delegar, el humano pierde la presencia de ingeniero. Si el orquestador se queda
+"ocupado" y solo habla al final, el usuario no sabe qué se está haciendo, ni cuándo intervenir, ni qué
+pasó por debajo. El feedback constante es lo que devuelve esa presencia, y es el argumento del
+producto: no solo hace el trabajo, lo cuenta mientras lo hace.
+
+**Cómo se concreta**: ver [CONTRATO-DE-NOTIFICACIONES.md](./CONTRATO-DE-NOTIFICACIONES.md). Cuatro
+salidas (narración, pregunta, evidencia, alerta), cadencia mínima, prioridad de eventos y dos
+superficies separadas (hilo y panel de canales).
+
+**Qué la cambiaría**: que el costo de mantener el orquestador a la escucha rompa la latencia del chat;
+en ese caso se degrada primero el latido de estado, nunca la narración de despacho y cierre.
