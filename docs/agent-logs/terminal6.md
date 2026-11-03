@@ -134,3 +134,4 @@ de Timeline y agrupado), `workspaceHeaderTitleSection.test.ts` (10),
 mostró solo `Pregunta sobre identidad y funcionamiento` (`timeline-filtered.png`); elegir el chat
 legado `bro...` desde el buscador volvió al orquestador con su etiqueta; `worker 9` Bloqueado se
 muestra sin `Parar` (`focus-live-blocked.png`). Typecheck raíz 0 con 8 GB de heap y lint 0 errores.
+- Arranque limpio final con todo ensamblado (`launch-final.png`, `launch-final.log`): `Orquestador` junto al título, `WORKERS 9`, sin foco abierto y compositor del orquestador. La vista `Recently updated` mostró solo `Pregunta sobre identidad y funcionamiento`; cero excepciones de renderer. Lint raíz 0 errores/105 avisos y typecheck raíz 0.
