@@ -115,10 +115,10 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
   que el aviso de cierre, así que despierta al orquestador sin abrir un mensaje
   del humano. Pruebas: `core/tests/auton-live-loop.test.ts` (6) y
   `core/tests/auton-live-loop-wiring.test.ts` (3).
-- **Parcial — turno que no se cierra**: el turno del modelo sigue emitiendo su
-  cierre; lo que se mantiene vivo es la conversación, porque el latido entra como
-  notificación y despierta al orquestador. Además, un mensaje del worker todavía
-  no reinicia el reloj (solo lo hacen despacho y cierre).
+- **Hecho — turno que no se cierra**: `runtime/methods/turn-loop.ts` espera con
+  `waitForAutonIdle` antes de cerrar (30 min, abortable), y cualquier notificación
+  de worker reinicia el reloj (`background-notifications.ts` → `activity()`).
+  Prueba sobre sesión real: `core/tests/auton-live-turn-runtime.test.ts`.
 - **Bloqueado — prueba de integración del canal rápido**: exige el arnés completo
   de runtime de subagentes, que hoy no existe; el mecanismo (ZCode
   `RespondToCoordinator` / `SendMessage`) sí está operativo y los mensajes quedan
