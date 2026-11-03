@@ -43,3 +43,17 @@ Verificado con: `projectConversation.test.ts` (4), `projectSidebarHomeOnlyWorksp
 (8); tsc y lint de `@zcode/ui`.
 
 - Proyecto sin conversación: al crearlo se envía un prompt inicial para que el orquestador se presente y pregunte qué hacer; el chat principal queda abierto en el mismo hilo.
+
+## 2026-11-03 — worker real en vivo, resumen y parada
+
+Qué: con el chat del orquestador abierto, un prompt real lanzó los subagentes Explore 1 y Explore 2;
+el panel mostró Workers 2 con estado, reloj, última señal y parada, sin listar el chat del
+orquestador. Al clicar un worker, el área del orquestador muestra su resumen; "Ver chat completo"
+abre la conversación real de solo lectura sin compositor; parar interrumpe el turno del orquestador
+y el worker pasa a Bloqueado con el motivo real.
+Por qué: el panel anterior no distinguía el chat activo y el detalle no era la sesión real.
+Verificado con: `autonWorkerPanel.test.tsx` (8), `autonWorkerFocusPane.test.tsx` (2),
+`autonWorkersSidebar.test.tsx` (4), `projectSidebarHomeOnlyWorkspaces.test.ts` (11);
+capturas `launch-1.png`, `launch-2.png`, `worker-summary.png`, `worker-chat.png`, `worker-stopped.png`.
+Nota: el orquestador vivo crea subagentes como canales worker; los agentes completos de ZCode se
+muestran en su grupo cuando el runtime los marca en `workerTaskIds`.
