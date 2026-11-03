@@ -110,8 +110,8 @@ parser del REPORTE); (2) registro engine en la herramienta Agent y en el item de
 "Motor del worker" en la doctrina; (4) prueba 23 de PRUEBAS y pruebas de contrato/adaptador/despacho.
 Límite declarado: exec es one-shot; session-message no está soportado en Windows, así que no hay
 steer a mitad de corrida en Muse.
-Verificado con: Muse real (echo x2 y meta x1) a través del adaptador; auton-muse-engine (10 sin e2e,
-12 con e2e), auton-engine-dispatch (6), typecheck y lint.
+Verificado con: Muse real (echo x2, carpeta con espacio y &, puerto real de sesión y meta x1) a través
+del adaptador; auton-muse-engine (12 sin e2e, 16 con e2e), auton-engine-dispatch (6), typecheck y lint.
 
 
 
