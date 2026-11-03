@@ -60,15 +60,16 @@ export function ConversationAgentToolCallRow({
       failureStage: "subagent_open",
     });
   }, [childSessionId, context, subagentType, title]);
+  const isAutonProgrammer = subagentType === "auton-worker";
   const agentSummaryAction = useMemo(
     () =>
-      canOpenChildSession && childSessionId
+      !isAutonProgrammer && canOpenChildSession && childSessionId
         ? {
             onActivate: handleOpenChildSession,
             testId: testId(TID_V4_SUBAGENT_OPEN_SIDE_PANE, childSessionId),
           }
         : undefined,
-    [canOpenChildSession, childSessionId, handleOpenChildSession],
+    [canOpenChildSession, childSessionId, handleOpenChildSession, isAutonProgrammer],
   );
 
   // Agent 工具行和普通工具行同属工作流，不能在配对壳上额外加 px-4，

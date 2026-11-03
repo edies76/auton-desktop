@@ -1182,7 +1182,11 @@ async function runAgentToCompletion(
       resumeFromStore: executionOptions.resumeFromStore,
       systemPrompt:
         lifecycle.profile.name === AUTON_WORKER_AGENT_TYPE
-            ? buildAutonWorkerPromptForRequest({ effort: request.effort, brief: request.prompt })
+            ? buildAutonWorkerPromptForRequest({
+              effort: request.effort,
+              brief: request.prompt,
+              description: request.description,
+            })
             : lifecycle.profile.systemPrompt,
       workingDirectory: request.workingDirectory,
       workspaceRoot: request.workspaceRoot,

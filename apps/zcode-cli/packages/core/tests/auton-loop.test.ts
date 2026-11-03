@@ -24,7 +24,7 @@ describe("bucle vivo", () => {
   });
 
   it("abrir un canal se narra siempre y sube el contador", () => {
-    const decision = applyLoopEvent(initialLoopState(T0), {
+    const decision = applyLoopEvent(initialLoopState(), {
       kind: "dispatch",
       at: T0,
       workerId: "prog1",
@@ -81,7 +81,7 @@ describe("bucle vivo", () => {
   });
 
   it("narrar reinicia el reloj del silencio", () => {
-    const dispatched = applyLoopEvent(initialLoopState(T0), { kind: "dispatch", at: T0 });
+    const dispatched = applyLoopEvent(initialLoopState(), { kind: "dispatch", at: T0 });
     const soon = applyLoopEvent(dispatched.state, { kind: "heartbeat", at: T0 + 60_000 });
     expect(soon.narrate).toBe(false);
 

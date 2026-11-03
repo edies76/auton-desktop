@@ -347,17 +347,17 @@ export function AgentToolCallBlock(context: ToolCallBlockRenderContext) {
         toolId={toolCall.toolId}
         icon={AGENT_TOOL_ICON}
         showIcon={context.showIcon !== false}
-        canToggle={false}
-        forceOpen={false}
-        summaryAction={summaryAction}
-        // 产品边界：Agent/Task 在父对话中只保留单行摘要；完整 child timeline 统一从
-        // 右侧 tab / 手机抽屉查看，因此这里既不自动展开，也不提供手动展开入口。
+        canToggle={isAutonProgrammer}
+        forceOpen={isAutonProgrammer && isAgentVisuallyRunning}
+        summaryAction={isAutonProgrammer ? undefined : summaryAction}
+        // Producto Auton: el Programador se lee en el hilo como canal vivo y no abre
+        // el panel derecho. Los demás agentes conservan el resumen de una línea.
         kindLabel={kindLabel}
         expandedKindLabel={kindLabel}
         kindDetail={agentNameDetail}
         expandedKindDetail={agentNameDetail}
         sourceLabel={sourceLabel}
-        autoCollapseOnComplete
+        autoCollapseOnComplete={!isAutonProgrammer}
         primaryText={
           collapsedChildSummary ? collapsedChildSummary.primaryText : collapsedPrimaryText
         }

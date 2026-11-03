@@ -41,7 +41,7 @@ export interface LoopDecision {
   state: LoopState;
 }
 
-export function initialLoopState(now: number): LoopState {
+export function initialLoopState(): LoopState {
   return { running: 0, openQuestions: 0, lastNarrationAt: null, phase: "idle" };
 }
 

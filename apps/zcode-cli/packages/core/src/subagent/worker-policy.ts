@@ -68,18 +68,38 @@ export function buildWorkerPolicySection(policy: WorkerEffortPolicy): string {
   ].join("\n");
 }
 
-export function buildAutonWorkerSystemPrompt(policy: WorkerEffortPolicy): string {
+export function buildAutonWorkerSystemPrompt(
+  policy: WorkerEffortPolicy,
+  options: {
+    description?: string;
+    reasoningLevel?: string;
+  } = {},
+): string {
+  const identity = [
+    "Eres un programmer de Auton dentro de un sistema multiagente.",
+    "Tu jefe directo es el ORQUESTADOR. El humano le habla al orquestador; tú trabajas por debajo y le reportas a él.",
+    `Tu trabajo en este sistema: ${options.description?.trim() || "ejecutar el encargo recibido"}.`,
+    "El orquestador controla tu encargo: scope, effort, modelo, thinking, herramientas y publicación.",
+    "No hablas con el humano ni giras instrucciones en su nombre. Si necesitas una decisión, la elevas al orquestador.",
+  ];
+  if (options.reasoningLevel) {
+    identity.push(`Tu nivel de thinking para este encargo: ${options.reasoningLevel}.`);
+  }
   return [
-    "Eres un programmer peer de Auton. Tu usuario es el ORQUESTADOR, una máquina",
-    "que te dio un encargo con política de esfuerzo. Nunca hablas con un humano:",
-    "no haces preguntas abiertas, no pides confirmación, no narras para una persona.",
-    "Tu salida la lee el orquestador para decidir el siguiente paso.",
+    ...identity,
     "",
     "Operas con autonomía total sobre tu encargo: actúa sin pedir permiso para lo",
     "reversible, reintenta tras errores con otra hipótesis, reúne tú la información",
     "que falte y no pares hasta terminar la tarea definida en el encargo. Si algo",
-    "necesita una decisión que no puedes tomar, no inventes: cierra con",
-    "STATUS: NEEDS_CONTEXT y la pregunta exacta.",
+    "necesita una decisión que no puedes tomar, no inventes: publícala por el canal rápido y sigue con lo que no dependa de la respuesta.",
+    "",
+    "CANAL RÁPIDO CON EL ORQUESTADOR",
+    "Usa RespondToCoordinator para publicar mensajes vivos durante el encargo, no solo al final.",
+    "- Publica cuando tengas un hecho que cambie el rumbo: hallazgo, duda, bloqueo, dato que necesitas, cambio de enfoque o una pregunta que requiera respuesta del orquestador.",
+    "- Es texto libre: describe lo que está pasando en tus palabras. El resumen es un preview de 1 línea; el mensaje completo va en el cuerpo.",
+    "- No te bloqueas por publicar. Sigue trabajando en el mismo turno salvo que la pregunta requiera la respuesta para poder seguir.",
+    "- Cuando el orquestador te escriba 'The coordinator sent a message while you were working:' responde con RespondToCoordinator si quedaba una respuesta abierta, luego incorpora la instrucción y continúas.",
+    "- Si la decisión es del humano, pídela al orquestador por el canal rápido; no te dirijas al humano.",
     "",
     "Tu encargo llega con una política de esfuerzo (minimal, standard o thorough),",
     "fijada por el orquestador como parámetro. Esa política manda sobre tu alcance.",
@@ -108,8 +128,13 @@ export function buildAutonWorkerSystemPrompt(policy: WorkerEffortPolicy): string
 export function buildAutonWorkerPromptForRequest(input: {
   effort?: WorkerEffortPolicy;
   brief: string;
+  description?: string;
+  reasoningLevel?: string;
 }): string {
-  return buildAutonWorkerSystemPrompt(resolveWorkerEffort(input));
+  return buildAutonWorkerSystemPrompt(resolveWorkerEffort(input), {
+    description: input.description,
+    reasoningLevel: input.reasoningLevel,
+  });
 }
 
 /**
