@@ -1,7 +1,4 @@
 import { describe, expect, it } from "vitest";
-import { readFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import {
   AgentInputJsonSchema,
   AgentInputSchema,
@@ -18,6 +15,7 @@ import {
   resolveAutonWorkerTaskMode,
 } from "../src/auton/workerTaskMode.js";
 import { buildAutonSection } from "../src/auton/contextAuton.js";
+import { createContextBuilder } from "../src/context/index.js";
 
 const MODES = ["build", "read", "research", "debug", "refactor"] as const;
 const EFFORTS = ["minimal", "standard", "thorough"] as const;
@@ -158,19 +156,29 @@ describe("el registro y el contrato declaran el modo", () => {
   });
 
   it("la doctrina ensamblada dice cuándo usar cada modo", () => {
-    const section = buildAutonSection().content;
-    expect(section).toContain("## Modos de trabajo de los workers");
-    expect(section).toContain("`read`: cuando necesitas contexto");
-    expect(section).toContain("`research`: cuando hay que decidir entre alternativas");
-    expect(section).toContain("`debug`: cuando hay un fallo");
-    expect(section).toContain("`refactor`: cuando hay que cambiar la forma");
-    expect(section).toContain("`worker_mode` es otra cosa");
+    // El prompt real del orquestador, no el archivo de la sección.
+    const assembled = createContextBuilder({
+      workingDirectory: "/workspace",
+      envInfo: {
+        cwd: "/workspace",
+        platform: "darwin",
+        shell: "zsh",
+        osVersion: "Darwin 25.4.0",
+        nodeVersion: "v24.14.0",
+      },
+      guidanceToolNames: ["Read", "Edit", "Bash", "Agent", "TodoWrite", "AskUserQuestion"],
+    })
+      .build()
+      .systemMessages.map((message) => String(message.content ?? ""))
+      .join("\n");
 
-    // La sección llega al ensamblado: el builder la empuja al prompt.
-    const builder = readFileSync(
-      resolve(dirname(fileURLToPath(import.meta.url)), "../src/context/builder.ts"),
-      "utf8",
-    );
-    expect(builder).toMatch(/sections\.push\(buildAutonSection\(\)\)/);
+    expect(assembled).toContain("## Modos de trabajo de los workers");
+    expect(assembled).toContain("`read`: cuando necesitas contexto");
+    expect(assembled).toContain("`research`: cuando hay que decidir entre alternativas");
+    expect(assembled).toContain("`debug`: cuando hay un fallo");
+    expect(assembled).toContain("`refactor`: cuando hay que cambiar la forma");
+    expect(assembled).toContain("`worker_mode` es otra cosa");
+    // La sección sigue existiendo por separado; el ensamblado la incluye.
+    expect(buildAutonSection().content).toContain("## Modos de trabajo de los workers");
   });
 });

@@ -16,10 +16,12 @@ const WRITE_TOOLS = ["Write", "Edit", "Bash", "ApplyPatch", "AutonRevert", "Auto
 async function dispatchWithMode(
   mode: "build" | "read" | "research" | "debug" | "refactor",
   workerMode: "subagent" | "session",
+  workerToolCall?: { name: string; input: Record<string, unknown> },
 ) {
   const root = await mkdtemp(join(tmpdir(), "auton-mode-"));
   const requests: RecordedRequest[] = [];
   let parentCalls = 0;
+  let workerCalls = 0;
 
   const modelAdapter = {
     async generateText(request: {
@@ -59,6 +61,16 @@ async function dispatchWithMode(
           usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
         };
       }
+      workerCalls += 1;
+      if (workerCalls === 1 && workerToolCall) {
+        return {
+          finishReason: "tool-calls" as const,
+          providerMetadata: undefined,
+          text: "",
+          toolCalls: [{ id: "call_write", name: workerToolCall.name, input: workerToolCall.input }],
+          usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+        };
+      }
       return {
         finishReason: "stop" as const,
         providerMetadata: undefined,
@@ -91,9 +103,21 @@ async function dispatchWithMode(
   return { root, workerRequests, parent };
 }
 
+async function workerWorkspace(parent: unknown): Promise<string | undefined> {
+  const registry = (
+    parent as {
+      runtimeTaskRegistry: {
+        all(): Record<string, { agentType: string; workingDirectory?: string }>;
+      };
+    }
+  ).runtimeTaskRegistry;
+  return Object.values(registry.all()).find((entry) => entry.agentType === "auton-worker")
+    ?.workingDirectory;
+}
+
 describe("seguridad del modo en el camino real de despacho", () => {
-  it("read no recibe herramientas de escritura y no deja diario", async () => {
-    const { root, workerRequests } = await dispatchWithMode("read", "session");
+  it("read no recibe herramientas de escritura y el diario del worker queda vacío", async () => {
+    const { root, workerRequests, parent } = await dispatchWithMode("read", "session");
     try {
       expect(workerRequests.length).toBeGreaterThan(0);
       const worker = workerRequests[0]!;
@@ -104,18 +128,49 @@ describe("seguridad del modo en el camino real de despacho", () => {
       for (const tool of WRITE_TOOLS) {
         expect(worker.tools).not.toContain(tool);
       }
+      const workspace = await workerWorkspace(parent);
+      expect(workspace).toBeTruthy();
+      await expect(stat(join(workspace!, ".auton", "changes.jsonl"))).rejects.toThrow();
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("read también recorta el juego en subagente y un intento de escritura se rechaza sin diario", async () => {
+    const { root, workerRequests } = await dispatchWithMode("read", "subagent", {
+      name: "Write",
+      input: { file_path: "intento.txt", content: "no debería" },
+    });
+    try {
+      expect(workerRequests.length).toBeGreaterThan(0);
+      for (const tool of WRITE_TOOLS) {
+        expect(workerRequests[0]!.tools).not.toContain(tool);
+      }
+
+      const lastMessages = (workerRequests.at(-1)?.messages ??
+        []) as Array<Record<string, unknown>>;
+      const toolMessage = lastMessages.find(
+        (message) => message.role === "tool" && message.toolCallId === "call_write",
+      );
+      expect(toolMessage?.isError).toBe(true);
       await expect(stat(join(root, ".auton", "changes.jsonl"))).rejects.toThrow();
     } finally {
       await rm(root, { recursive: true, force: true });
     }
   }, 30_000);
 
-  it("read también recorta el juego en el camino subagente", async () => {
-    const { root, workerRequests } = await dispatchWithMode("read", "subagent");
+  it("research no recibe escritura y su prompt declara el criterio de recomendación", async () => {
+    const { root, workerRequests } = await dispatchWithMode("research", "session");
     try {
       expect(workerRequests.length).toBeGreaterThan(0);
+      const worker = workerRequests[0]!;
+      const prompt = JSON.stringify(worker.messages);
+      expect(prompt).toContain("MODO DE TRABAJO: research");
+      expect(prompt).toContain("recomendación con razones");
+      expect(prompt).toContain("No devuelves una lista de enlaces");
+
       for (const tool of WRITE_TOOLS) {
-        expect(workerRequests[0]!.tools).not.toContain(tool);
+        expect(worker.tools).not.toContain(tool);
       }
     } finally {
       await rm(root, { recursive: true, force: true });
