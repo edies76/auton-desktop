@@ -67,6 +67,7 @@ sale centrada y con `data-kind`.
 | `core/tests/auton-live-loop.test.ts` (9) | Reloj, latido, reinicio, cierre, `waitForIdle` por cierre/tiempo/aborto |
 | `core/tests/auton-live-loop-wiring.test.ts` (4) | Enganche en el runner y espera en el turno |
 | `core/tests/auton-live-turn-runtime.test.ts` (1) | Sesión real: turno abierto, noticia, latido, cierre |
+| `core/tests/auton-real-dispatch-runtime.test.ts` (1) | Despacho real: el modelo pide `Agent`, el runtime lanza el worker, el turno espera y se libera |
 | `core/tests/auton-fast-channel-runtime.test.ts` (2) | Canal rápido en los dos sentidos |
 | `ui/test/autonThreadChannels.test.tsx` (2) | Mapeo real del hilo: dos canales, relojes, cierre, acción |
 | `ui/test/autonSubagentChannel.test.ts` (5) | Estado, reloj y props del evento |
