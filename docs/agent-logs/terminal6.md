@@ -77,3 +77,8 @@ explícitamente quitar el verde y la llave: "ese color verde y ese icono en los 
 DISEÑO, trata de reciclar lo más q puedas copia.pega y modifica". Por eso el badge es neutro y el
 icono es de estado; el logo/nombre del proyecto y los grupos Agentes ZCode/Subagentes/Muse Code son
 la UI nueva. Comparación lado a lado: `style-compare.png`.
+
+Comparación lado a lado: `style-compare.png`. Se restauró la estructura y densidad de la referencia
+(encabezado, badge con punto, nombre+reloj, última línea, parada) con badge neutro e icono de estado
+por decisión explícita del usuario; el panel actual muestra `Agentes ZCode 3` con un worker completo
+Trabajando y el hilo del orquestador abierto/fuera de la lista (`final-running-style.png`).
