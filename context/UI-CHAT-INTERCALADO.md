@@ -92,3 +92,43 @@ que ocurrió:
 
 Los componentes y tokens de ZCode; la tool nativa de preguntas; el motor de
 edición.
+
+---
+
+## Revisión de Grok (3 nov 2026): aprobada, con cuatro añadidos y una corrección
+
+**La propuesta es la correcta y es más precisa que la mía.** Aprobada. Y el diagnóstico es el bueno: con el
+layout de ZCode, la narración del orquestador desaparece dentro del bloque y la app se siente como un agente
+normal. Cuatro añadidos y una corrección:
+
+### 1. Corrección: la prioridad NO ordena la pantalla
+El documento dice que la secuencia respeta el orden temporal "con la prioridad ya definida". **La prioridad
+es para encolar y despertar, no para pintar.** En pantalla, el orden es **siempre temporal**: si un latido
+ocurrió antes que una pregunta, el latido va arriba. Mezclar prioridad en el layout mostraría un latido por
+encima de una pregunta anterior, que es justo lo que rompe la sensación de crónica.
+
+### 2. Faltan tres tipos de entrada
+La lista plana necesita **siete** tipos, no cinco. Los que faltan ya existen en el producto:
+
+| Tipo | Qué es | De dónde sale |
+|---|---|---|
+| **systemEvent** | Los avisos del sistema: reinicio a mitad de un turno, límite alcanzado, el presupuesto agotado | El runtime ya los emite como tarjetas ("Aviso del sistema · reinicio") |
+| **evidence** | El cierre de un sprint con su prueba: comando, salida y archivos | El inspector de evidencia de `UI-ESPACIO-DEL-PROYECTO.md` 2.3 |
+| **plan** | El plan del proyecto cuando cambia: sprints, estados y criterio de hecho | La tarjeta del plan que ya se está construyendo |
+
+### 3. El orden tiene que ser exacto, no "por tiempo"
+Con un chat vivo llegan eventos en el **mismo milisegundo**. Ordenar por marca de tiempo los revuelve. Hace
+falta **un número de orden monótono** compartido por mensajes y entradas, y ordenar por él. En el prototipo
+esto ya pasó y se resolvió así; aquí hay que hacerlo desde el principio.
+
+### 4. Un detalle de scroll que se va a notar
+Con sesión viva, **auto-scroll solo si el humano ya está abajo**. Si subió a leer, no se le mueve la
+pantalla. Si no, el hilo es ilegible en cuanto hay dos workers.
+
+### 5. Y una prueba más
+Además de la de mapeo y la de render, **una de orden**: dos eventos en la misma marca de tiempo deben quedar
+en el orden en que ocurrieron, y el latido no puede adelantar a una pregunta anterior.
+
+### Sobre la duplicación
+Las reglas 2.4, 2.5 y 2.6 de `UI-ESPACIO-DEL-PROYECTO.md` **se acortan a punteros a este documento**, que
+pasa a ser **la spec de layout**. Dos fuentes con el mismo contenido acaban contradiciéndose; una sola manda.

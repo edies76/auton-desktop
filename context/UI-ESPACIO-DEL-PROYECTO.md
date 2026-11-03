@@ -35,22 +35,26 @@ Es **el espacio de un proyecto, y solo uno a la vez**. Se compone de tres zonas:
 - Aquí vive **la narración del orquestador** y, **anidados en el hilo**, los **bloques de trabajo**.
 - **El humano solo escribe aquí.** No hay otro campo de texto en la pantalla.
 
-### 2.2 El panel izquierdo: **los workers**
+### 2.2 El panel izquierdo: **el proyecto y sus workers**
 
-- **No se apaga el panel: se rehace.** Deja de listar proyectos y tareas de ZCode.
-- **Una fila por worker**, con:
+- **No se apaga el panel: se rehace.** La cabecera muestra **el proyecto activo como una fila nativa**
+  (icono de carpeta + nombre, seleccionada), **sin el logo de ZCode**. Al pulsarla se abre un selector
+  que lista **solo proyectos**; no hay chats, tareas ni botón de crear tarea dentro del proyecto.
+- **Una fila por worker**, con el estilo de lista del chat normal de ZCode:
+  - icono de estado a la izquierda,
   - su nombre (`worker 1`, `worker 2`… o el que el orquestador le ponga),
-  - **su estado en vivo** (`trabajando`, `preguntando`, `esperando`, `bloqueado`, `terminado`),
-  - **su tiempo corriendo**,
-  - y **su control de parada** (botón para detenerlo a mano).
-- Las vistas de tareas (`Timeline`, agrupado, proyectos) muestran **solo la conversación del
-  orquestador de cada proyecto**. Los chats legados y las sesiones de worker no se listan, no se
-  editan y no se promueven a orquestador al seleccionarlos.
+  - **su estado en vivo** (`trabajando`, `preguntando`, `esperando`, `bloqueado`, `terminado`) y
+    **su tiempo corriendo** (o el silencio) a la derecha,
+  - y **su control de parada**, visible al pasar el ratón.
+- Los workers se agrupan por rol/motor (`Agentes ZCode`, `Subagentes`, `Muse Code`) con cabeceras
+  plegables. La cabecera **Workers** también se pliega para ocultar la lista completa.
+- **No hay vistas nativas de ZCode** (`Timeline`, agrupado, lista de tareas) ni sección `Tasks` en este
+  panel. El proyecto es el encabezado; el orquestador es el hilo del centro.
 - **Clicable**: al abrir una fila se ve **su conversación completa** y **lo que hace en tiempo real** —
   igual que el chat de un proyecto normal, pero **sin campo de texto**: al worker no se le escribe.
 - Desde la fila se puede **volver al hilo** del orquestador ("atrás" del panel).
-- Referencia visual que pidió Edi: el bloque de tareas de **Grok Build** (fila con el reloj, el estado y
-  los botones de parar/cerrar).
+- Referencia visual que pidió Edi: la lista de chats normal de ZCode (icono, nombre y acción), no una
+  tarjeta con badge y segunda línea.
 
 ### 2.3 Los bloques anidados en el hilo
 
@@ -62,51 +66,13 @@ Dentro de la conversación, y en orden con el texto:
 | **Plan** | El plan del proyecto: sprints con su estado, su dueño y su criterio de hecho. *(La tarjeta del plan ya está en construcción por otra sesión: `packages/ui/src/auton/plan-card.tsx`.)* |
 | **Evidencia** | Al cerrar un sprint: el comando que se corrió, su salida y los archivos tocados. Es la prueba de que está bien. |
 
-### 2.4 La regla de layout: crónica intercalada (propuesta, pendiente del visto bueno de Edi)
+### 2.4 La regla de layout y los eventos
 
-**Esto no es un retoque de color: es el cambio que hace que se sienta un chat único y vivo.** Hoy el hilo
-usa el agrupado de ZCode: un bloque colapsable tipo "trabajó X segundos" y **la respuesta final debajo**.
-Esa forma es de un agente que **hace** el trabajo. El orquestador **no hace el trabajo: lo dirige**, así que
-esa forma sobra.
-
-**La regla:**
-
-> El hilo es **una crónica**: narración → bloque de trabajo del tramo → narración → bloque → … y así
-> indefinidamente, **sin cerrar el turno**.
-
-- **Se acabó el bloque por turno.** No hay "trabajó Xs" con la respuesta abajo: hay **narración del
-  orquestador**, y **un bloque por worker** (no por turno), que se abre y se cierra sin límite.
-- **El trabajo no tiene "fase de work" y "fase de respuesta".** Todo ocurre **en el mismo hilo y a la vez**:
-  el orquestador puede estar narrando, un worker trabajando y otro preguntando, sin que nada espere a nada.
-- **Dónde se cambia**: los componentes que hoy agrupan por turno — `ConversationTimeline` y
-  `ConversationTurnGroup` — pasan a componer por **evento en orden**: narración, canal de worker, evento
-  del sistema, pregunta.
-- **Nada de huecos**: si el orquestador espera, lo dice; si no tiene nada que decir, marca el tramo en
-  espera y sigue vivo.
-
-**Por qué importa tanto**: sin esto, en reposo la app **se siente como un agente normal**, y toda la
-promesa —multiagente, un solo chat, el orquestador como director— se queda invisible aunque el código la
-cumpla.
-
-### 2.5 Los eventos: mismo tratamiento que los de ZCode
-
-- **El evento de pregunta de un worker se camufla como un evento más del bloque de trabajo**: una fila,
-  como las demás. Ni banner centrado, ni color propio, ni salto de layout.
-- **Los workers no preguntan al humano.** El worker pregunta **al orquestador**; el orquestador decide si
-  responde él o si le pregunta al humano, y para eso usa **la tool de preguntas que ZCode ya trae**.
-- Lo mismo para el resto de eventos: **copiar el tratamiento que ZCode ya tiene** para sus filas de
-  herramientas. Si algo se ve raro, es que se inventó en vez de copiarse.
-
-### 2.6 Colores: solo los de ZCode (corrección pedida)
-
-- **Nada de colores nuevos.** Ni azul para los workers, ni ámbar o verde propios: se usan **los tokens de
-  ZCode**. Si ZCode no tiene un color para "pregunta" o "espera", se resuelve con **neutros y un solo
-  acento**, igual que sus propias filas.
-- **El estado se distingue por forma y palabra** —etiqueta, punto, parpadeo— **no por un arcoíris**. Cinco
-  estados no son cinco colores.
-
-> **Pendiente**: estas tres reglas (2.4, 2.5 y 2.6) las propone Grok y esperan el visto bueno de Edi antes
-> de tocar la interfaz.
+**La spec de layout es [`context/UI-CHAT-INTERCALADO.md`](./UI-CHAT-INTERCALADO.md)**, y manda ella.
+Resumen: el hilo es **una crónica intercalada** (narración → canal de worker → evento → narración…), sin
+bloque por turno; el evento de pregunta de un worker **se camufla** como una fila más; los workers preguntan
+**al orquestador**, y para preguntarle al humano se usa **la tool nativa de ZCode**; y **solo se usan los
+tokens de ZCode**, sin colores nuevos.
 
 ## Estados y animaciones (lo nuevo)
 
@@ -120,7 +86,9 @@ cumpla.
 
 ## Qué reutilizar (dónde mirar en el código)
 
-- **El panel y su navegación**: `packages/ui/src/project-sidebar/ProjectSidebarNavigation.tsx`, `TaskList.tsx`, `WorkspaceSidebar.tsx`.
+- **El panel y su navegación**: `packages/ui/src/project-sidebar/ProjectSidebarListHeader.tsx`,
+  `AutonProjectPicker.tsx`, `packages/ui/src/auton/project-space/WorkerPanel.tsx`.
+- **El estilo de fila**: `packages/ui/src/TaskListItem.tsx` (icono, nombre, acción; una sola línea).
 - **La vista de una sesión** (la corriente de un agente): ya existe; se **reutiliza** para el detalle del worker.
 - **La tarjeta del plan**: `packages/ui/src/auton/plan-card.tsx` (en construcción).
 - **Los tokens y la tipografía**: donde están definidos en `packages/ui/src`. No introducir colores ni fuentes nuevas.
