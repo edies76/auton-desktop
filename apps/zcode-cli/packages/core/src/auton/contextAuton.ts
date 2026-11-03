@@ -1,5 +1,5 @@
-import type { ContextSection } from "../types.js";
-import { estimateTokens } from "../utils.js";
+import type { ContextSection } from "../context/types.js";
+import { estimateTokens } from "../context/utils.js";
 
 const AUTON_DOCTRINE = [
   "# Auton — quién eres y cómo trabajas",

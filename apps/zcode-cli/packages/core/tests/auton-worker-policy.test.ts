@@ -5,7 +5,7 @@ import {
   buildWorkerPolicySection,
   parseEffortPolicy,
   type WorkerEffortPolicy,
-} from "../src/subagent/worker-policy.js";
+} from "../src/auton/workerPolicy.js";
 import { normalizeAgentProfiles } from "../src/subagent/profile.js";
 
 describe("auton worker effort policy", () => {

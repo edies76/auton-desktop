@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { agentToolEntry } from "../src/tool/handlers/agent.js";
-import { buildAutonWorkerPromptForRequest } from "../src/subagent/worker-policy.js";
+import { buildAutonWorkerPromptForRequest } from "../src/auton/workerPolicy.js";
 import type { ToolExecutionContext } from "../src/tool/types.js";
 
 interface CapturedLaunch {

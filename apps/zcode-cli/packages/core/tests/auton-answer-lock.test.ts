@@ -5,7 +5,7 @@ import {
   clearWaitingForAnswer,
   isAnswerRequired,
   markWaitingForAnswer,
-} from "../src/subagent/answer-lock.js";
+} from "../src/auton/answerLock.js";
 import { createSubagentMessageSink } from "../src/subagent/message-steering.js";
 import { InMemoryRuntimeTaskRegistry } from "../src/runtime-task/registry.js";
 

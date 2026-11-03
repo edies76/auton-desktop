@@ -5,8 +5,8 @@
 // es aspiracional: cada tool mencionada existe hoy.
 // ============================================================
 
-import type { ContextSection } from "../types.js";
-import { estimateTokens } from "../utils.js";
+import type { ContextSection } from "../context/types.js";
+import { estimateTokens } from "../context/utils.js";
 
 const ORCHESTRATOR_PROCEDURE = [
   "## Cómo dirigir el trabajo",

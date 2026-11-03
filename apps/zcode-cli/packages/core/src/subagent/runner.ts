@@ -53,10 +53,10 @@ import {
   AUTON_WORKER_AGENT_TYPE,
   buildAutonWorkerPromptForRequest,
   type WorkerEffortPolicy,
-} from "./worker-policy.js";
+} from "../auton/workerPolicy.js";
 import { EXPLORE_AGENT_ALLOWED_TOOLS } from "./explore-tools.js";
 import { formatLocalAgentTaskNotification } from "./completion-notification.js";
-import { markWaitingForAnswer } from "./answer-lock.js";
+import { markWaitingForAnswer } from "../auton/answerLock.js";
 import { AutonLiveLoop, formatHeartbeatMessage, registerAutonLiveLoop } from "../auton/live-loop.js";
 import { filterSubagentChildToolNames } from "./tool-policy.js";
 import {

@@ -3,7 +3,7 @@ import { GENERAL_PURPOSE_AGENT_TYPE, buildGeneralPurposeSystemPrompt } from "./g
 import {
   AUTON_WORKER_AGENT_TYPE,
   buildAutonWorkerSystemPrompt,
-} from "./worker-policy.js";
+} from "../auton/workerPolicy.js";
 import { EXPLORE_AGENT_TYPE } from "./explore.js";
 import { formatExploreAllowedToolsForAgentDescription } from "./explore-tools.js";
 import { filterSubagentChildToolNames } from "./tool-policy.js";

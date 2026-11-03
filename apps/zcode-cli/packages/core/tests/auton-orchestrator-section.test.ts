@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createContextBuilder } from "../src/context/index.js";
-import { buildOrchestratorSection } from "../src/context/sections/orchestrator.js";
+import { buildOrchestratorSection } from "../src/auton/contextOrchestrator.js";
 import { createTestRuntimeModel } from "./test-runtime-model.js";
 
 const contextTestModel = createTestRuntimeModel({

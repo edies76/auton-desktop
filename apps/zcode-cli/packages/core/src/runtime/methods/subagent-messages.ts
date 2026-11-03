@@ -5,7 +5,7 @@ import type { AgentRuntimeInternal } from "../internal.js";
 import type { EnqueueSubagentMessageInput } from "../types.js";
 import { runtimeInputMetadata } from "../../agent/runtime-input-presentation.js";
 import { escapeXml } from "../../runtime-task/notification.js";
-import { clearWaitingForAnswer } from "../../subagent/answer-lock.js";
+import { clearWaitingForAnswer } from "../../auton/answerLock.js";
 
 export function formatSubagentMessage(input: {
   agentId: string;

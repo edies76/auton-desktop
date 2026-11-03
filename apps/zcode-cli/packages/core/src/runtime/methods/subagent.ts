@@ -42,7 +42,7 @@ import {
 } from "../../subagent/mcp-config.js";
 import { mirrorSubagentToolEvent } from "../../subagent/tool-event-mirror.js";
 import { isBuiltInExploreAgentProfile } from "../../subagent/profile.js";
-import { childAgentName } from "../../subagent/worker-policy.js";
+import { childAgentName } from "../../auton/workerPolicy.js";
 import {
   buildSubagentChildDisallowRules,
   filterSubagentChildToolNames,

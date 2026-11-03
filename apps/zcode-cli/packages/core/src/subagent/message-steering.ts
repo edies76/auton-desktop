@@ -1,6 +1,6 @@
 import type { TraceContext, TurnSteerInput, TurnSteerResult } from "@zcode/contracts";
 import type { RuntimeTaskMessageSink } from "../runtime-task/registry.js";
-import { ANSWER_REQUIRED_HEADER } from "./answer-lock.js";
+import { ANSWER_REQUIRED_HEADER } from "../auton/answerLock.js";
 
 interface SteerableRuntime {
   steerTurn(input: string | TurnSteerInput): Promise<TurnSteerResult>;
