@@ -152,3 +152,20 @@ Verificado con: `autonWorkerSurface.test.tsx` (4), `autonWorkerSessionPane.test.
 `projectSidebarTaskVisibility.test.tsx` (4) y la suite de UI 75/75. Typecheck raíz 0 con 8 GB y lint
 raíz 0 errores/105 avisos.
 - Arranque limpio con estas correcciones (`launch-final2.png`, `launch-final2.log`): `Orquestador` + `WORKERS 9`, foco cerrado y compositor del orquestador; `Recently updated` solo con el chat del proyecto; cero excepciones de renderer.
+
+## 2026-11-03 - un solo modelo para el centro
+
+Qué: `resolveCenterView` decide entre orquestador, foco del panel y sesión de worker con una sola
+regla; la selección explícita del panel gana y el orquestador queda excluido por id. El foco guarda
+solo la intención (`selectedWorkerId`, `selectionOrigin`, `mode`) y la lista viva es un dato aparte
+que escribe el sidebar. `AutonWorkerSurface` renderiza exactamente el tipo resuelto y
+`AutonWorkerFocusPane` recibe `worker`, `stopTaskId` y `canStop` requeridos; se eliminó el fallback al
+id del worker y el `open()` automático de la sesión.
+
+Por qué: la sesión de worker activa podía pisar la fila elegida en el panel y, sin orquestador
+publicado, la parada caía al worker. Eran combinaciones ilegales de los mismos cuatro datos.
+
+Verificado con: `centerView.test.ts` (15 filas, incluida sesión activa + selección distinta),
+`workerCenterTransitions.test.tsx` (5 secuencias), `autonWorkerFocusPane.test.tsx` (5),
+`workerFocusStore.test.ts` (3), `autonWorkersSidebar.test.tsx` (4) y la suite de UI 91/91. Typecheck
+raíz 0 con 8 GB y lint raíz 0 errores/105 avisos.
