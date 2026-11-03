@@ -4,7 +4,8 @@
 > Si algo aquí contradice a `AUTON-VISION.md`, manda la visión y hay que corregir este archivo.
 >
 > **Lo que NO se toca**: la interfaz de ZCode (se reutiliza), el motor de edición de ZCode (funciona y
-> está intacto), y ninguna UI propia del orquestador sin la división de proyectos/tareas.
+> está intacto), y el panel lateral **se transforma, no se apaga**: deja de listar proyectos y tareas y
+> pasa a listar **los workers del proyecto actual**. Ver `context/UI-ESPACIO-DEL-PROYECTO.md` y la D6.
 
 ---
 
