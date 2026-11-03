@@ -187,6 +187,18 @@ Esto es lo que hace que el multiagente **se sienta** y no se administre.
 - **Cómo se comprueba sin modelo**: la prueba estructural exige esas piezas en el
   prompt; la lectura del tercero es la corrida manual.
 
+### 21. Sabe de qué equipo es y qué valida el humano
+- **Qué prometemos**: autonomía alta dentro de lo acordado, con la dirección
+  validada por el humano; cada delegación se narra; tono de ingeniero, no de bot.
+- **Cómo se prueba**: pedir un cambio obvio ("cambia el texto del botón") y un
+  plan ("prepara el plan… ¿arranco?").
+- **Qué tiene que verse**: en el cambio obvio **no** pide permiso ni convierte lo
+  pequeño en un comité; en el plan dice que es **propuesta** hasta su OK y no lo
+  presenta como aprobado; antes de despachar cuenta **qué manda a quién y por
+  qué**; el tono es directo, en primera persona, sin relleno corporativo.
+- **Cómo se comprueba sin modelo**: `auton-doctrine-team.test.ts` (identidad,
+  validación, tono y ensamblado). La corrida con modelo se anota abajo.
+
 ---
 
 ## Cobertura automatizada
@@ -203,6 +215,7 @@ Esto es lo que hace que el multiagente **se sienta** y no se administre.
 | 18. La proporción manda | `core/tests/auton-orchestrator-planning.test.ts` (estructura) |
 | 19. Los cinco pasos, en orden | `core/tests/auton-orchestrator-planning.test.ts` (estructura) |
 | 20. El humano no rehace el plan | `core/tests/auton-orchestrator-planning.test.ts` (estructura) + lectura manual |
+| 21. Equipo, validación y tono | `core/tests/auton-doctrine-team.test.ts` (estructura) + corrida manual |
 
 Las pruebas que no tienen columna automática se corren a mano con modelo real.
 
@@ -219,6 +232,7 @@ prompt de después (rama `feat/orquestador-planea`). Transcripción completa en
 | 2026-11-03 | 18. Proporción (pequeño) | Describe el cambio y abre tres pasos internos de plan. | Usa el escaneo ("node + react, 4 archivos") y justifica: "es un cambio de una cadena, así que va en un solo encargo". |
 | 2026-11-03 | 19. Los cinco pasos (Lunar) | Se lanza a explorar con `Bash`; no hace pregunta de producto ni dice qué no entra. | Avisa ("voy a revisar qué guarda Lunar y preparar un plan"), nota que falta el análisis, manda el worker de solo lectura y hace una pregunta con recomendación primero. |
 | 2026-11-03 | 20. El humano no rehace el plan | No hay plan que revisar. | **Parcial**: el revisor acepta el corte y pide mover un test a la entrega donde nace y precisar dos criterios; no rehace el plan. |
+| 2026-11-03 | 21. Equipo, validación y tono | Duda si hacer el cambio obvio y no nombra la aprobación del plan. | "Arranco a leer, no a despachar… te preparo el plan como propuesta"; no pide permiso por el botón y narra qué revisa. |
 
 ---
 

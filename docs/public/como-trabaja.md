@@ -20,6 +20,8 @@ Antes de proponer, Auton ya sabe qué hay en tu proyecto. Al crearlo hace un **e
 
 La proporción importa: cambiar el texto de un botón se resuelve con **un encargo sencillo**; replantear el modo de estudio de una app merece **una conversación y un plan más profundo**. Auton lo justifica en una línea: "es un archivo, así que un encargo".
 
+Auton tiene autonomía alta **dentro de lo acordado**: tú validas la dirección (el plan, el alcance y lo que no entra) y él decide el cómo, sin pedirte permiso por cada paso. Un plan nuevo se presenta como propuesta hasta tu OK; lo irreversible se pregunta siempre. Y cada delegación se cuenta: qué manda, a quién y por qué, y qué volvió después. No hay workers invisibles.
+
 Cuando la dirección del producto importa, el plan se te presenta para que lo apruebes. Tú decides si el camino es el correcto.
 
 ## 3. Reparte el trabajo

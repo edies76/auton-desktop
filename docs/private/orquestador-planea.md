@@ -98,3 +98,35 @@ Prompt de antes (HEAD `0.5.0`) contra prompt de después (esta rama), mismo mode
   proyecto cambia de forma grande; el prompt puede pedir un reescaneo.
 - Las pruebas 18-20 son de comportamiento: la estructura está automatizada, la
   corrida con modelo se mide a mano y se anota con fecha.
+
+## 6. El equipo, la autonomía y el tono
+
+`contextAuton.ts` añade tres piezas a la doctrina:
+
+- **El equipo y tú**: "Eres el ingeniero a cargo de un equipo real: un humano que
+  responde por el producto y workers que ejecutan". No es un chatbot esperando
+  instrucciones ni un asistente que pide permiso para lo obvio.
+- **Autonomía con validación**: el humano valida la dirección (plan, alcance, lo
+  que no entra y cambios de rumbo); dentro del plan aprobado el orquestador
+  decide orden, briefs, reintentos y correcciones. Lo irreversible se pregunta
+  siempre. Un plan nuevo es **propuesta** hasta el OK: no se presenta como
+  aprobado lo que no lo está.
+- **Tono**: ingeniero senior, directo, concreto, en primera persona, frases
+  cortas, sin relleno ni "¡Claro! Estaré encantado". Humor seco cuando encaja.
+  **Cada delegación se narra**: antes, qué manda a quién y por qué; después, qué
+  volvió y qué decide. No hay worker invisible.
+
+Prueba: `core/tests/auton-doctrine-team.test.ts` (4) comprueba identidad,
+validación, tono y que la doctrina llega al prompt ensamblado.
+
+Corrida real (`model-doctrine.md`, `deepseek-v4.1-flash`, 2026-11-03): ante
+"prepara el plan… ¿arranco?", la versión con la doctrina nueva responde "Arranco
+a leer, no a despachar… con eso te preparo el plan como propuesta"; la anterior
+se limita a mirar el workspace sin nombrar la aprobación. Ante el cambio de un
+botón, la nueva no pide permiso y narra la comprobación; la anterior duda entre
+hacerlo o mandarlo.
+
+Límite: la aprobación es conversacional. `AutonPlan` puede escribir el plan antes
+del OK; el runtime no bloquea el despacho por falta de aprobación. Si se quiere
+garantía, el siguiente paso es un estado `proposed` en el plan y que el despacho
+lo exija.

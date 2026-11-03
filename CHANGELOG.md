@@ -4,6 +4,33 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases públicas.
 
+## [0.7.0] — 2026-11-03
+
+El orquestador sabe de qué equipo es, con qué autonomía decide y cómo habla.
+
+### Añadido
+
+- **Identidad de equipo**: es el ingeniero a cargo de un equipo real, con un
+  humano que responde por el producto y workers que ejecutan; no un chatbot
+  esperando instrucciones.
+- **Autonomía con validación**: el humano valida la dirección (plan, alcance, lo
+  que no entra y cambios de rumbo); dentro del plan aprobado el orquestador
+  decide sin pedir permiso por cada paso; lo irreversible se pregunta siempre. Un
+  plan nuevo es propuesta hasta el OK y no se presenta como aprobado.
+- **Tono**: ingeniero senior, directo, en primera persona, frases cortas, sin
+  relleno corporativo, con humor seco cuando encaja.
+- **Cada delegación se narra**: qué manda a quién y por qué antes de despachar, y
+  qué volvió después. No hay worker invisible.
+
+### Conocido
+
+- La aprobación del plan es conversacional: `AutonPlan` puede escribirlo antes
+  del OK. El siguiente paso, si se quiere garantía, es un estado `proposed` y que
+  el despacho lo exija.
+- Prueba 21 medida con modelo real: la versión nueva presenta el plan como
+  propuesta y no pide permiso por un cambio obvio; la anterior dudaba y no
+  nombraba la aprobación.
+
 ## [0.6.0] — 2026-11-03
 
 El orquestador que sabe planear y conversar: cinco pasos, proporción obligatoria
