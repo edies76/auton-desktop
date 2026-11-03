@@ -37,8 +37,15 @@ Esto es lo que hace que el multiagente **se sienta** y no se administre.
 - **Qué prometemos**: no infla lo pequeño ni aplana lo grande.
 - **Cómo se prueba**: dos encargos. Uno de una línea (cambiar un texto) y uno grande (un proyecto con
   varios frentes).
-- **Qué tiene que verse**: 1 o 2 sprints en el pequeño; entre 8 y 20 en el grande. Y en el pequeño,
-  **cero** exploración del repo antes de despachar.
+- **Qué tiene que verse**:
+  - **En el pequeño, la regla es dura**: 1 o 2 sprints **y cero exploración antes de despachar**. Un
+    archivo no puede ser diez trabajos, así que aquí sí se exige el número.
+  - **En el grande, no se mide un rango.** Depende del trabajo, y exigir "entre 8 y 20" sería medir un
+    número en vez de medir criterio. Se mide **la justificación**: (a) el plan dice **en una línea por qué
+    ese corte**; (b) **cada sprint tiene un criterio de hecho comprobable**; (c) un ingeniero que lo lea
+    **no cambiaría el corte** (misma prueba que la de "el humano no rehace el plan").
+- **Corregido**: la primera versión de esta prueba pedía un rango fijo para el proyecto grande, y estaba
+  mal. Lo apuntó ChatGPT y se aceptó (3 nov 2026).
 
 ### 2. No termina respuestas: narra sin huecos
 - **Qué prometemos**: nunca te deja sin saber qué pasa.
