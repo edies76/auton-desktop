@@ -105,15 +105,24 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
   traduce la fila real del subagente a estado, reloj y evento de cierre; el hilo
   lo pinta en `v4/ConversationAgentToolCallRow.tsx` (canal con reloj mientras
   corre, fila centrada al cerrar). Prueba: `ui/test/autonSubagentChannel.test.ts`.
-- **Hecho — fila de evento despertador**: `packages/ui/src/auton/WakeEventRow.tsx`
-  pinta la fila centrada y las **tres** clases salen del código que corre:
+- **Hecho — fila de evento despertador (los tres tipos salen del código que corre)**:
   - **pregunta**: una fila real de `SendMessage` con `waitingForAnswer` se resuelve
     como `QuestionWakeBlock` (`auton/question-wake.tsx`, en `resolveRenderer`);
   - **cierre**: `wakeEventForSubagent` con el estado final del canal;
   - **latido**: `heartbeatEventForSubagent` cuando el canal sigue en marcha y lleva
     más de 90 s sin señal.
-  Pruebas: `ui/test/autonThreadChannels.test.tsx` (las tres por el mapeo real) y
-  `ui/test/autonWakeEventRow.test.tsx`.
+  Pruebas: `ui/test/autonThreadChannels.test.tsx` (las tres por el mapeo real:
+  `resolveToolCallRenderer` + `buildAssistantWorkRenderItems` +
+  `ConversationAgentToolCallRow`) y `ui/test/autonWakeEventRow.test.tsx`.
+- **Bloqueado — la fila de pregunta no tiene acción de responder**: en el contexto
+  de la fila no hay manejador para responder; la respuesta se escribe en el
+  compositor. Motivo: falta exponer un callback de respuesta en
+  `ConversationRowRenderContext`. La fila de cierre sí lleva **Abrir**.
+- **Bloqueado — prueba 17 con modelo real**: pedir "deshaz el sprint 2" y comprobar
+  que el orquestador **llama** a `AutonRevert` requiere un proveedor real, que no
+  existe en este entorno. La comprobación estructural
+  (`core/tests/auton-four-pieces.test.ts`) demuestra registro y ensamblado, no la
+  elección del modelo.
 - **Hecho — latido enganchado al runtime**: `core/src/auton/live-loop.ts` mantiene
   un reloj por sesión del orquestador, y el port de subagentes lo alimenta al
   despachar un worker en background y al cerrarlo (completado o fallido). A los
