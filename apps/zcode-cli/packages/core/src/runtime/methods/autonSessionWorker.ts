@@ -126,7 +126,20 @@ async function createWorkerSessionRuntime(
       midConversationSystem: parent.config.midConversationSystem,
       toolSearch: parent.config.toolSearch,
       currentDate: parent.contextSourceSnapshot?.currentDate ?? parent.config.currentDate,
-      subagentContext: { agentPrompt: systemPrompt },
+      subagentContext: {
+        agentPrompt: systemPrompt,
+        // Mismo contrato que el worker subagente: las instrucciones del
+        // proyecto (AGENTS.md y similares) también llegan a la sesión. El
+        // snapshot las trae resueltas cuando hay context source; si no, la
+        // configurada en el runtime es la misma fuente.
+        ...(() => {
+          const configured = parent.config.userInstructions;
+          const userInstructions =
+            parent.contextSourceSnapshot?.userInstructions ??
+            (isResolvedUserInstructions(configured) ? configured : undefined);
+          return userInstructions ? { userInstructions } : {};
+        })(),
+      },
       agentName: "auton-worker",
       maxTurns: 200,
       parentSessionId: parent.sessionId,
@@ -230,6 +243,19 @@ async function createWorkerSessionRuntime(
       abort.abort(reason);
     },
   };
+}
+
+/** El config puede traer opciones sin resolver; solo sirve el contenido leído. */
+function isResolvedUserInstructions(
+  value: unknown,
+): value is import("@zcode/contracts").ResolvedUserInstructions {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "fileName" in value &&
+    "content" in value &&
+    "bytesRead" in value
+  );
 }
 
 /** El id de sesión del worker conserva el prefijo que distingue a los Auton. */

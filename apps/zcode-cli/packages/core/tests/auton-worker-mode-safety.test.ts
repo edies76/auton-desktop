@@ -9,6 +9,7 @@ import { createTestSessionEventStore } from "./test-event-store.js";
 interface RecordedRequest {
   tools: string[];
   messages: unknown[];
+  raw: string;
 }
 
 const WRITE_TOOLS = ["Write", "Edit", "Bash", "ApplyPatch", "AutonRevert", "AutonPlan"];
@@ -17,6 +18,14 @@ async function dispatchWithMode(
   mode: "build" | "read" | "research" | "debug" | "refactor",
   workerMode: "subagent" | "session",
   workerToolCall?: { name: string; input: Record<string, unknown> },
+  userInstructions?: {
+    filePath: string;
+    fileName: string;
+    content: string;
+    bytesRead: number;
+    sizeBytes: number;
+    truncated: boolean;
+  },
 ) {
   const root = await mkdtemp(join(tmpdir(), "auton-mode-"));
   const requests: RecordedRequest[] = [];
@@ -29,7 +38,7 @@ async function dispatchWithMode(
       messages?: unknown[];
     }): Promise<ModelResult> {
       const tools = (request.tools ?? []).map((tool) => tool.name);
-      requests.push({ tools, messages: request.messages ?? [] });
+      requests.push({ tools, messages: request.messages ?? [], raw: JSON.stringify(request) });
       if (tools.includes("Agent")) {
         parentCalls += 1;
         if (parentCalls === 1) {
@@ -88,6 +97,7 @@ async function dispatchWithMode(
       autonWorkerMode: workerMode,
       workingDirectory: root,
       workspacePath: root,
+      ...(userInstructions ? { userInstructions } : {}),
     },
     { eventStore: createTestSessionEventStore(), modelAdapter },
   );
@@ -187,6 +197,28 @@ describe("seguridad del modo en el camino real de despacho", () => {
       expect(worker.tools).toContain("Bash");
       expect(worker.tools).not.toContain("Write");
       expect(worker.tools).not.toContain("Edit");
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  }, 30_000);
+
+  it("la sesión del worker recibe las instrucciones del proyecto, como el subagente", async () => {
+    const { root, workerRequests } = await dispatchWithMode(
+      "read",
+      "session",
+      undefined,
+      {
+        filePath: "/proyecto/AGENTS.md",
+        fileName: "AGENTS.md",
+        content: "REGLA-DE-PRUEBA-DEL-PROYECTO",
+        bytesRead: 27,
+        sizeBytes: 27,
+        truncated: false,
+      },
+    );
+    try {
+      expect(workerRequests.length).toBeGreaterThan(0);
+      expect(workerRequests[0]!.raw).toContain("REGLA-DE-PRUEBA-DEL-PROYECTO");
     } finally {
       await rm(root, { recursive: true, force: true });
     }
