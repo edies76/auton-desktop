@@ -3,7 +3,7 @@
 // Sin dependencias: se corre con `node site/build.mjs` y el resultado queda en site/dist.
 
 import { copyFileSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const siteDir = dirname(fileURLToPath(import.meta.url));
@@ -46,14 +46,35 @@ const PRIVATE_PAGES = [
 const escapeHtml = (text) =>
   text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
+// Cada árbol solo puede enlazar sus propias páginas. Un enlace a un documento
+// que no está en este árbol se degrada a texto: preferimos un texto sin enlace
+// antes que un enlace roto.
+let resolveLink = (href) => href;
+
+function makeLinkResolver(sourceFile, pages) {
+  const byPath = new Map(pages.map((page) => [resolve(repoRoot, page.file), page.slug]));
+  const bySlug = new Map(pages.map((page) => [page.slug.toLowerCase(), page.slug]));
+  const sourceDir = dirname(join(repoRoot, sourceFile));
+
+  return (href) => {
+    if (/^(https?:|mailto:|#)/.test(href)) return href;
+    const [pathPart, hash] = href.split("#");
+    const target = resolve(sourceDir, pathPart);
+    const slug = byPath.get(target) ?? bySlug.get(basename(pathPart, ".md").toLowerCase());
+    return slug ? `./${slug}.html${hash ? `#${hash}` : ""}` : null;
+  };
+}
+
 function inline(text) {
   let out = text;
   out = out.replace(/`([^`]+)`/g, (_m, code) => `<code>${code}</code>`);
   out = out.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
   out = out.replace(/(^|[\s(])\*([^*\n]+)\*/g, "$1<em>$2</em>");
   out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, label, href) => {
-    const external = /^https?:/.test(href);
-    return `<a href="${href}"${external ? ' rel="noreferrer"' : ""}>${label}</a>`;
+    const resolved = resolveLink(href);
+    if (!resolved) return label;
+    const external = /^https?:/.test(resolved);
+    return `<a href="${resolved}"${external ? ' rel="noreferrer"' : ""}>${label}</a>`;
   });
   return out;
 }
@@ -247,6 +268,7 @@ function buildTree(outDir, pages, isPrivate) {
       console.warn(`aviso: falta ${entry.file}, se omite`);
       continue;
     }
+    resolveLink = makeLinkResolver(entry.file, pages);
     const body = renderMarkdown(markdown);
     writeFileSync(
       join(outDir, "docs", `${entry.slug}.html`),
