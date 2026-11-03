@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 import type { SessionLease } from "@/v4/sessionDataLayer.js";
 import { useConversationProjection } from "@/v4/useConversationProjection.js";
+import { useWorkspaceSessionsIndexItems } from "@/v4/useWorkspaceSessionsIndexItems.js";
 import { useAutonClock } from "./clock.js";
 import { AutonProjectSpace } from "./ProjectSpaceScreen.js";
 import { projectAutonSpace } from "./projection.js";
+import { agentTramo, projectAgentWorkers } from "./agentProjection.js";
 import type { AutonProject } from "./model.js";
 
 export interface AutonSpaceLiveProps {
@@ -36,7 +38,27 @@ export function AutonSpaceLive({
   const projection = useConversationProjection(lease);
   const rows = projection.snapshot?.rows.window ?? [];
   const now = useAutonClock(injectedNow);
-  const data = useMemo(() => projectAutonSpace({ rows, now }), [rows, now]);
+  const agents = useWorkspaceSessionsIndexItems([{ workspacePath: project.path }]);
+  const data = useMemo(() => {
+    const base = projectAutonSpace({ rows, now });
+    // Transición: los agentes completos son los workers; los subagentes se
+    // conservan como compatibilidad mientras existan.
+    const agentWorkers = projectAgentWorkers(agents.items, now).filter(
+      // El task del orquestador no es un worker: es quien dirige.
+      (worker) => worker.id !== project.id,
+    );
+    const agentIds = new Set(agentWorkers.map((worker) => worker.id));
+    const workers = [
+      ...agentWorkers,
+      ...base.workers.filter((worker) => !agentIds.has(worker.id)),
+    ];
+    const tramo = agentTramo(agentWorkers);
+    return {
+      ...base,
+      workers,
+      tramos: tramo ? [tramo, ...base.tramos] : base.tramos,
+    };
+  }, [agents.items, now, rows]);
 
   return (
     <AutonProjectSpace
