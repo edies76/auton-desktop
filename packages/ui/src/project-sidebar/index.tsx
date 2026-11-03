@@ -105,6 +105,13 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     (state) => state.getWorkspaceState(props.workspacePath, props.workspaceIdentity).activeTaskId,
   );
   const lastOrchestratorRef = useRef<string | null>(null);
+  const forcedWorkersRef = useRef(false);
+  // El panel del proyecto arranca en workers, no en la lista de chats.
+  useEffect(() => {
+    if (forcedWorkersRef.current) return;
+    forcedWorkersRef.current = true;
+    if (view !== "workers") setView("workers");
+  }, [setView, view]);
   // Al entrar a un proyecto, el panel muestra sus workers; el hilo del
   // orquestador es el chat del centro y no vuelve a listarse como tarea.
   useEffect(() => {

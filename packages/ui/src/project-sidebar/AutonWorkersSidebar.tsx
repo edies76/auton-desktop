@@ -49,7 +49,9 @@ function AutonWorkersSidebarContents({
       .filter((task) => task.projectId === projectId && !task.archived)
       .sort((left, right) => right.updatedAt - left.updatedAt);
     return {
-      orchestratorId: activeTaskId ?? ordered[0]?.taskId ?? null,
+      // El orquestador es la sesión del humano. Sin sesión activa no hay
+      // exclusión: las sesiones históricas del proyecto son canales worker.
+      orchestratorId: activeTaskId,
       projectTasks: ordered,
     };
   }, [activeTaskId, tasks]);
