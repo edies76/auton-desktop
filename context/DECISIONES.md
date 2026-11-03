@@ -117,8 +117,10 @@ humano siempre sabe dónde está.
 - **Es interfaz nueva**, la primera de verdad. Pero **no diseño nuevo**: se reutilizan los componentes,
   los tokens y la tipografía de ZCode. Lo que se construye son **dos pantallas delgadas** (lista y
   espacio) más las superficies anidadas (plan, trabajo, evidencia).
-- **Lo que se apaga de ZCode**: su panel lateral de proyectos y tareas dentro del espacio del proyecto.
-  Es parte de la poda.
+- **El panel lateral NO se apaga: se transforma.** Deja de ser la lista de proyectos y tareas de
+  ZCode y pasa a ser **la lista de workers** de ese proyecto (clicables, en vivo, con control de parada y
+  sin campo de texto). Ver `context/UI-ESPACIO-DEL-PROYECTO.md`. *(Corregido: la primera versión de esta
+  decisión decía "se apaga", y era la idea anterior.)*
 - **Lo que se gana**: el usuario nunca está perdido, y el chat **es** el espacio de trabajo.
 
 **Lo que la cambiaría**: que un proyecto necesite varias conversaciones a la vez (por ejemplo una por
