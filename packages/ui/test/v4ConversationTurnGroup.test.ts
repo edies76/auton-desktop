@@ -2953,4 +2953,53 @@ describe("topic preparation flow membership", () => {
       expect(html).toContain('aria-label="正在准备材料"');
     }
   });
+
+  it("el chat vivo pinta canales y eventos despertadores dentro del hilo normal", () => {
+    const rows = [
+      turnHeader(),
+      userInputRow(2),
+      toolCallRow(
+        3,
+        "Agent",
+        { description: "Landing de Auton", subagent_type: "auton-worker" },
+        { status: "running" },
+      ),
+      subagentRow(13, {
+        parentToolCallId: "tool-3",
+        subagentType: "auton-worker",
+        status: "running",
+        summaryText: "¿uso la paleta nueva?",
+        startedAt: "2026-11-02T20:00:00.000Z",
+        lastActivityAt: "2026-11-02T20:00:00.000Z",
+        waitingForAnswer: true,
+      }),
+      toolCallRow(4, "Agent", {
+        description: "Segundo frente",
+        subagent_type: "auton-worker",
+      }),
+      subagentRow(14, {
+        parentToolCallId: "tool-4",
+        subagentType: "auton-worker",
+        status: "success",
+        summaryText: "verificado",
+        startedAt: "2026-11-02T20:00:00.000Z",
+        endedAt: "2026-11-02T20:02:14.000Z",
+      }),
+    ] as never[];
+
+    const [unit] = buildConversationTurnRenderUnits(rows);
+    const html = renderUnit(unit!, { messageStreamShowReasoning: false });
+
+    // Es el mismo hilo del orquestador: canales anidados con reloj y estado.
+    expect(html).toContain("en marcha");
+    expect(html).toContain("terminó");
+
+    // Los eventos despertadores van centrados en ese mismo hilo, no en otra
+    // pantalla, y conservan su acción.
+    expect(html).toContain('data-testid="auton-wake-event"');
+    expect(html).toContain('data-kind="question"');
+    expect(html).toContain('data-kind="closed"');
+    expect(html).toContain("Responder");
+    expect(html).toContain("Abrir");
+  });
 });
