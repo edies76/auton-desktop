@@ -114,3 +114,23 @@ mostraron el mismo proyecto, un solo chat, `WORKERS` por defecto, `Agentes ZCode
 `Subagentes` 3, `Muse Code` 0 y cero excepciones de renderer. La interacción por CDP
 (`launch-1-state.json`, `launch-2-state.json`) abrió un worker, comprobó el resumen sin compositor,
 el chat completo sin `textarea` y la vuelta al orquestador con compositor.
+
+## 2026-11-03 - vistas de tareas, promoción y rol
+
+Qué: `hiddenProjectTaskIds` excluye de las vistas de tareas los chats legados de cada proyecto, las
+sesiones `sess_auton_*`/`sess_subagent_*` y las tareas sin proyecto; `resolveProjectTaskSelection`
+impide que un legado o un worker se convierta en orquestador y `ensureProjectConversation` ya no
+admite sesiones hijas como candidatas. La etiqueta `Orquestador` solo aparece cuando el chat activo es
+el orquestador publicado por el sidebar. Si una sesión de worker queda como tarea activa, el shell
+monta `AutonWorkerSessionPane` con el resumen de solo lectura y vuelve al orquestador publicado.
+
+Por qué: las vistas timeline/agrupado seguían siendo un segundo listado de chats y podían promover un
+legado; la etiqueta se pintaba sobre cualquier tarea.
+
+Verificado con: `projectConversation.test.ts` (12), `projectConversationStore.test.ts` (1),
+`projectSidebarTaskVisibility.test.tsx` (2, montando el `ProjectSidebar` real y capturando las tareas
+de Timeline y agrupado), `workspaceHeaderTitleSection.test.ts` (10),
+`autonWorkerSessionPane.test.tsx` (3) y la suite de UI 69/69. En vivo: la vista `Recently updated`
+mostró solo `Pregunta sobre identidad y funcionamiento` (`timeline-filtered.png`); elegir el chat
+legado `bro...` desde el buscador volvió al orquestador con su etiqueta; `worker 9` Bloqueado se
+muestra sin `Parar` (`focus-live-blocked.png`). Typecheck raíz 0 con 8 GB de heap y lint 0 errores.
