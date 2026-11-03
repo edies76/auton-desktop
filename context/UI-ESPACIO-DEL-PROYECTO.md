@@ -43,6 +43,9 @@ Es **el espacio de un proyecto, y solo uno a la vez**. Se compone de tres zonas:
   - **su estado en vivo** (`trabajando`, `preguntando`, `esperando`, `bloqueado`, `terminado`),
   - **su tiempo corriendo**,
   - y **su control de parada** (botón para detenerlo a mano).
+- Las vistas de tareas (`Timeline`, agrupado, proyectos) muestran **solo la conversación del
+  orquestador de cada proyecto**. Los chats legados y las sesiones de worker no se listan, no se
+  editan y no se promueven a orquestador al seleccionarlos.
 - **Clicable**: al abrir una fila se ve **su conversación completa** y **lo que hace en tiempo real** —
   igual que el chat de un proyecto normal, pero **sin campo de texto**: al worker no se le escribe.
 - Desde la fila se puede **volver al hilo** del orquestador ("atrás" del panel).

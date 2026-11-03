@@ -4,16 +4,25 @@ import { beforeEach, describe, expect, it } from "vitest";
 import {
   claimProjectConversationCreation,
   ensureProjectConversation,
+  hiddenProjectTaskIds,
   isLegacyProjectTask,
+  isPromotableProjectTask,
+  isWorkerSessionTaskId,
   rememberProjectOrchestrator,
+  resolveProjectTaskSelection,
   shouldOpenProjectOrchestrator,
 } from "../src/project-sidebar/projectConversation.js";
 
-function task(taskId: string, createdAt: number, updatedAt: number): ProjectTask {
+function task(
+  taskId: string,
+  createdAt: number,
+  updatedAt: number,
+  projectId: string | null = "p1",
+): ProjectTask {
   return {
     taskId,
     title: taskId,
-    projectId: "p1",
+    projectId: projectId,
     hostId: "local",
     workspacePath: "/workspace/lunar",
     status: "completed",
@@ -73,3 +82,88 @@ describe("una conversación de orquestador por proyecto", () => {
     expect(shouldOpenProjectOrchestrator({ ...base, activeTaskId: "orch" })).toBe(false);
     expect(shouldOpenProjectOrchestrator({ ...base, activeTaskId: "nueva" })).toBe(false);
   });
+
+describe("visibilidad de las tareas del proyecto", () => {
+  it("oculta legados y sesiones hijas, y conserva un orquestador por proyecto", () => {
+    const tasks = [
+      task("orch1", 1, 5, "p1"),
+      task("legacy1", 2, 9, "p1"),
+      task("sess_auton_worker_1", 3, 9, "p1"),
+      task("sess_subagent_agent_1", 4, 9, "p1"),
+      task("orch2", 1, 5, "p2"),
+      task("legacy2", 2, 9, "p2"),
+      task("suelto", 3, 9, null),
+    ];
+    ensureProjectConversation(
+      "ws::p1",
+      tasks.filter((entry) => entry.projectId === "p1"),
+      "orch1",
+    );
+
+    const hidden = hiddenProjectTaskIds("ws", tasks, "orch1");
+
+    expect(hidden.has("legacy1")).toBe(true);
+    expect(hidden.has("sess_auton_worker_1")).toBe(true);
+    expect(hidden.has("sess_subagent_agent_1")).toBe(true);
+    expect(hidden.has("orch1")).toBe(false);
+    expect(hidden.has("orch2")).toBe(false);
+    expect(hidden.has("legacy2")).toBe(true);
+    expect(hidden.has("suelto")).toBe(true);
+  });
+
+  it("no promueve un legado ni una sesión de worker como orquestador", () => {
+    expect(isPromotableProjectTask({ taskId: "nueva", legacyTaskIds: ["vieja"] })).toBe(true);
+    expect(isPromotableProjectTask({ taskId: "vieja", legacyTaskIds: ["vieja"] })).toBe(false);
+    expect(
+      isPromotableProjectTask({ taskId: "sess_auton_agent_1", legacyTaskIds: [] }),
+    ).toBe(false);
+    expect(
+      isPromotableProjectTask({ taskId: "sess_subagent_agent_1", legacyTaskIds: [] }),
+    ).toBe(false);
+    expect(isWorkerSessionTaskId("sess_auton_agent_1")).toBe(true);
+    expect(isWorkerSessionTaskId("sess_subagent_agent_1")).toBe(true);
+    expect(isWorkerSessionTaskId("session_project_1")).toBe(false);
+  });
+});
+
+describe("decisión al seleccionar una tarea", () => {
+  const base = { orchestratorTaskId: "orch", legacyTaskIds: ["viejo"] };
+
+  it("un worker va a su panel de solo lectura", () => {
+    expect(resolveProjectTaskSelection({ ...base, taskId: "sess_auton_agent_1" })).toEqual({
+      action: "worker",
+      taskId: "sess_auton_agent_1",
+    });
+  });
+
+  it("un chat legado reabre el orquestador y no se promueve", () => {
+    expect(resolveProjectTaskSelection({ ...base, taskId: "viejo" })).toEqual({
+      action: "redirect-orchestrator",
+      taskId: "viejo",
+    });
+  });
+
+  it("el orquestador se abre y una tarea nueva lo reemplaza", () => {
+    expect(resolveProjectTaskSelection({ ...base, taskId: "orch" })).toEqual({
+      action: "open",
+      taskId: "orch",
+    });
+    expect(resolveProjectTaskSelection({ ...base, taskId: "nueva" })).toEqual({
+      action: "promote-and-open",
+      taskId: "nueva",
+    });
+  });
+});
+
+describe("los workers no son el orquestador", () => {
+  it("una sesión de worker no se convierte en la conversación del proyecto", () => {
+    const conversation = ensureProjectConversation(
+      "ws::p3",
+      [task("sess_auton_agent_1", 1, 9, "p3")],
+      "sess_auton_agent_1",
+    );
+
+    expect(conversation.orchestratorTaskId).toBe("");
+    expect(conversation.legacyTaskIds).toEqual([]);
+  });
+});

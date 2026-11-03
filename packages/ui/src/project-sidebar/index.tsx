@@ -29,11 +29,15 @@ import { AutonWorkersSidebar } from "@/project-sidebar/AutonWorkersSidebar.js";
 import {
   claimProjectConversationCreation,
   ensureProjectConversation,
-  isLegacyProjectTask,
+  hiddenProjectTaskIds,
+  isPromotableProjectTask,
   projectConversationKey,
   rememberProjectOrchestrator,
+  resolveProjectTaskSelection,
   shouldOpenProjectOrchestrator,
 } from "@/project-sidebar/projectConversation.js";
+import { useAutonProjectConversationStore } from "@/project-sidebar/projectConversationStore.js";
+import { useAutonWorkerFocusStore } from "@/auton/project-space/workerFocusStore.js";
 import { useProjectTaskNavigation } from "@/project-sidebar/useProjectTaskNavigation.js";
 import { useProjectFileTree } from "@/project-sidebar/useProjectFileTree.js";
 import {
@@ -150,6 +154,34 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
       conversation: ensureProjectConversation(key, projectTasks, activeTaskId),
     };
   }, [activeProject, activeTaskId, tree.tasks, workspaceKey]);
+  // Las vistas de tareas no son un segundo listado de chats: muestran solo la
+  // conversación del orquestador de cada proyecto, nunca legados ni workers.
+  const hiddenTaskIds = useMemo(
+    () => hiddenProjectTaskIds(workspaceKey, tree.tasks, activeTaskId),
+    [activeTaskId, tree.tasks, workspaceKey],
+  );
+  const visibleTree = useMemo(
+    () => ({
+      ...tree,
+      tasks: tree.tasks.filter((task) => !hiddenTaskIds.has(task.taskId)),
+    }),
+    [hiddenTaskIds, tree],
+  );
+  // El shell no conoce el árbol de proyectos; publica la identidad resuelta
+  // para etiquetar el hilo como orquestador solo cuando de verdad lo es.
+  useEffect(() => {
+    const state = useAutonProjectConversationStore.getState();
+    if (!activeProject || !activeConversation?.conversation.orchestratorTaskId) {
+      state.clear();
+      return;
+    }
+    state.publish({
+      workspaceKey,
+      projectId: activeProject.id,
+      orchestratorTaskId: activeConversation.conversation.orchestratorTaskId,
+      legacyTaskIds: activeConversation.conversation.legacyTaskIds,
+    });
+  }, [activeConversation, activeProject, workspaceKey]);
   const autoOpenedRef = useRef<string | null>(null);
   const createdConversationRef = useRef<Set<string>>(new Set());
   // Al abrir la app, el proyecto abre directo su única conversación de
@@ -204,27 +236,76 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
   useEffect(() => {
     if (!activeTaskId || !activeConversation || !activeProject) return;
     if (activeConversation.conversation.orchestratorTaskId === activeTaskId) return;
-    if (isLegacyProjectTask(activeConversation.key, activeTaskId)) return;
+    if (
+      !isPromotableProjectTask({
+        taskId: activeTaskId,
+        legacyTaskIds: activeConversation.conversation.legacyTaskIds,
+      })
+    ) {
+      return;
+    }
     const belongs = tree.tasks.some(
       (task) => task.taskId === activeTaskId && task.projectId === activeProject.id,
     );
     if (!belongs) return;
     rememberProjectOrchestrator(activeConversation.key, activeTaskId);
   }, [activeConversation, activeProject, activeTaskId, tree.tasks]);
-  // Solo una acción del humano cambia la conversación del proyecto: el chat
-  // anterior queda como legado y deja de mostrarse como worker.
+  // Solo una acción del humano cambia la conversación del proyecto. Un chat
+  // legado reabre el orquestador y una sesión de worker se muestra en su panel
+  // de solo lectura; ninguno de los dos se promueve ni se edita como chat.
   const selectTask = useCallback<ProjectSidebarProps["onSelectTask"]>(
     (...args) => {
       const task = tree.tasks.find((entry) => entry.taskId === args[1]);
-      if (task?.projectId) {
-        rememberProjectOrchestrator(
-          projectConversationKey(workspaceKey, task.projectId),
-          task.taskId,
+      if (!task?.projectId) {
+        onSelectTask(...args);
+        return;
+      }
+      const key = projectConversationKey(workspaceKey, task.projectId);
+      const projectTasks = tree.tasks.filter((entry) => entry.projectId === task.projectId);
+      const conversation = ensureProjectConversation(key, projectTasks, activeTaskId);
+      const selection = resolveProjectTaskSelection({
+        taskId: task.taskId,
+        orchestratorTaskId: conversation.orchestratorTaskId,
+        legacyTaskIds: conversation.legacyTaskIds,
+      });
+
+      if (selection.action === "worker") {
+        const worker = useAutonWorkerFocusStore
+          .getState()
+          .liveWorkers.find((entry) => entry.id === task.taskId);
+        if (worker) {
+          useAutonWorkerFocusStore
+            .getState()
+            .open(
+              worker,
+              task.workspacePath,
+              task.workspaceIdentity,
+              conversation.orchestratorTaskId || undefined,
+            );
+        }
+        return;
+      }
+
+      if (selection.action === "redirect-orchestrator") {
+        const orchestrator = tree.tasks.find(
+          (entry) => entry.taskId === conversation.orchestratorTaskId,
         );
+        if (orchestrator) {
+          onSelectTask(
+            orchestrator.workspacePath,
+            orchestrator.taskId,
+            orchestrator.workspaceIdentity,
+          );
+        }
+        return;
+      }
+
+      if (selection.action === "promote-and-open") {
+        rememberProjectOrchestrator(key, task.taskId);
       }
       onSelectTask(...args);
     },
-    [onSelectTask, tree.tasks, workspaceKey],
+    [activeTaskId, onSelectTask, tree.tasks, workspaceKey],
   );
   const { openFiles, openTaskFiles } = useProjectFileTree(props, directory, remoteService);
   const remoteControlEnabled = useWebRemoteControlFeatureEnabled();
@@ -295,7 +376,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     );
   };
   const renderProject = (project: VirtualProject) => {
-    const projectTasks = selectProjectRows(tree, {
+    const projectTasks = selectProjectRows(visibleTree, {
       kind: "project",
       projectId: project.id,
       hostId: project.hostId,
@@ -388,7 +469,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
                         <HomeOnlyWorkspaceRows switcher={homeOnlySwitcher} />
                       ) : view === "workers" ? (
                         <AutonWorkersSidebar
-                          tasks={tree.tasks}
+                          tasks={visibleTree.tasks}
                           workspacePath={props.workspacePath}
                           workspaceIdentity={props.workspaceIdentity}
                           workspaceRemoteSessionId={props.workspaceRemoteSessionId}
@@ -400,7 +481,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
                         <>
                           <ProjectTaskRows
                             kind="pinned"
-                            tasks={selectProjectRows(tree, { kind: "pinned" })}
+                            tasks={selectProjectRows(visibleTree, { kind: "pinned" })}
                             onSelect={selectTask}
                             refresh={refresh}
                           />
@@ -410,7 +491,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
                             onReorder={reorder}
                           />
                           <ProjectSections
-                            tree={tree}
+                            tree={visibleTree}
                             projects={projects}
                             directory={directory}
                             renderProject={renderProject}
@@ -431,12 +512,12 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
                         <>
                           <ProjectTaskRows
                             kind="pinned"
-                            tasks={selectProjectRows(tree, { kind: "pinned" })}
+                            tasks={selectProjectRows(visibleTree, { kind: "pinned" })}
                             onSelect={selectTask}
                             refresh={refresh}
                           />
                           <TaskGroupedView
-                            tasks={tree.tasks}
+                            tasks={visibleTree.tasks}
                             onSelect={selectTask}
                             refresh={refresh}
                             scrollRef={scrollRef}
@@ -454,7 +535,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
                         <ProjectTaskRows
                           key="timeline"
                           kind="timeline"
-                          tasks={selectProjectRows(tree, { kind: view })}
+                          tasks={selectProjectRows(visibleTree, { kind: view })}
                           onSelect={selectTask}
                           refresh={refresh}
                         />
