@@ -106,26 +106,48 @@ ahí vivan los workers.
 **Qué reutilizar**: la vista que ya muestra la corriente de una sesión, y los controles de proceso que ya
 tiene la app. Lo nuevo es la lista, los estados y las animaciones.
 
-## B. El orquestador que sabe planear (esto es lo que separa al producto)
+## B. El orquestador que sabe planear (criterio de aceptación)
 
-Edi lo pidió explícito y tiene razón: **lo que él está haciendo a mano es lo que debe hacer Auton.**
-Planear el proyecto a fondo, sostener conversaciones largas, decidir el corte del trabajo. Eso no es un
-ajuste del prompt: es **trabajo pesado de prompt engineering**, y es el corazón del producto.
+Edi lo pidió explícito y lo refinamos con ChatGPT. **Esto es lo que debe hacer Auton**: planear y
+conversar como un ingeniero. Los cinco pasos son el criterio; si falta uno, no está.
 
-Lo que el orquestador tiene que saber hacer:
+**Ejemplo que se usa para juzgarlo**: *"quiero mejorar Lunar para que sea más fácil estudiar"*. El
+orquestador **no** se lanza a crear veinte tareas.
 
-1. **Pensar antes de partir.** Entender la intención, el stack, las restricciones, y **lo que no se va a
-   hacer**. Preguntar lo que decide producto; decidir él lo demás.
-2. **Planear profundo, y proporcional.** Sprints con criterio de hecho, dependencias y frentes paralelos,
-   y saber cuándo **no** hacerlo (un archivo es una fila, no un equipo).
-3. **Conversar para planear.** Con el humano: pocas preguntas, con opciones, sin interrogar. Y **con sus
-   workers**: hablar con ellos para partir el trabajo, no solo repartirlo.
-4. **Explicar el plan como si lo hubiera escrito un ingeniero**: qué se va a hacer, en qué orden, qué
-   depende de qué, y cómo se sabrá que está terminado.
-5. **El criterio de que está bien hecho**: **el humano no tiene que rehacer el plan**. Si tiene que
-   corregirlo, el orquestador no planeó: transcribió.
+1. **Entender la intención.** Preguntar qué problema quiere resolver el humano y para quién, e
+   **investigar el proyecto para saber qué existe** antes de proponer nada.
+2. **Proponer alternativas.** Explicar opciones, con sus ventajas y sus límites, y **recomendar una
+   cuando tenga razones** para ello. No ofrecer un menú sin criterio.
+3. **Conversar sobre producto.** Ayudar a decidir **qué experiencia** se quiere, sin pasarle al humano
+   las decisiones técnicas.
+4. **Construir el plan.** Definir resultados, **prioridades**, dependencias, encargos para los workers, y
+   **cómo se comprobará cada entrega**.
+5. **Mantenerlo vivo.** Si durante el trabajo aparece algo nuevo o el humano cambia de opinión:
+   **actualizar el plan y explicar qué cambia**. Sin empezar de cero.
 
-**Por qué esto es el diferencial**: cualquiera puede pedirle a un modelo que escriba una lista de tareas.
-Lo que casi nadie tiene es un sistema donde el plan **se piensa**, se **escribe en un contrato**, se
-**reparte con criterio** y se **revisa con evidencia**. Eso es prompt engineering + arquitectura, y es lo
-que hay que trabajar con más cuidado de todo el proyecto.
+**Y sabe cuánta planificación necesita cada cosa** — esto es la proporción, y es obligatorio:
+cambiar un botón puede resolverse con **un encargo sencillo**; replantear el modo de estudio de Lunar
+merece **una conversación y un plan más profundo**. Elegir mal la proporción (inflar lo pequeño o aplanar
+lo grande) es el fallo más visible del orquestador.
+
+### Lo que se suma de la lista anterior (sigue valiendo)
+
+- **El plan legible en 30 segundos**: arriba tres o cinco líneas (qué, en qué orden, qué depende de qué,
+  cómo se sabrá que está terminado) y debajo los sprints. Es lo que muestra la tarjeta del plan.
+- **Decidir o preguntar, nunca dejar abierto**: cada ambigüedad se resuelve con una razón o con una
+  pregunta.
+- **Lo que NO se va a hacer** escrito en el plan: es lo que evita que el alcance crezca solo.
+
+### Las pruebas
+
+- **La #1** de `context/PRUEBAS-QUE-PROMETEMOS.md`: parte en proporción (1-2 sprints para un archivo,
+  8-20 para un producto).
+- **Nueva — "el humano no rehace el plan"**: que un tercero lea el plan y diga si le cambiaría algo.
+  Si le cambia, el orquestador **transcribió, no planeó**.
+- **Nueva — los cinco pasos en orden**: dado el ejemplo de Lunar, se deben ver los cinco (intención,
+  alternativas, conversación de producto, plan y mantenimiento) y **no** una lista de veinte tareas.
+
+### Fuera del MVP (a propósito)
+
+Planificación multi-turno larga con el humano, el asistente planificador propio del orquestador, y
+aprender de planes anteriores. Eso es v3.4, y se dice así para no prometerlo.
