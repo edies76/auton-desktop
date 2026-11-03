@@ -1,3 +1,38 @@
+<!-- AUTON: portada. Este bloque es lo primero que ve quien entra al repositorio. -->
+
+# Auton
+
+**Este repositorio es Auton.** Un orquestador que dirige agentes de programación con disciplina de
+ingeniería: convierte una intención en un plan con criterio de hecho, manda programadores, verifica con
+evidencia y cierra. El humano deja de dirigir la ejecución y se queda con las decisiones de producto.
+
+El centro: *en otras herramientas el límite es el usuario, su disciplina para planear y verificar; en
+Auton esa disciplina es el producto.*
+
+Se construye **sobre ZCode** (Apache 2.0), que sigue siendo el motor por dentro. Su licencia y sus avisos
+se conservan intactos.
+
+## Si vienes a trabajar aquí
+
+**Todo lo de Auton vive en [context/](./context).** No lo busques en docs/: esa carpeta es de ZCode y
+es enorme.
+
+| Quiero... | Lee |
+|---|---|
+| Entender el proyecto | [context/EMPIEZA-AQUI.md](./context/EMPIEZA-AQUI.md) |
+| Saber qué me toca hacer | [context/REPARTO-DE-TRABAJO.md](./context/REPARTO-DE-TRABAJO.md) |
+| Saber cómo funciona por dentro | [context/ARQUITECTURA-ORQUESTADOR.md](./context/ARQUITECTURA-ORQUESTADOR.md) |
+| Saber qué se decidió y por qué | [context/DECISIONES.md](./context/DECISIONES.md) |
+| La visión de producto | [context/AUTON-VISION.md](./context/AUTON-VISION.md) |
+
+Las reglas del repositorio están en [AGENTS.md](./AGENTS.md).
+
+---
+
+## ZCode (el motor que Auton usa por dentro)
+
+Lo que sigue es la documentación original de ZCode, conservada tal cual.
+
 # Auton Desktop
 
 **Le hablas a un orquestador. Él dirige a los programadores.**
