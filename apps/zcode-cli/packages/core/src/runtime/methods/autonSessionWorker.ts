@@ -64,7 +64,7 @@ export function createDefaultAutonSessionWorkerPort(
 }
 
 /** Muse no separa system prompt: la capa de Auton abre el turno. */
-function buildMuseWorkerPrompt(
+export function buildMuseWorkerPrompt(
   parent: AgentRuntimeInternal,
   input: AutonSessionWorkerFactoryInput,
 ): string {

@@ -78,7 +78,7 @@ brief, mismo modo, mismo REPORTE de cuatro estados, misma exigencia de evidencia
 
 ## Verificación
 
-- `auton-worker-engine.test.ts`: resolución, sonda, flags de modo, argumentos y parser del REPORTE.
+- `auton-muse-engine.test.ts`: resolución, sonda, flags de modo, argumentos y parser del REPORTE.
 - `auton-muse-engine.test.ts`: adaptador contra un proceso hijo real (fixture) y, con
   `AUTON_MUSE_E2E=1`, contra el Muse real: `echo` dos veces y `meta` una, con resultado consistente.
 - `auton-engine-dispatch.test.ts`: selección de motor, ausencia de fallback silencioso y paso de
@@ -91,3 +91,4 @@ brief, mismo modo, mismo REPORTE de cuatro estados, misma exigencia de evidencia
 - La autenticación desatendida depende de la configuración del equipo; si falla, la sonda lo dice.
 - No se replica su sistema de aprobaciones ni su interfaz.
 - El coste de una corrida real con Meta es del orden de decenas de miles de tokens de entrada.
+

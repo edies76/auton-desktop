@@ -4,8 +4,10 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import type { SessionId, SubagentRunRequest } from "@zcode/contracts";
+import { createSessionId } from "@zcode/contracts";
 import {
   buildMuseExecArgs,
+  buildMuseSpawnSpec,
   museModeArgs,
   parseAutonWorkerEngine,
   parseWorkerReporte,
@@ -15,6 +17,9 @@ import {
 import { createMuseWorkerHandle } from "../src/auton/museWorker.js";
 import { resolveAutonWorkerPlacement } from "../src/auton/worker-mode.js";
 import type { AutonSessionWorkerFactoryInput } from "../src/auton/session-worker.js";
+import { buildMuseWorkerPrompt } from "../src/runtime/methods/autonSessionWorker.js";
+import { createTestAgentRuntime } from "./test-agent-runtime.js";
+import { createTestSessionEventStore } from "./test-event-store.js";
 
 const FIXTURE = fileURLToPath(new URL("./fixtures/fake-muse.cjs", import.meta.url));
 const TRACE = { traceId: "trace-muse", sessionId: "sess_orchestrator" } as never;
@@ -121,6 +126,25 @@ describe("contrato del motor", () => {
     expect(parseWorkerReporte("STATUS: NEEDS_CONTEXT")).toBe("NEEDS_CONTEXT");
     expect(parseWorkerReporte("STATUS: BLOCKED")).toBe("BLOCKED");
     expect(parseWorkerReporte("sin reporte")).toBeUndefined();
+  });
+
+  it("cita cada argumento para cmd.exe en Windows (espacios y &)", () => {
+    if (process.platform !== "win32") return;
+    const spec = buildMuseSpawnSpec(
+      "muse",
+      ["exec", "--workspace", "C:\\pro yecto\\a&b", "--prompt-file", "C:\\pro yecto\\p.txt"],
+      { ComSpec: "cmd.exe" },
+    );
+    expect(spec.command).toBe("cmd.exe");
+    expect(spec.args.slice(0, 3)).toEqual(["/d", "/s", "/c"]);
+    expect(spec.args[3]?.startsWith('"muse ')).toBe(true);
+    expect(spec.args[3]).toContain('"C:\\pro yecto\\a&b"');
+    expect(spec.args[3]).toContain('"C:\\pro yecto\\p.txt"');
+    expect(spec.windowsVerbatimArguments).toBe(true);
+
+    const direct = buildMuseSpawnSpec(process.execPath, ["x"]);
+    expect(direct.command).toBe(process.execPath);
+    expect(direct.windowsVerbatimArguments).toBeUndefined();
   });
 });
 
@@ -229,6 +253,81 @@ describe("adaptador de Muse Code", () => {
       await rm(root, { recursive: true, force: true });
     }
   }, 20_000);
+
+  it("la fábrica real compone la capa de Auton, el encargo y las instrucciones, y el motor lo recibe", async () => {
+    const root = await mkdtemp(join(tmpdir(), "muse-factory-"));
+    try {
+      const marker = "REGLA-DE-PRUEBA-DEL-PROYECTO";
+      const parent = createTestAgentRuntime(
+        createSessionId("auton-muse-factory"),
+        {
+          mode: "build",
+          autonWorkerMode: "session",
+          workingDirectory: root,
+          workspacePath: root,
+          userInstructions: {
+            filePath: "/proyecto/AGENTS.md",
+            fileName: "AGENTS.md",
+            content: marker,
+            bytesRead: marker.length,
+            sizeBytes: marker.length,
+            truncated: false,
+          },
+        },
+        {
+          eventStore: createTestSessionEventStore(),
+          modelAdapter: {
+            async generateText(): Promise<never> {
+              throw new Error("el modelo no debe ejecutarse en esta prueba");
+            },
+          } as never,
+        },
+      );
+
+      const input = await makeInput(root, {
+        mode: "read",
+        effort: "minimal",
+        thinkingLevel: "high",
+      });
+      const prompt = buildMuseWorkerPrompt(parent as never, input);
+
+      for (const expected of [
+        "Eres un programmer de Auton",
+        "ORQUESTADOR",
+        "MODO DE TRABAJO: read",
+        "POLÍTICA DE ESFUERZO: minimal",
+        "CANAL RÁPIDO CON EL ORQUESTADOR",
+        "REPORTE",
+        "## ENCARGO",
+        "haz el encargo",
+        "## INSTRUCCIONES DEL PROYECTO",
+        marker,
+      ]) {
+        expect(prompt).toContain(expected);
+      }
+
+      const handle = createMuseWorkerHandle({
+        input,
+        prompt,
+        command: process.execPath,
+        commandPrefix: [FIXTURE],
+      });
+      const result = await handle.run();
+      expect(result.response).toContain("STATUS: DONE");
+
+      const progress = await readFile(
+        join(input.placement.workingDirectory, ".auton", "muse-progress.jsonl"),
+        "utf8",
+      );
+      const event = probeEvent(progress.split("\n"));
+      expect(event?.payload?.prompt).toContain("Eres un programmer de Auton");
+      expect(event?.payload?.prompt).toContain("MODO DE TRABAJO: read");
+      expect(event?.payload?.prompt).toContain("## ENCARGO");
+      expect(event?.payload?.prompt).toContain(marker);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  }, 30_000);
 });
 
 const runRealMuse = process.env.AUTON_MUSE_E2E === "1";
@@ -250,6 +349,23 @@ describe.runIf(runRealMuse)("Muse Code real (opt-in con AUTON_MUSE_E2E=1)", () =
       } finally {
         await rm(root, { recursive: true, force: true });
       }
+    }
+  }, 120_000);
+
+  it("lanza headless en una carpeta con espacio y & (quoting de Windows)", async () => {
+    const root = await mkdtemp(join(tmpdir(), "muse real & echo-"));
+    try {
+      const input = await makeInput(root);
+      const handle = createMuseWorkerHandle({
+        input,
+        prompt: "Responde exactamente: HOLA-MUSE",
+        provider: "echo",
+      });
+      const result = await handle.run();
+      expect(result.response).toContain("echo:");
+      expect(result.response).toContain("HOLA-MUSE");
+    } finally {
+      await rm(root, { recursive: true, force: true });
     }
   }, 120_000);
 

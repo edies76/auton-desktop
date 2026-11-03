@@ -54,6 +54,56 @@ export function museCommand(env: NodeJS.ProcessEnv = process.env): string {
   return env.AUTON_MUSE_BIN?.trim() || MUSE_ENGINE_DEFAULT_COMMAND;
 }
 
+export interface MuseSpawnSpec {
+  command: string;
+  args: string[];
+  windowsVerbatimArguments?: boolean;
+}
+
+function isWindowsCommandScript(command: string): boolean {
+  if (/\.(cmd|bat)$/i.test(command)) return true;
+  if (/\.(exe|com)$/i.test(command)) return false;
+  return !/[\\/]/.test(command);
+}
+
+/**
+ * En Windows `muse` es un .cmd y hay que pasar por cmd.exe. Node con
+ * `shell: true` concatena los argumentos sin citar, y una carpeta con espacio
+ * rompe el `--workspace`/`--prompt-file`; peor, un `&` en la ruta se interpreta
+ * como separador. Construimos la línea con cada argumento citado y dejamos que
+ * cmd la reciba verbatim.
+ */
+export function quoteWindowsCmdArg(value: string): string {
+  return `"${value.replace(/"/g, '""')}"`;
+}
+
+/**
+ * Un nombre pelado (`muse`) se deja sin citar: `muse.cmd` usa `%~dp0` para
+ * encontrar su launcher y, entre comillas, cmd lo resuelve contra el cwd y
+ * rompe el arranque. Una ruta con espacios sí va citada.
+ */
+function quoteWindowsCommand(command: string): string {
+  return /[\\/]/.test(command) || /\s/.test(command)
+    ? quoteWindowsCmdArg(command)
+    : command;
+}
+
+export function buildMuseSpawnSpec(
+  command: string,
+  args: readonly string[],
+  env: NodeJS.ProcessEnv = process.env,
+): MuseSpawnSpec {
+  if (process.platform !== "win32" || !isWindowsCommandScript(command)) {
+    return { command, args: [...args] };
+  }
+  const line = [quoteWindowsCommand(command), ...args.map(quoteWindowsCmdArg)].join(" ");
+  return {
+    command: env.ComSpec?.trim() || "cmd.exe",
+    args: ["/d", "/s", "/c", `"${line}"`],
+    windowsVerbatimArguments: true,
+  };
+}
+
 /**
  * Sonda barata: `--version`. No lanza un turno ni gasta modelo. Si falla, el
  * motivo exacto viaja al orquestador en vez de fingir que el motor está.
@@ -66,15 +116,20 @@ export function probeMuseEngine(options: {
 } = {}): MuseEngineProbe {
   const command = options.command ?? museCommand(options.env);
   const args = options.args ?? ["--version"];
-  const shell =
-    process.platform === "win32" &&
-    (/\.(cmd|bat)$/i.test(command) || !/[\\/]/.test(command));
-  const result = spawnSync(command, [...args], {
+  const spec = buildMuseSpawnSpec(
+    command,
+    args,
+    options.env ?? process.env,
+  );
+  const result = spawnSync(spec.command, spec.args, {
     env: options.env ?? process.env,
     encoding: "utf8",
     timeout: options.timeoutMs ?? 10_000,
     windowsHide: true,
-    shell,
+    shell: false,
+    ...(spec.windowsVerbatimArguments
+      ? { windowsVerbatimArguments: spec.windowsVerbatimArguments }
+      : {}),
   });
 
   if (result.error) {

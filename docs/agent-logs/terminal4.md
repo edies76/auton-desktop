@@ -102,13 +102,18 @@ Lanzamiento: `pnpm dev:desktop` con el modo sesión se quedó en el build a los 
 
 ## 2026-11-03 — Muse Code como motor del worker
 
-Qué: el orquestador puede elegir ngine: "muse" y el worker corre con Muse Code 1.4.14 headless en su
+Qué: el orquestador puede elegir engine: "muse" y el worker corre con Muse Code 1.4.14 headless en su
 carpeta, con la misma capa de Auton, modo, evidencia y REPORTE. Sin fallback silencioso: motor
 desconocido lo rechaza el esquema; binario o auth ausentes fallan con el motivo de la sonda.
 Cuatro piezas: (1) handler/adaptador (muse exec --json, prompt file, workspace, flags de modo, stop,
-parser del REPORTE); (2) registro ngine en la herramienta Agent y en el item del plan; (3) bloque
+parser del REPORTE); (2) registro engine en la herramienta Agent y en el item del plan; (3) bloque
 "Motor del worker" en la doctrina; (4) prueba 23 de PRUEBAS y pruebas de contrato/adaptador/despacho.
-Límite declarado: xec es one-shot; session-message no está soportado en Windows, así que no hay
+Límite declarado: exec es one-shot; session-message no está soportado en Windows, así que no hay
 steer a mitad de corrida en Muse.
-Verificado con: Muse real (echo x2 y meta x1) a través del adaptador; uton-muse-engine (10 sin e2e,
-12 con e2e), uton-engine-dispatch (6), typecheck y lint.
+Verificado con: Muse real (echo x2 y meta x1) a través del adaptador; auton-muse-engine (10 sin e2e,
+12 con e2e), auton-engine-dispatch (6), typecheck y lint.
+
+
+
+Ajuste de cierre: el arranque de Muse en Windows pasa por cmd.exe con cada argumento citado (espacios y & en la ruta del workspace); el nombre pelado `muse` va sin citar porque su .cmd resuelve el launcher con %~dp0. Probado contra el Muse real en una carpeta con espacio y &.
+La fábrica real del prompt (buildMuseWorkerPrompt) se prueba ahora con el hijo de contrato y afirma identidad, rol, modo, esfuerzo, canal, REPORTE, encargo e instrucciones del proyecto antes de que el motor lo reciba.

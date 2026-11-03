@@ -20,6 +20,7 @@ import type {
 } from "./session-worker.js";
 import {
   buildMuseExecArgs,
+  buildMuseSpawnSpec,
   museCommand,
   parseMuseEventLine,
   probeMuseEngine,
@@ -100,15 +101,16 @@ export function createMuseWorkerHandle(
       ...(maxModelSteps ? { maxModelSteps } : {}),
     });
 
-    const running = spawn(command, [...commandPrefix, ...args], {
+    const spec = buildMuseSpawnSpec(command, [...commandPrefix, ...args], env);
+    const running = spawn(spec.command, spec.args, {
       cwd: workspace,
       env,
       windowsHide: true,
       stdio: ["ignore", "pipe", "pipe"],
-      // En Windows `muse` es `muse.cmd`; el prefijo de pruebas ya es un .exe.
-      shell:
-        process.platform === "win32" &&
-        (commandPrefix.length === 0 || /\.(cmd|bat)$/i.test(command)),
+      shell: false,
+      ...(spec.windowsVerbatimArguments
+        ? { windowsVerbatimArguments: spec.windowsVerbatimArguments }
+        : {}),
     });
     child = running;
     if (!running.stdout || !running.stderr) {
