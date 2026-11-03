@@ -2,9 +2,9 @@
 
 # Auton Desktop - reglas de este repositorio
 
-**El documento central es [AUTON-VISION.md](./AUTON-VISION.md) (Vision 2.0).** Antes de proponer
-arquitectura, producto, UI o prioridades, leelo. Si lo que vas a hacer contradice la vision,
-pregunta antes de escribir codigo.
+**El documento central es [AUTON-VISION.md](./AUTON-VISION.md).** Antes de proponer arquitectura,
+producto, UI o prioridades, leelo. Si lo que vas a hacer contradice la vision, pregunta antes de
+escribir codigo.
 
 ## Que es este repo y que no
 
@@ -29,6 +29,76 @@ pregunta antes de escribir codigo.
   tecnica 20%, calidad de demo 25%. Por eso el stack de Meta (Muse Code, Meta Model API, pesos
   abiertos Muse Glimmer) tiene que estar integrado de verdad, y la demo -tablero, evidencia,
   relojes- vale tanto como la arquitectura.
+
+## Varias manos a la vez (no pisarse)
+
+Este repositorio lo tocan varias personas y varios agentes en paralelo. Las reglas que evitan el
+merge sangriento:
+
+1. **Una rama por persona y tema**: `feat/<nombre>/<tema>` (`feat/ana/sprint-board`). Nadie trabaja
+   directo en `auton-desktop`; esa rama solo recibe merges ya verificados.
+2. **Un dueño por archivo.** Antes de tocar un archivo que no es tuyo, avisa y espera el OK. Los
+   archivos calientes hoy: `ProjectSidebarNavigation.tsx`, `WorkspaceShellLayout.tsx`,
+   `core/src/context/sections/auton.ts` y los handlers `write.ts`, `edit.ts`, `agent.ts`.
+3. **`git add` selectivo, nunca `git add -A` a ciegas**: puede haber trabajo a medias de otra
+   sesión. Agrega solo lo que tú cambiaste y revisa el diff antes.
+4. **Rebase antes de empujar** (`git pull --rebase auton auton-desktop`). Nunca `--force` sobre una
+   rama compartida.
+5. **Cambios pequeños y seguidos**: una pieza por commit. Un cambio de 600 líneas bloquea a los
+   demás.
+6. **El que rompe, arregla**: si tu cambio deja el árbol en rojo, lo arreglas antes de pedir merge.
+7. **Docs nuevos en archivos nuevos** (`docs/...`): se integran sin conflicto. Editar un doc
+   existente se avisa.
+
+## Verificación y honestidad
+
+- **Root cause, no síntoma.** Antes de editar, explica el mecanismo: "X causa Y, produce Z". Arregla
+  la capa dueña (estado, flujo de eventos, ciclo de vida, fuente del prompt), no la salida de abajo.
+- **Paridad antes de copiar un patrón de ZCode.** Mira cómo lo resuelve el upstream, en qué capa
+  vive, y si la diferencia es arquitectónica o un bug local. No envíes un workaround cuando el
+  hueco es de arquitectura.
+- **La fuente de verdad va en disco, no en memoria**: el plan en `.auton/plan.json`, el diario en
+  `.auton/changes.jsonl`, el rastro de reversiones en `.auton/reverts.jsonl`. Prohibido construir
+  decisiones de producto sobre estado efímero del cliente.
+- **Si tomas un atajo, dilo**: qué se dejó por el camino corto, por qué, qué riesgo tiene y cuál es
+  el camino profesional pendiente. Nunca presentes un workaround como solución definitiva.
+- Antes de afirmar "hecho": `pnpm typecheck` y `pnpm lint` reales, la prueba del camino afectado
+  ejecutada, y la salida guardada. No escribas "pasa" si no lo viste pasar.
+
+## Registro del trabajo (para saber quién hizo qué)
+
+- Cada agente mantiene **su propio** archivo en `docs/agent-logs/terminalN.md` (numeración
+  secuencial; el siguiente libre es `max + 1`).
+- La autoría se prueba por memoria de esta conversación, no por el nombre en la cabecera. Si al
+  abrir un `terminalN.md` ves sesiones que no recuerdas haber escrito, **no es tuyo**: crea el
+  siguiente número libre.
+- Cada entrada: 3–6 líneas con qué cambiaste y por qué. Sin código pegado ni secretos.
+- Al responder al humano, cierra con una línea de firma: `— <agente> · terminalN · <tema>`.
+
+## Versionado
+
+- La versión de Auton vive en **`VERSION`** y se cuenta en **`CHANGELOG.md`**; el tag es `vX.Y.Z`.
+  (El `package.json` de la raíz es el de ZCode, `3.16.2`: no es nuestra versión.)
+- Feature nueva → sube MINOR; corrección → PATCH; cambio de contrato de datos → MAJOR.
+- Antes de anunciar una versión, verifica el número **en el archivo**, no en el mensaje del commit.
+- Con varias sesiones, lee `VERSION` antes de tocarlo: otra persona pudo haberlo subido.
+
+## Documentación
+
+- `README.md` es la cara pública; `docs/` es el trabajo interno. `AUTON-VISION.md` manda en
+  producto.
+- No actualices docs en cada commit: **acumula** y propón un sprint de docs cuando el acumulado
+  importe. Las docs internas valen más que las públicas.
+- El sitio (`site/`) se genera con `node site/build.mjs` y se publica en S3; nunca lleva
+  credenciales.
+
+## Deber de verificación de esta guía
+
+Todo lo que dice este bloque se verificó al escribirlo, pero el código cambia: cualquier agente que
+actúe basándose en una afirmación de aquí debe re-verificarla (grep del símbolo, `git log` del
+archivo) antes de confiar. Si encuentras una regla que ya no es cierta, corrígela en el mismo commit
+que tu cambio.
+
 ## 核心原则
 
 - 新增或修改行为前，先更新对应 spec；目录不存在时按需创建。先明确产品规则、状态所有者、接口和验收场景，再实现代码。
