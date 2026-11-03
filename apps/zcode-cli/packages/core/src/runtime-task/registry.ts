@@ -76,6 +76,10 @@ export interface RuntimeTaskSnapshot extends SubagentTaskSnapshot {
    * pone el orquestador con criterio, no una guardia global.
    */
   waitingForAnswer?: boolean;
+  /** Worker de sesión: trabaja en su propia carpeta, aislada de sus hermanos. */
+  isolatedWorkspace?: boolean;
+  /** Carpeta real del worker cuando corre como sesión completa. */
+  workingDirectory?: string;
 }
 
 export interface RuntimeTaskRegistry {

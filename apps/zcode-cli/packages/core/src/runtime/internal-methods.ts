@@ -245,6 +245,7 @@ export interface AgentRuntimeCoreMethods {
   /** 清空全部排队输入（clearQueueAndSend 执行件），返回丢弃条数。 */
   clearAllPendingInputs(traceContext: TraceContext): Promise<number>;
   createDefaultSubagentPort(deps: AgentRuntimeDeps): SubagentPort | undefined;
+  createDefaultAutonSessionWorkerPort(deps: AgentRuntimeDeps): SubagentPort;
   getTools(model?: Model): ModelToolContract[];
   invalidateToolCache(): void;
   getToolRegistry(): ToolRegistry;

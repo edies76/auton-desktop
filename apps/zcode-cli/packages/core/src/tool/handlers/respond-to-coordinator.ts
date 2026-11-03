@@ -27,7 +27,9 @@ const RESPOND_TO_COORDINATOR_PROVIDER_OUTPUT_SCHEMA = {
 const respondToCoordinatorHandler: ToolHandler = async (input, context) => {
   const parsed = RespondToCoordinatorInputSchema.parse(input) as RespondToCoordinatorInput;
 
-  if (context.runtimeScope !== "subagent" || !context.coordinatorResponsePort) {
+  // El puerto es la condición, no el tipo de sesión: el worker como sesión
+  // completa (`auton_worker_session`) también le habla a su orquestador.
+  if (!context.coordinatorResponsePort) {
     throw createCoreError(
       CoreErrorType.ConfigurationError,
       "Coordinator response port is not configured for RespondToCoordinator",

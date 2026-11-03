@@ -54,6 +54,15 @@ export const AgentInputSchema = z.object({
         "dispatched by the orchestrator: they answer to the orchestrator, not to the human, and close " +
         "with a REPORTE block (STATUS/HICE/PROBE/ARCHIVOS/DUDAS).",
     ),
+  worker_mode: z
+    .enum(["subagent", "session"])
+    .optional()
+    .describe(
+      "Only for subagent_type=auton-worker. 'subagent' (default) runs the worker as a subagent with the " +
+        "narrowed tool policy. 'session' opens a complete ZCode session for it: full toolset, its own " +
+        "isolated workspace and its own browser to test its work. Use 'session' when the task needs to " +
+        "build and verify itself (UI, integration, anything that must be opened and checked).",
+    ),
   // subagent 模型由 Settings / Markdown profile 统一决定；若把调用级
   // model 暴露给父模型，历史 tool call 会持续生成旧 override 并覆盖当前配置。
   run_in_background: z
