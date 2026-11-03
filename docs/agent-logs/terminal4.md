@@ -99,3 +99,16 @@ Verificado con: `auton-worker-task-mode` (10), `auton-worker-mode-safety` (4) y
 Lanzamiento: `pnpm dev:desktop` con el modo sesión se quedó en el build a los 150 s; capturado en mode-launch.log con timeout, PID, veredicto y stderr. Typecheck UI: se ajustó el tipo local de la fila del canal al protocolo actual (lastActivityAt y waitingForAnswer son opcionales).
 
 2026-11-03 — worker por defecto en sesión completa: DEFAULT_AUTON_WORKER_MODE pasa a session. `subagent` queda como vuelta atrás por despacho (`worker_mode`) o por `AUTON_WORKER_MODE=subagent`. Actualizados la tool, la doctrina, la doc privada/pública y las pruebas: sin parámetro, el despacho usa el puerto de sesión.
+
+## 2026-11-03 — Muse Code como motor del worker
+
+Qué: el orquestador puede elegir ngine: "muse" y el worker corre con Muse Code 1.4.14 headless en su
+carpeta, con la misma capa de Auton, modo, evidencia y REPORTE. Sin fallback silencioso: motor
+desconocido lo rechaza el esquema; binario o auth ausentes fallan con el motivo de la sonda.
+Cuatro piezas: (1) handler/adaptador (muse exec --json, prompt file, workspace, flags de modo, stop,
+parser del REPORTE); (2) registro ngine en la herramienta Agent y en el item del plan; (3) bloque
+"Motor del worker" en la doctrina; (4) prueba 23 de PRUEBAS y pruebas de contrato/adaptador/despacho.
+Límite declarado: xec es one-shot; session-message no está soportado en Windows, así que no hay
+steer a mitad de corrida en Muse.
+Verificado con: Muse real (echo x2 y meta x1) a través del adaptador; uton-muse-engine (10 sin e2e,
+12 con e2e), uton-engine-dispatch (6), typecheck y lint.

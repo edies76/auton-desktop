@@ -77,3 +77,5 @@ El panel de workers se alimenta de filas de subagente; un worker de sesión no p
 - El ciclo de vida del worker de sesión: módulo `session-worker`.
 - La fábrica real del runtime: método `autonSessionWorker` del runtime.
 - La traducción al panel: `sessionWorker` dentro de `project-space` en la UI.
+
+El motor se elige aparte con `engine` (`zcode` por defecto, `muse` para Muse Code); el detalle vive en [muse-code.md](./muse-code.md).

@@ -237,6 +237,12 @@ ayer.
 - **Cómo se prueba**: un refactor acotado con `mode: "refactor"`.
 - **Qué tiene que verse**: **la suite previa sigue en verde**, el comportamiento observable no cambió y el reporte dice qué se movió y qué no.
 
+### 23. Muse Code como motor del worker **[auto]**
+- **Qué prometemos**: un sprint puede correr en Muse Code con el mismo brief, modo, evidencia y REPORTE que en el motor de casa.
+- **Cómo se prueba**: despacha con `engine: "muse"` un encargo mínimo en una carpeta propia y pide que cierre con REPORTE.
+- **Qué tiene que verse**: la sonda de versión, el worker corriendo en **su carpeta**, su salida/progreso, el **REPORTE con uno de los cuatro estados** y la parada. Si Muse no está instalado o autenticado, el despacho **falla explícito** y no cae a ZCode. En `read` y `research` no puede escribir (el adaptador apaga escritura y shell).
+- **Límite declarado**: Muse es **one-shot**; en este entorno no acepta mensajes a mitad de corrida. Si el sprint necesita preguntar a media faena, se parte o se usa `zcode`.
+
 ---
 
 ## Lo que estas pruebas protegen

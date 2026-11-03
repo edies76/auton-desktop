@@ -56,6 +56,12 @@ Un encargo de lectura explora y devuelve contexto con rutas, sin tocar un solo a
 
 Pedir contexto es barato y no ensucia el proyecto. Por eso el orquestador lee para decidir y manda leer para tener contexto, en vez de explorarlo todo a ciegas.
 
+## 4.3. El motor se elige por encargo
+
+Un encargo puede correr en el motor de casa (ZCode) o en Muse Code. El orquestador lo elige y lo dice. El contrato no cambia: el mismo brief, el mismo modo, la misma exigencia de evidencia y el mismo reporte de cierre.
+
+Muse Code trabaja en su propia carpeta y devuelve su reporte al terminar. Es un motor de una sola pasada: recibe el encargo completo y responde al cerrar. Si no está instalado o autenticado, el despacho lo dice con el motivo exacto y no finge que funcionó.
+
 ## 5. Comprueba antes de cerrar
 
 Una pieza terminada pasa por una revisión independiente. Se comprueba el criterio de hecho, no la seguridad con la que el modelo cuenta que lo hizo.
