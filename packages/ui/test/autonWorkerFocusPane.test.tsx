@@ -78,5 +78,32 @@ describe("resumen del worker en el área del orquestador", () => {
       taskId: "orch",
       workspacePath: "/workspace/lunar",
     });
+
+    act(() => {
+      useAutonWorkerFocusStore
+        .getState()
+        .setLiveWorkers([{ ...WORKER, status: "bloqueado", lastLine: "Detenido por el orquestador" }]);
+    });
+    expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Bloqueado");
+    expect(screen.getByTestId("auton-worker-summary").textContent).not.toContain("Parar");
+  });
+
+  it("el reloj del resumen avanza con la sesión viva", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(NOW);
+    try {
+      useAutonWorkerFocusStore
+        .getState()
+        .open({ ...WORKER, lastSignalAt: NOW }, "/workspace/lunar");
+      render(<AutonWorkerFocusPane />);
+      expect(screen.getByTestId("auton-worker-summary").textContent).toContain("01:00");
+
+      act(() => {
+        vi.advanceTimersByTime(5_000);
+      });
+      expect(screen.getByTestId("auton-worker-summary").textContent).toContain("01:05");
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
