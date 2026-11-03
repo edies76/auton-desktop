@@ -68,3 +68,12 @@ muestran en su grupo cuando el runtime los marca en `workerTaskIds`.
 - Segunda corrida completa: `Agentes ZCode 2` (un `auton-worker` terminado y otro trabajando) con el
   hilo del orquestador abierto y fuera de la lista; captura `launch-full-worker-2.png`. La parada
   del worker completo usa su propia sesión (worker 4 pasó a Terminado 01:25).
+
+## 2026-11-03 — paridad visual y decisión aprobada por el usuario
+
+Se restauró la estructura del panel anterior: encabezado `WORKERS` en mayúsculas, badge de estado con
+punto, nombre + reloj, última línea, densidad y tipografía de la referencia. El usuario pidió
+explícitamente quitar el verde y la llave: "ese color verde y ese icono en los agentes NO VA CON DL
+DISEÑO, trata de reciclar lo más q puedas copia.pega y modifica". Por eso el badge es neutro y el
+icono es de estado; el logo/nombre del proyecto y los grupos Agentes ZCode/Subagentes/Muse Code son
+la UI nueva. Comparación lado a lado: `style-compare.png`.
