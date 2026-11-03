@@ -82,3 +82,11 @@ Comparación lado a lado: `style-compare.png`. Se restauró la estructura y dens
 (encabezado, badge con punto, nombre+reloj, última línea, parada) con badge neutro e icono de estado
 por decisión explícita del usuario; el panel actual muestra `Agentes ZCode 3` con un worker completo
 Trabajando y el hilo del orquestador abierto/fuera de la lista (`final-running-style.png`).
+
+## 2026-11-03 — correcciones de verificación
+
+- Orquestador: `ensureProjectConversation` usa la sesión activa y, si no hay, la conversación persistida o la más antigua; ya no ordena por `updatedAt`. La auto-apertura solo cambia de sesión si la activa es legado o no hay activa (`shouldOpenProjectOrchestrator`).
+- Workers: se retiró la rama muerta de tareas de proyecto (`workerTaskIds`, `markWorkerTask`, `projectProjectAgentWorkers`). Los agentes completos y subagentes salen de la proyección viva `auton-worker`/subagente; los tests usan esa ruta.
+- Foco del worker: el store guarda id/scope y el sidebar publica `setLiveWorkers`; el resumen deriva el worker vivo y `useAutonClock`. Parar un worker interrumpe el turno del orquestador; la prueba en vivo pasó de Trabajando a Bloqueado en el resumen (`focus-blocked-summary2.png`).
+- Creación por proyecto: `claimProjectConversationCreation` reclama una vez por clave, no un booleano global; test de p1/p2/p1.
+- Foco al cambiar de workspace: `closeWorkerFocusForWorkspace` se ejecuta en `WorkspaceShellLayout`; test de cierre en workspace distinto.
