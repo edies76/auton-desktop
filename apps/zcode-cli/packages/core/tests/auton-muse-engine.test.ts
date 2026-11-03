@@ -259,11 +259,14 @@ describe.runIf(runRealMuse)("Muse Code real (opt-in con AUTON_MUSE_E2E=1)", () =
       const input = await makeInput(root);
       const handle = createMuseWorkerHandle({
         input,
-        prompt: "Responde exactamente: MUSE-OK. No uses herramientas.",
+        prompt:
+          "No uses herramientas. Cierra exactamente con este bloque:\n" +
+          "REPORTE\nSTATUS: DONE\nARCHIVOS: ninguno\nEVIDENCIA: ninguna\nDUDAS: ninguna",
         maxModelSteps: 2,
       });
       const result = await handle.run();
       expect(result.response.trim().length).toBeGreaterThan(0);
+      expect(parseWorkerReporte(result.response)).toBe("DONE");
     } finally {
       await rm(root, { recursive: true, force: true });
     }
