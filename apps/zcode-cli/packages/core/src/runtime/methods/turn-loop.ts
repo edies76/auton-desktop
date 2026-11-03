@@ -39,6 +39,7 @@ import {
 import type { RegularTurnLoopState } from "./turn-loop-state.js";
 import { consumeSettledProjectMemoryRecall } from "../helpers/project-memory-recall.js";
 import { consumePendingProjectMemoryUpdate } from "../helpers/project-memory-dream.js";
+import { waitForAutonIdle } from "../../auton/live-loop.js";
 import { ACTIVE_PROJECT_MEMORY_RETRIEVAL_BRANCH } from "../../memory/project-memory-retrieval-branch.js";
 import {
   appendTurnRequestEntries,
@@ -271,6 +272,12 @@ export async function runRegularTurnLoop(
     });
 
     if (result === "break") {
+      // Auton: el turno no se cierra mientras quede trabajo vivo. La espera es
+      // acotada (30 min) y abortable con el turno, así que nunca cuelga.
+      await waitForAutonIdle(String(this.sessionId), {
+        timeoutMs: 30 * 60_000,
+        signal: state.turnAbortSignal,
+      });
       break;
     }
   }

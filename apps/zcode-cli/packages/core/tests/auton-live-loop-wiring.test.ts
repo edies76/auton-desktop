@@ -29,4 +29,14 @@ describe("enganche del latido en el runner de subagentes", () => {
     expect(runnerSource).toContain("formatHeartbeatMessage");
     expect(runnerSource).toMatch(/enqueue\?\.\(\{[\s\S]{0,300}backgroundSource: "subagent"/);
   });
+
+  it("el turno espera al trabajo vivo antes de cerrar, con espera acotada", () => {
+    const turnLoop = readFileSync(
+      resolve(here, "../src/runtime/methods/turn-loop.ts"),
+      "utf8",
+    );
+    expect(turnLoop).toMatch(/if \(result === "break"\)[\s\S]{0,500}waitForAutonIdle\(/);
+    expect(turnLoop).toContain("timeoutMs: 30 * 60_000");
+    expect(turnLoop).toContain("signal: state.turnAbortSignal");
+  });
 });

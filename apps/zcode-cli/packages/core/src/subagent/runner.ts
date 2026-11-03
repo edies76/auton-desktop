@@ -56,7 +56,7 @@ import {
 } from "./worker-policy.js";
 import { EXPLORE_AGENT_ALLOWED_TOOLS } from "./explore-tools.js";
 import { formatLocalAgentTaskNotification } from "./completion-notification.js";
-import { AutonLiveLoop, formatHeartbeatMessage } from "../auton/live-loop.js";
+import { AutonLiveLoop, formatHeartbeatMessage, registerAutonLiveLoop } from "../auton/live-loop.js";
 import { filterSubagentChildToolNames } from "./tool-policy.js";
 import {
   ErrorPayloadRole,
@@ -1914,6 +1914,7 @@ function autonLiveLoopFor(
       },
     });
     autonLiveLoops.set(key, loop);
+    registerAutonLiveLoop(key, loop);
   }
   return loop;
 }

@@ -100,4 +100,41 @@ describe("latido del turno vivo", () => {
     expect(formatHeartbeatMessage({ running: 1, silentForMs: 92_000 })).toContain("01:32");
     expect(formatHeartbeatMessage({ running: 3, silentForMs: 90_000 })).toContain("3 programadores");
   });
+
+  it("waitForIdle espera al último cierre del canal", async () => {
+    const { loop } = harness();
+    loop.dispatch();
+    loop.dispatch();
+
+    let resolved: boolean | null = null;
+    const waiting = loop.waitForIdle({ timeoutMs: 5_000 }).then((value) => {
+      resolved = value;
+    });
+
+    await Promise.resolve();
+    expect(resolved).toBeNull();
+
+    loop.close();
+    await Promise.resolve();
+    expect(resolved).toBeNull();
+
+    loop.close();
+    await waiting;
+    expect(resolved).toBe(true);
+  });
+
+  it("waitForIdle vence por tiempo y devuelve false (nunca cuelga el turno)", async () => {
+    const { loop } = harness();
+    loop.dispatch();
+    await expect(loop.waitForIdle({ timeoutMs: 10 })).resolves.toBe(false);
+  });
+
+  it("waitForIdle se libera al abortar el turno", async () => {
+    const { loop } = harness();
+    loop.dispatch();
+    const controller = new AbortController();
+    const waiting = loop.waitForIdle({ timeoutMs: 5_000, signal: controller.signal });
+    controller.abort();
+    await expect(waiting).resolves.toBe(false);
+  });
 });
