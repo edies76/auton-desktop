@@ -127,6 +127,10 @@ Reglas:
 - La documentación privada lleva el detalle que un compañero necesita para continuar sin preguntar:
   rutas, contratos, invariantes, pruebas ejecutadas y lo que falta. "Con lujo de detalle" es el
   estándar, no la excepción.
+- **La documentación describe comportamiento, no archivos.** Lo que debe quedar es qué hace el
+  sistema, cómo funciona y por qué; se pueden nombrar funciones, variables o herramientas especiales
+  cuando aclaran el mecanismo, pero nunca pegar código crudo ni convertir la página en un índice de
+  rutas. Si al leerla hay que abrir el editor para entenderla, está mal escrita.
 - La documentación pública se escribe para alguien que no conoce el repo: sin jerga interna y sin
   prometer lo que no está verificado.
 - Se actualiza cuando cambia el comportamiento, no en cada commit de estilo.

@@ -36,6 +36,16 @@ Mientras el trabajo corre, Auton mantiene una crónica en el mismo hilo:
 
 El detalle técnico vive en el canal de cada pieza. El hilo conserva la historia que necesitas para dirigir.
 
+## 4.1. Los programadores hablan mientras trabajan
+
+Cada programador puede hablar con el orquestador a mitad del encargo, en texto libre: contar lo que encontró, pedir un dato, proponer otro enfoque, avisar un bloqueo o responder algo que el orquestador le preguntó.
+
+Ese mensaje llega al orquestador como una interrupción de alta prioridad, por encima de los avisos de estado y por debajo de lo que escribes tú. El orquestador contesta por el mismo canal: da el dato, corrige el rumbo, pide evidencia o detiene la pieza y la relanza con un encargo mejor.
+
+La conversación se ve en el mismo hilo, dentro del bloque de esa pieza. No hace falta abrir nada ni cambiar de pestaña para seguirla.
+
+Cuando el orquestador necesita una decisión que el programador no puede tomar, marca el mensaje como **decisión requerida**: esa pieza se detiene antes de continuar y contesta. Las demás siguen su curso. Si la decisión es tuya, el orquestador te la trae y deja la pieza esperando mientras adelanta otro frente.
+
 ## 5. Comprueba antes de cerrar
 
 Una pieza terminada pasa por una revisión independiente. Se comprueba el criterio de hecho, no la seguridad con la que el modelo cuenta que lo hizo.

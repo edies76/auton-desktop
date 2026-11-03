@@ -9,10 +9,13 @@ cd apps/zcode-cli
 npx vitest run \
   packages/core/tests/auton-limits-governance.test.ts \
   packages/core/tests/auton-plan-tool.test.ts \
-  packages/core/tests/auton-limits-guard.test.ts
+  packages/core/tests/auton-limits-guard.test.ts \
+  packages/core/tests/auton-answer-lock.test.ts \
+  packages/core/tests/auton-worker-policy.test.ts \
+  packages/core/tests/auton-loop.test.ts
 ```
 
-Resultado de la última corrida (2026-11-02): **23 pruebas en 3 archivos, todas en verde**.
+Resultado de la última corrida (2026-11-03): **51 pruebas en 5 archivos, todas en verde**.
 
 Typecheck:
 
@@ -25,9 +28,12 @@ pnpm --filter @zcode/core typecheck
 
 | Archivo | Pruebas | Qué demuestra |
 | --- | --- | --- |
-| `auton-plan-tool.test.ts` | 6 | Lectura/escritura del plan, límites versionados, historial conservado, plan legado, JSON inválido |
+| `auton-plan-tool.test.ts` | 10 | Lectura/escritura del plan, límites versionados, historial conservado, plan legado, JSON inválido, despacho sin versión |
 | `auton-limits-guard.test.ts` | 3 | El orquestador escribe límites; el worker no puede cambiarlos; el worker sí puede actualizar items |
-| `auton-limits-governance.test.ts` | 14 | Evaluación pura y gobierno del despacho |
+| `auton-limits-governance.test.ts` | 15 | Evaluación pura y gobierno del despacho |
+| `auton-answer-lock.test.ts` | 6 | Candado del orquestador: marcar, no marcar, levantar, y encabezado de decisión requerida en la entrega |
+| `auton-worker-policy.test.ts` | 14 | Identidad del programador, política de esfuerzo y thinking distinto del esfuerzo |
+| `auton-loop.test.ts` | 6 | Prioridades del bucle y latido |
 
 ## Casos de la suite de gobierno
 
@@ -41,15 +47,16 @@ Evaluación pura:
 
 Handler:
 
-6. Sin límites versionados, un item no puede arrancar (42201).
-7. Los intentos los cuenta el plan y frenan al agotarse (42202).
-8. Una aprobación pendiente no arranca ni consume intento (42203).
-9. `not_evaluable` exige pregunta (42206) y se cuenta en el resumen.
-10. `safe_default` exige la decisión escrita en `detail`.
-11. Cambiar límites exige versión nueva y entrada de historial (42204).
-12. Omitir `limits` conserva los vigentes.
-13. Un worker no puede añadir `limitReports`; el orquestador sí.
-14. El historial y los reportes sobreviven a un write que los omite.
+6. Sin límites versionados el orquestador despacha, el plan queda sin versión y cuenta el intento (sin 42201).
+7. La aprobación que escribió el orquestador se respeta aunque no haya límites (42203).
+8. Los intentos los cuenta el plan y frenan al agotarse (42202).
+9. Una aprobación pendiente no arranca ni consume intento (42203).
+10. `not_evaluable` exige pregunta (42206) y se cuenta en el resumen.
+11. `safe_default` exige la decisión escrita en `detail`.
+12. Cambiar límites exige versión nueva y entrada de historial (42204).
+13. Omitir `limits` conserva los vigentes.
+14. Un worker no puede añadir `limitReports`; el orquestador sí.
+15. El historial y los reportes sobreviven a un write que los omite.
 
 ## Prueba manual mínima
 

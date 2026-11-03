@@ -20,7 +20,23 @@ Una regla sin versión es una costumbre. Una regla versionada es un contrato:
 - se puede reconstruir por qué cambió;
 - un cambio no se puede reescribir en silencio.
 
-Los planes creados antes de esta regla quedan marcados como "sin versión". El sistema no inventa un pasado que no existía.
+Los planes creados antes de esta regla quedan marcados como "sin versión". El sistema no inventa un pasado que no existía, y ese estado no detiene el trabajo: el orquestador sigue al mando y el primer cambio de límites ya queda versionado con su historial.
+
+## Las reglas las escribe el orquestador
+
+Auton es un MVP y la dirección la lleva el orquestador. Los límites existen para que sus decisiones se puedan leer y auditar, no para sustituir su criterio:
+
+- con límites versionados, el plan aplica el tope de intentos y las aprobaciones que el orquestador marcó;
+- sin límites versionados, el plan solo cuenta intentos y respeta las aprobaciones que el propio orquestador escribió en la pieza;
+- en ambos casos, quien decide qué se hace y en qué orden es el orquestador.
+
+Ninguna guardia genérica decide por él. Lo que el sistema garantiza es que sus reglas queden escritas y que cada cambio se pueda reconstruir.
+
+## El candado lo pone el orquestador
+
+Hay preguntas que un trabajador no puede resolver solo. Cuando el orquestador detecta una de esas, la marca como **decisión requerida** y ese frente queda esperando la respuesta antes de continuar. El resto de los frentes sigue trabajando.
+
+Lo importante es de quién es la decisión: el candado lo pone el orquestador con criterio, caso por caso. Para una instrucción, un dato nuevo o una corrección, manda el mensaje sin candado y el trabajador lo incorpora sin detenerse.
 
 ## Cuándo te consulta
 

@@ -82,4 +82,4 @@ La escritura reemplaza el archivo completo. Reglas de conservación:
 | `limitReports` | Se conservan |
 | `items` | Obligatorio (el esquema lo exige) |
 
-Omitir `limits` nunca deja el plan sin gobierno; quitar el gobierno exige enviar un objeto sin `limits` y eso se rechaza cuando ya había límites.
+Omitir `limits` conserva los vigentes. Un plan que nunca tuvo límites se escribe y se lee como "sin versión": el despacho se permite, el plan cuenta los intentos y respeta el `needsApproval` que el orquestador escribió en el item. El gobierno se gana con el primer cambio versionado, no con un candado de arranque.

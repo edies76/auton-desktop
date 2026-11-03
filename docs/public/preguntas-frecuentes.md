@@ -20,6 +20,10 @@ No se cierra. Una declaración no es evidencia. La pieza pasa por una revisión 
 
 Pregunta. Existe un estado explícito para eso: cuando el sistema no puede evaluar una decisión, la deja en espera con la pregunta concreta y la escala a ti. No elige por inercia.
 
+## ¿Puedo hablar con los programadores?
+
+Hablas con el orquestador. Él habla con los programadores mientras trabajan: les pasa datos, les corrige el rumbo, les pide evidencia o los detiene. Cuando una decisión es tuya, el orquestador te la trae con la pregunta concreta y deja esa pieza esperando mientras adelanta otra.
+
 ## ¿Puedo detener una pieza?
 
 Sí. Puedes pedirlo en lenguaje natural al orquestador. La pieza se detiene con su motivo visible y el resto del trabajo continúa.

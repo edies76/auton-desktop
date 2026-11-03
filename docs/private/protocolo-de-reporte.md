@@ -23,6 +23,15 @@ Mensaje del rechazo:
 
 > Un programador no puede cambiar los límites del plan. Puede reportarlo en el REPORTE y el orquestador decide.
 
+## Canal rápido: hablar mientras se trabaja
+
+El REPORTE final sigue siendo el cierre formal del encargo. Además existe el canal rápido:
+`RespondToCoordinator` deja que el programador publique avances, dudas o bloqueos a mitad de corrida,
+y `SendMessage` deja que el orquestador le responda o le cambie el rumbo sin esperar al cierre.
+
+Cuando el orquestador marca su mensaje como decisión requerida, ese frente contesta antes de seguir;
+el detalle completo está en [canal rápido](./canal-rapido.md).
+
 ## Cómo reporta un worker un límite mal calibrado
 
 No escribe el plan. Lo cuenta en su REPORTE final; el orquestador lo recoge y lo registra:

@@ -374,7 +374,7 @@ describe("gobierno del despacho", () => {
     expect((await readPlan(root)).limits?.version).toBe(2);
   });
 
-  it("quitar los límites deja el plan sin gobierno y se rechaza", async () => {
+  it("omitir los límites conserva la versión vigente", async () => {
     const root = await workspace();
     await seed(root);
 

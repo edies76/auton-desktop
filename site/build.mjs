@@ -37,6 +37,7 @@ const PRIVATE_PAGES = [
   { slug: "scorecard", file: "docs/SCORECARD.md", title: "Scorecard", blurb: "El juicio del orquestador sobre su trabajo." },
   { slug: "versionado", file: "docs/VERSIONADO.md", title: "Versionado", blurb: "Ramas, tags y cómo se publica." },
   { slug: "limites-implementacion", file: "docs/private/limites-implementacion.md", title: "Límites: implementación", blurb: "Esquema, veredictos, códigos de fallo e invariantes." },
+  { slug: "canal-rapido", file: "docs/private/canal-rapido.md", title: "Canal rápido", blurb: "Cómo se hablan orquestador y programador, y de quién es el candado." },
   { slug: "contrato-del-plan", file: "docs/private/contrato-del-plan.md", title: "Contrato del plan", blurb: "El archivo del plan, campo por campo." },
   { slug: "protocolo-de-reporte", file: "docs/private/protocolo-de-reporte.md", title: "Protocolo de reporte", blurb: "Qué puede un worker y cómo reporta un límite mal calibrado." },
   { slug: "verificacion-y-pruebas", file: "docs/private/verificacion-y-pruebas.md", title: "Verificación y pruebas", blurb: "Qué cubre cada suite y qué no se probó." },

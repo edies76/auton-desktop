@@ -82,7 +82,6 @@ Son resultados de negocio (`{ result: false, errorCode, message }`), no excepcio
 
 | Código | Constante | Significado |
 | --- | --- | --- |
-| 42201 | `NotEvaluable` | Se intentó despachar sin límites versionados |
 | 42202 | `Exceeds` | Se agotó `maxAttempts` |
 | 42203 | `RequiresApproval` | El item exige una aprobación humana pendiente |
 | 42204 | `UnrecordedChange` | Cambio de límites sin versión nueva o sin historial |
@@ -93,7 +92,7 @@ El guard de worker sigue lanzando `Error` (comportamiento previo, con test propi
 
 ## Invariantes
 
-1. Un plan sin `limits` no permite poner ningún item en `running`.
+1. Sin límites versionados el despacho se permite: el plan queda "sin versión" y solo se aplica la aprobación que el orquestador escribió en el item.
 2. `attempts` solo sube, y lo cuenta el handler; el modelo puede omitirlo.
 3. El historial de límites es append-only; no se acorta ni se reescribe.
 4. Todo cambio de límites sube `version` y registra el campo cambiado.
@@ -103,7 +102,7 @@ El guard de worker sigue lanzando `Error` (comportamiento previo, con test propi
 
 ## Decisiones y por qué
 
-- **Fail-closed en el despacho**: si no hay contrato, no se arranca. La alternativa (arrancar y evaluar después) reproduce el fallo silencioso que la pieza quiere eliminar.
+- **El orquestador manda; el plan registra.** La versión 0.3.0 del diseño sometía el arranque a tener límites escritos y eso recortaba la autonomía del orquestador en el MVP. Ahora el plan cuenta intentos y aplica lo que el orquestador marcó, y la versión se escribe desde el primer cambio real.
 - **La primera versión no exige historial**: no hay un "antes" que registrar; la entrada inicial sería ruido.
 - **Omitir `attempts` significa "lo lleva el plan"**: el modelo no tiene que recordar la cuenta, y un 0 explícito no puede usarse para reiniciar.
 - **`safe_default` exige `detail`**: un default seguro sin constancia es indistinguible de no haber decidido.
