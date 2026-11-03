@@ -93,6 +93,7 @@ export function WorkspaceHeaderTitleSection({
   localWorkspacePath,
   projectName,
   activeTaskTitle,
+  isProjectOrchestrator = false,
   activeTaskChangeSummary: _activeTaskChangeSummary,
   activeTaskId,
   activeTraceId: _activeTraceId,
@@ -547,13 +548,16 @@ export function WorkspaceHeaderTitleSection({
         title={activeTaskTitle}
       >
         <span className="min-w-0 truncate">{activeTaskTitle}</span>
-        {/* El hilo central es el orquestador; el panel izquierdo son los workers. */}
-        <span
-          data-testid="auton-orchestrator-badge"
-          className="shrink-0 rounded-sm border border-border bg-secondary/40 px-1.5 py-0.5 text-ui-xs font-medium text-foreground-subtle"
-        >
-          Orquestador
-        </span>
+        {/* Solo el hilo publicado como orquestador lleva la etiqueta; un
+            worker o un chat legado abierto por otra vía no se disfraza. */}
+        {isProjectOrchestrator ? (
+          <span
+            data-testid="auton-orchestrator-badge"
+            className="shrink-0 rounded-sm border border-border bg-secondary/40 px-1.5 py-0.5 text-ui-xs font-medium text-foreground-subtle"
+          >
+            Orquestador
+          </span>
+        ) : null}
         {/* {activeTaskChangeSummary ? (
           <>
             {activeTaskChangeSummary.added > 0 ? (

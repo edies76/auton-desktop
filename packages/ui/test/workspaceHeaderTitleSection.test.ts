@@ -263,6 +263,7 @@ describe("WorkspaceHeaderTitleSection", () => {
         workspaceAbsPath: "/workspace/zcode-cli",
         projectName: "zcode-cli",
         activeTaskTitle: "Hilo del proyecto",
+        isProjectOrchestrator: true,
         activeTaskId: "task-1",
         activeTraceId: "trace-1",
         activeSessionId: "session-1",
@@ -286,6 +287,40 @@ describe("WorkspaceHeaderTitleSection", () => {
     const badgeAt = html.indexOf('data-testid="auton-orchestrator-badge"');
     expect(badgeAt).toBeGreaterThan(html.indexOf(`data-testid="${TID_WORKSPACE_TITLE}"`));
     expect(html).toContain("Orquestador");
+  });
+
+  it("does not label a worker or legacy session as Orquestador", async () => {
+    const { WorkspaceHeaderTitleSection } = await import("@/WorkspaceHeaderSections.js");
+
+    const html = renderToStaticMarkup(
+      createElement(WorkspaceHeaderTitleSection, {
+        workspaceAbsPath: "/workspace/zcode-cli",
+        projectName: "zcode-cli",
+        activeTaskTitle: "Chat legado",
+        isProjectOrchestrator: false,
+        activeTaskId: "legacy-chat",
+        activeTraceId: "trace-1",
+        activeSessionId: "session-1",
+        activeTaskProvider: "glm",
+        gitSummary: { isRepository: false },
+        gitDirtyFileCount: 0,
+        sessionLogPath: null,
+        nativeSessionLogProvider: null,
+        nativeSessionLogPath: null,
+        nativeSessionLogExists: false,
+        nativeSessionLogLoading: false,
+        providerWorkspaceConfigPath: null,
+        providerWorkspaceConfigExists: false,
+        providerWorkspaceConfigLoading: false,
+        workspaceHeaderState: { selectedProvider: "glm" },
+        selectedEditor: null,
+        onRefreshGit: vi.fn(),
+      }),
+    );
+
+    expect(html).toContain(`data-testid="${TID_WORKSPACE_TITLE}"`);
+    expect(html).toContain("Chat legado");
+    expect(html).not.toContain('data-testid="auton-orchestrator-badge"');
   });
 
   it("places the workspace icon before the title and removes the inline branch in mobile mode", async () => {

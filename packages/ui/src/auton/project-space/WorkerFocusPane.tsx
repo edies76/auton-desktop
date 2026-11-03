@@ -15,13 +15,21 @@ import { focusedWorker, useAutonWorkerFocusStore } from "./workerFocusStore.js";
 
 export interface AutonWorkerFocusPaneProps {
   isDesktop?: boolean;
+  /** Vuelta al orquestador; en una sesión de worker abierta como tarea se
+   *  navega al chat publicado en vez de cerrar sobre la sesión del worker. */
+  onBack?: () => void;
+  canGoBack?: boolean;
 }
 
 /**
  * El resumen del worker vive en el área del orquestador. Desde aquí se abre su
  * chat completo de solo lectura; el compositor del orquestador no se toca.
  */
-export function AutonWorkerFocusPane({ isDesktop = false }: AutonWorkerFocusPaneProps) {
+export function AutonWorkerFocusPane({
+  isDesktop = false,
+  onBack,
+  canGoBack = true,
+}: AutonWorkerFocusPaneProps) {
   const worker = useAutonWorkerFocusStore(focusedWorker);
   const workspacePath = useAutonWorkerFocusStore((state) => state.workspacePath);
   const workspaceIdentity = useAutonWorkerFocusStore((state) => state.workspaceIdentity);
@@ -77,10 +85,17 @@ export function AutonWorkerFocusPane({ isDesktop = false }: AutonWorkerFocusPane
   return (
     <div className="flex h-full min-h-0 flex-col bg-background" data-testid="auton-worker-summary">
       <header className="flex shrink-0 items-center gap-2 border-border border-b px-3 py-2.5">
-        <Button variant="ghost" size="sm" onClick={close} data-testid="auton-worker-focus-back">
-          <ArrowLeft className="size-3.5" />
-          Orquestador
-        </Button>
+        {canGoBack ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack ?? close}
+            data-testid="auton-worker-focus-back"
+          >
+            <ArrowLeft className="size-3.5" />
+            Orquestador
+          </Button>
+        ) : null}
         <span className="min-w-0 flex-1 truncate text-ui-sm font-medium text-foreground">
           {worker.name}
         </span>
