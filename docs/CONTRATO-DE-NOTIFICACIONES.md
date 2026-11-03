@@ -127,6 +127,16 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
   `core/tests/auton-real-dispatch-runtime.test.ts` (despacho real: el turno espera
   al worker lanzado por la herramienta Agent y se libera al cerrar).
 
+| Capacidad | Archivo | Prueba | Commit |
+| --- | --- | --- | --- |
+| Decisión del bucle | `core/src/auton/live-loop.ts` | `auton-live-loop.test.ts` | `9d6b4151` |
+| Turno que no cierra | `runtime/methods/turn-loop.ts` | `auton-live-turn-runtime.test.ts`, `auton-real-dispatch-runtime.test.ts` | `4714c3a3`, `5e03d9ca` |
+| Noticias del worker | `runtime/methods/background-notifications.ts` | `auton-real-dispatch-runtime.test.ts` | `07219f97` |
+| Canal con reloj | `ui/src/auton/subagentChannel.ts` | `autonSubagentChannel.test.ts` | `3491a3ca` |
+| Fila despertadora | `ui/src/auton/WakeEventRow.tsx` | `autonWakeEventRow.test.tsx`, `autonThreadChannels.test.tsx` | `b75b7042`, `3491a3ca` |
+| Canal rápido bidireccional | `subagent/coordinator-response.ts`, `message-steering.ts` | `auton-fast-channel-runtime.test.ts` | `b38bcbfa` |
+| Cuatro piezas y ensamblado | `auton/contextAuton.ts`, `context/builder.ts` | `auton-four-pieces.test.ts` | `a373592a` |
+
 ## 9. Relación con los otros documentos
 
 - [`ARQUITECTURA-ORQUESTADOR.md`](./ARQUITECTURA-ORQUESTADOR.md): el cambio de
