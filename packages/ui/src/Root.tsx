@@ -65,6 +65,10 @@ import { TabStoreProvider, useTabStore, useTabStoreApi } from "@/store/TabStoreP
 import { isSettingsTab, isWorkspaceTab, type WorkspaceTabState } from "@/store/tabStore.js";
 import { logger } from "@/logger.js";
 import { RootShell } from "@/root/RootShell.js";
+import {
+  AutonProjectList,
+  AutonProjectSpaceRoute,
+} from "@/auton/project-space/index.js";
 import { RootWorkspaceContent } from "@/root/RootWorkspaceContent.js";
 import { resolveConversationWorkspaceTarget } from "@/conversation-workspace-target/index.js";
 import { resolveRootWorkspaceShellTarget } from "@/root/rootWorkspaceShellTarget.js";
@@ -284,6 +288,16 @@ function RootInner({
     useState<WelcomeScreenOpenReason | null>(() =>
       consumeZcodeJwtInvalidRestartMarker() ? "session-expired" : null,
     );
+  // Espacio de Auton abierto desde la lista: el shell de ZCode se conserva para
+  // `?auton=zcode`; la entrada por defecto es la lista de proyectos.
+  const [autonSpace, setAutonSpace] = useState<{
+    name: string;
+    path: string;
+    taskId: string;
+  } | null>(null);
+  // Al abrir un proyecto sin sesiones se entra al workspace de ZCode; esta
+  // bandera evita que la ruta de Auton lo tape. Vuelve al salir del workspace.
+  const [autonBypass, setAutonBypass] = useState(false);
   const [providerFamilyDomainMigrationComplete, setProviderFamilyDomainMigrationComplete] =
     useState(false);
   const loginEntryRequest = useZCodeStore((state) => state.loginEntryRequest);
@@ -1508,6 +1522,41 @@ function RootInner({
         {remoteConnectionDialog}
         {directoryBrowserDialog}
         <WelcomeScreen onComplete={handleWelcomeScreenComplete} />
+      </RootShell>
+    );
+  }
+
+  if (
+    !autonBypass &&
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("auton") !== "zcode"
+  ) {
+    return (
+      <RootShell>
+        {rootModelSelectionErrorNode}
+        {requestSecurityBridgeNode}
+        {autonSpace ? (
+          <AutonProjectSpaceRoute
+            project={{
+              id: autonSpace.taskId,
+              name: autonSpace.name,
+              path: autonSpace.path,
+              lastActiveAt: Date.now(),
+            }}
+            sessionId={autonSpace.taskId}
+            onBack={() => setAutonSpace(null)}
+          />
+        ) : (
+          <AutonProjectList
+            onOpenProject={(project, rootPath, taskId) =>
+              setAutonSpace({ name: project.name, path: rootPath, taskId })
+            }
+            onOpenWorkspace={(path) => {
+              setAutonBypass(true);
+              void handleSelectProject(path);
+            }}
+          />
+        )}
       </RootShell>
     );
   }
