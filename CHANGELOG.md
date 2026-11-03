@@ -4,6 +4,50 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases públicas.
 
+## [0.5.0] — 2026-11-03
+
+El chat vivo: la conversación del orquestador se mantiene abierta mientras hay
+trabajo y los eventos que lo despiertan se ven dentro del mismo hilo.
+
+### Añadido
+
+- **Turno que no se cierra con trabajo vivo**: al terminar de escribir, el turno
+  del orquestador espera al último canal (30 minutos como máximo, abortable);
+  nunca se queda colgado.
+- **Latido de 90 segundos**: con trabajo en curso y sin noticias, aparece una
+  fila centrada de estado; el reloj de la conversación la hace visible durante el
+  silencio, no solo cuando llega otro evento.
+- **Eventos despertadores centrados**: pregunta del programador (ámbar, con
+  Responder), cierre del canal (verde, con Abrir) y latido (neutro). Salen del
+  mapeo real del hilo y se pintan dentro de la conversación normal, sin pantalla
+  aparte.
+- **Canales anidados con reloj**: cada programador muestra su estado y su tiempo
+  mientras corre; al cerrar conserva su estado final y su reloj.
+- **Canal rápido bidireccional**: lo que el programador publica llega al
+  orquestador como evento del worker, no como mensaje del humano; la instrucción
+  del orquestador entra en el siguiente paso del worker sin reiniciar el encargo.
+- **Modos de trabajo**: build, read, research, debug y refactor como eje aparte
+  del esfuerzo, con criterio de hecho y su lugar en el prompt.
+
+### Cambiado
+
+- La pregunta pendiente se marca en la proyección cuando el orquestador envía un
+  `SendMessage` con `requires_answer`; la respuesta del programador, su cierre o
+  un nuevo arranque la levantan.
+- El latido se mide con la última señal de vida de la fila visible del worker.
+
+### Eliminado
+
+- `QuestionWakeBlock` y el paso de `onRespondToQuestion`: la pregunta sale del
+  mismo mapeo que el cierre y el latido.
+
+### Conocido
+
+- La prueba 17 con modelo real (que el orquestador elija `AutonRevert` al pedir
+  "deshaz el sprint 2") sigue bloqueada por falta de proveedor en este entorno.
+- Preguntas con opciones y el caso "el humano escribe mientras pregunto" quedan
+  fuera de esta etapa.
+
 ## [0.4.0] — 2026-11-02
 
 El primer cambio grande de interfaz: el espacio de trabajo de un proyecto.
