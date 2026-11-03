@@ -12,8 +12,8 @@ export const AUTON_WORKER_MODE_ENV = "AUTON_WORKER_MODE";
 
 export type AutonWorkerMode = "subagent" | "session";
 
-/** El modo de siempre. Apagar el interruptor devuelve exactamente esto. */
-export const DEFAULT_AUTON_WORKER_MODE: AutonWorkerMode = "subagent";
+/** El modo por defecto: el worker corre como sesión completa de ZCode. */
+export const DEFAULT_AUTON_WORKER_MODE: AutonWorkerMode = "session";
 
 export function parseAutonWorkerMode(value: unknown): AutonWorkerMode | undefined {
   if (typeof value !== "string") return undefined;

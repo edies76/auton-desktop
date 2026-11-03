@@ -66,6 +66,22 @@ describe("el despacho elige el puerto según el interruptor", () => {
     expect((session.launched[0] as { agentType: string }).agentType).toBe("auton-worker");
   });
 
+  it("sin pedirlo, el despacho usa la sesión completa por defecto", async () => {
+    const session = fakePort("session-default");
+    const subagent = fakePort("subagent-default");
+
+    await agentToolEntry.handler(
+      INPUT,
+      context({
+        autonSessionWorkerPort: session.port,
+        subagentPort: subagent.port,
+      }),
+    );
+
+    expect(session.port.launch).toHaveBeenCalledTimes(1);
+    expect(subagent.port.launch).not.toHaveBeenCalled();
+  });
+
   it("con el interruptor apagado usa la ruta de siempre", async () => {
     const session = fakePort("session");
     const subagent = fakePort("subagent");

@@ -11,8 +11,8 @@ Ahora hay dos modos y un interruptor:
 
 | Modo | Qué es | Herramientas | Espacio | Navegador |
 | --- | --- | --- | --- | --- |
-| `subagent` (por defecto) | El worker de siempre | Recortadas por la política de subagente | El del orquestador | El del orquestador |
-| `session` | Sesión completa de ZCode | El mismo juego que el orquestador, sin los controles de orquestación | Carpeta propia y aislada | Propio del worker |
+| `session` (por defecto) | Sesión completa de ZCode | El mismo juego que el orquestador, sin los controles de orquestación | Carpeta propia y aislada | Propio del worker |
+| `subagent` (vuelta atrás) | El worker de siempre, para un cambio pequeño de archivos | Recortadas por la política de subagente | El del orquestador | El del orquestador |
 
 En modo sesión el worker puede leer, escribir, editar y ejecutar como el orquestador. Lo que no lleva es lo que sirve para dirigir a otros: repartir trabajo (`Agent`/`Task`), mensajear agentes (`SendMessage`) y el modo plan. Eso es una frontera de producto, no un recorte de la política de subagentes.
 
@@ -21,10 +21,10 @@ En modo sesión el worker puede leer, escribir, editar y ejecutar como el orques
 Se resuelve en una función pura, antes de tocar el runtime, con este orden:
 
 1. lo que pida el despacho (`worker_mode` en la herramienta Agent);
-2. el interruptor del entorno (`AUTON_WORKER_MODE=session`) o la configuración del runtime;
-3. el modo por defecto: `subagent`.
+2. el interruptor del entorno (`AUTON_WORKER_MODE=subagent` para volver atrás) o la configuración del runtime;
+3. el modo por defecto: `session`.
 
-Con el interruptor apagado no se construye el puerto nuevo y el despacho usa exactamente la ruta anterior. Volver atrás no exige tocar nada más.
+El worker nace como sesión completa salvo que se pida lo contrario. Para volver atrás en un despacho concreto basta `worker_mode: "subagent"`; para apagarlo en todo el proceso, `AUTON_WORKER_MODE=subagent`. En ese modo no se construye el puerto de sesión y el despacho usa exactamente la ruta anterior.
 
 ## Qué decide el modo
 

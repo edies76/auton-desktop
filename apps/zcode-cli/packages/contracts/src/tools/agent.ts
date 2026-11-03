@@ -73,10 +73,11 @@ export const AgentInputSchema = z.object({
     .enum(["subagent", "session"])
     .optional()
     .describe(
-      "Only for subagent_type=auton-worker. 'subagent' (default) runs the worker as a subagent with the " +
-        "narrowed tool policy. 'session' opens a complete ZCode session for it: full toolset, its own " +
-        "isolated workspace and its own browser to test its work. Use 'session' when the task needs to " +
-        "build and verify itself (UI, integration, anything that must be opened and checked).",
+      "Only for subagent_type=auton-worker. 'session' (default) opens a complete ZCode session for the " +
+        "worker: full toolset, its own isolated workspace and its own browser to test its work. " +
+        "'subagent' is the fallback: the worker runs with the narrowed subagent tool policy and shares " +
+        "the orchestrator's workspace. Use 'subagent' only for a small, file-bounded change or as the " +
+        "escape hatch if the session path fails.",
     ),
   // subagent 模型由 Settings / Markdown profile 统一决定；若把调用级
   // model 暴露给父模型，历史 tool call 会持续生成旧 override 并覆盖当前配置。

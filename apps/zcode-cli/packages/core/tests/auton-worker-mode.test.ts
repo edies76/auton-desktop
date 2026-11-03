@@ -10,10 +10,10 @@ import {
 } from "../src/auton/worker-mode.js";
 
 describe("interruptor del worker", () => {
-  it("por defecto usa el modo de siempre", () => {
-    expect(DEFAULT_AUTON_WORKER_MODE).toBe("subagent");
-    expect(resolveAutonWorkerMode()).toBe("subagent");
-    expect(resolveAutonWorkerMode({ env: "" })).toBe("subagent");
+  it("por defecto usa la sesión completa", () => {
+    expect(DEFAULT_AUTON_WORKER_MODE).toBe("session");
+    expect(resolveAutonWorkerMode()).toBe("session");
+    expect(resolveAutonWorkerMode({ env: "" })).toBe("session");
   });
 
   it("entiende los dos valores y rechaza lo demás", () => {
