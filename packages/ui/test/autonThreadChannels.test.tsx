@@ -7,6 +7,7 @@ import { buildAssistantWorkRenderItems } from "@/v4/conversationAssistantWorkIte
 import { ConversationAgentToolCallRow } from "@/v4/ConversationAgentToolCallRow.js";
 import { WakeEventRow } from "@/auton/WakeEventRow.js";
 import { resolveToolCallRenderer } from "@/ToolCallBlocks/resolveRenderer.js";
+import { toolCallRowToLegacyNode } from "@/v4/toolCallRowAdapter.js";
 import type { ConversationRowRenderContext } from "@/v4/conversationRowContext.js";
 
 const START = "2026-11-02T20:00:00.000Z";
@@ -130,7 +131,9 @@ describe("hilo real con dos canales y eventos despertadores", () => {
   });
 
   it("el hilo produce las tres filas despertadoras desde las filas reales", () => {
-    // Pregunta: fila real de SendMessage con waitingForAnswer.
+    // Pregunta: fila real de SendMessage con waitingForAnswer dentro del mapeo
+    // del hilo (buildAssistantWorkRenderItems -> toolCallRowToLegacyNode ->
+    // resolveToolCallRenderer), el mismo camino que usa el render de la fila.
     const questionRow = {
       kind: "toolCall",
       rowId: 3,
@@ -142,18 +145,9 @@ describe("hilo real con dos canales y eventos despertadores", () => {
       input: { message: "¿uso la paleta nueva?", summary: "decisión", waitingForAnswer: true },
     } as unknown as ToolCallRow;
 
-    const questionContext = {
-      toolCallNode: { toolCall: questionRow, childToolCalls: [] },
-    } as never;
-    const questionBlock = resolveToolCallRenderer(questionContext) as (
-      ctx: never,
-    ) => unknown;
-    const question = renderToStaticMarkup(
-      createElement(questionBlock as never, questionContext),
-    );
-
-    // Latido y cierre: filas reales de subagente a través del mapeo del hilo.
+    // Latido y cierre: filas reales de subagente.
     const rows = [
+      questionRow,
       agentRow(1, "tool-old", "running"),
       subagentRow({
         rowId: 11,
@@ -171,7 +165,23 @@ describe("hilo real con dos canales y eventos despertadores", () => {
       }),
     ] as never;
 
-    const channels = buildAssistantWorkRenderItems(rows, "hidden")
+    const items = buildAssistantWorkRenderItems(rows, "hidden");
+
+    const questionItem = items.find(
+      (item) => item.kind === "row" && item.row.toolCallId === "tool-ask",
+    );
+    expect(questionItem).toBeDefined();
+    const questionNode = toolCallRowToLegacyNode(
+      (questionItem as Extract<typeof questionItem, { kind: "row" }>).row,
+    );
+    const QuestionBlock = resolveToolCallRenderer({
+      toolCallNode: questionNode,
+    } as never) as (props: never) => unknown;
+    const question = renderToStaticMarkup(
+      createElement(QuestionBlock as never, { toolCallNode: questionNode } as never),
+    );
+
+    const channels = items
       .filter((item) => item.kind === "agentToolCall")
       .map(renderRow)
       .join("\n");
