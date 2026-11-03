@@ -21,11 +21,12 @@ const Sidebar = (props: ProjectSidebarProps) =>
 const fixture = vi.hoisted(() => ({
   state: { tabs: [], activeWorkspaceIdentity: null, openSettingsTab: () => {} },
   hasProjectService: false,
+  tree: { projects: [], tasks: [] } as { projects: unknown[]; tasks: unknown[] },
   toast: vi.fn(),
   renderSidebar: vi.fn(),
 }));
 vi.mock("@/hooks/useWorkspaceServices.js", () => {
-  const projectService = { readTree: async () => ({ projects: [], tasks: [] }) };
+  const projectService = { readTree: async () => fixture.tree };
   const remoteProjectService = { readDirectory: async () => ({ hosts: [], entries: [] }) };
   const base = {
     get projectService() {
@@ -37,7 +38,10 @@ vi.mock("@/hooks/useWorkspaceServices.js", () => {
     zcodeTaskService: { onDynamicWorkspaceEvent: () => () => ({ dispose() {} }) },
     broadcastService: { onMessage: () => ({ dispose() {} }) },
   };
-  return { useBaseWorkspaceServices: () => base };
+  return {
+    useBaseWorkspaceServices: () => base,
+    useWorkspaceServicesResolution: () => ({ services: base, remoteSessionId: null }),
+  };
 });
 vi.mock("@/store/TabStoreProvider.js", () => ({
   useTabStore: (selector: (state: typeof fixture.state) => unknown) => selector(fixture.state),
@@ -316,5 +320,61 @@ describe("ProjectSidebar home-only workspace list", () => {
     await waitFor(() => expect(screen.queryByText("common.loading")).toBeNull());
     expect(screen.queryByText("webRemoteControl.homeOnlyWorkspaces")).toBeNull();
     expect(switcher.listWorkspaces).not.toHaveBeenCalled();
+  });
+
+  it("abre la única conversación del proyecto y deja workers por defecto", async () => {
+    fixture.hasProjectService = true;
+    fixture.tree = {
+      projects: [
+        {
+          id: "p1",
+          name: "Lunar",
+          hostId: "local",
+          roots: [{ rootPath: "/workspace/lunar", position: 0, isPrimary: true }],
+          pinned: false,
+          position: 0,
+        },
+      ],
+      tasks: [
+        {
+          taskId: "orchestrator-old",
+          title: "Conversación única",
+          projectId: "p1",
+          hostId: "local",
+          workspacePath: "/workspace/lunar",
+          status: "completed",
+          createdAt: 1,
+          updatedAt: 2,
+          archived: false,
+        },
+        {
+          taskId: "legacy-newer",
+          title: "Chat viejo",
+          projectId: "p1",
+          hostId: "local",
+          workspacePath: "/workspace/lunar",
+          status: "completed",
+          createdAt: 3,
+          updatedAt: 4,
+          archived: false,
+        },
+      ],
+    };
+    const { switcher } = createSwitcher();
+    const onSelectTask = vi.fn();
+    render(
+      createElement(
+        Sidebar,
+        props(switcher, { isWebRemoteControl: false, onSelectTask }),
+      ),
+    );
+
+    await waitFor(() =>
+      expect(onSelectTask).toHaveBeenCalledWith(
+        "/workspace/lunar",
+        "orchestrator-old",
+        undefined,
+      ),
+    );
   });
 });

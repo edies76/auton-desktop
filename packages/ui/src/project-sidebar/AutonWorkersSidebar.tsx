@@ -6,8 +6,8 @@ import {
 } from "@/auton/project-space/agentProjection.js";
 import { useAutonClock } from "@/auton/project-space/clock.js";
 import { projectAutonWorkers } from "@/auton/project-space/projection.js";
-import { AutonWorkerDetail } from "@/auton/project-space/WorkerDetail.js";
 import { AutonWorkerPanel } from "@/auton/project-space/WorkerPanel.js";
+import { useAutonWorkerFocusStore } from "@/auton/project-space/workerFocusStore.js";
 import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { logger } from "@/logger.js";
 import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
@@ -23,19 +23,24 @@ export interface AutonWorkersSidebarProps {
   workspacePath: string;
   workspaceIdentity?: string;
   workspaceRemoteSessionId?: string;
+  orchestratorTaskId?: string | null;
+  workerTaskIds?: readonly string[];
 }
 
 function AutonWorkersSidebarContents({
   tasks,
   workspacePath,
   workspaceIdentity,
+  orchestratorTaskId,
+  workerTaskIds,
 }: AutonWorkersSidebarProps) {
-  const activeTaskId = useZCodeSessionStore(
-    (state) => state.getWorkspaceState(workspacePath, workspaceIdentity).activeTaskId,
-  );
+  const activeTaskId = useZCodeSessionStore((state) => {
+    const workspaceKey = workspaceIdentity?.trim() || workspacePath;
+    return state.workspaces[workspaceKey]?.activeTaskId ?? null;
+  });
   const { layer } = useV4Conversation();
   const [lease, setLease] = useState<SessionLease | null>(null);
-  const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
+  const focusedWorkerId = useAutonWorkerFocusStore((state) => state.worker?.id);
   const projection = useConversationProjection(lease);
   const rows = projection.snapshot?.rows.window ?? [];
   const now = useAutonClock();
@@ -49,12 +54,12 @@ function AutonWorkersSidebarContents({
       .filter((task) => task.projectId === projectId && !task.archived)
       .sort((left, right) => right.updatedAt - left.updatedAt);
     return {
-      // El orquestador es la sesión del humano. Sin sesión activa no hay
-      // exclusión: las sesiones históricas del proyecto son canales worker.
-      orchestratorId: activeTaskId,
+      // El orquestador es la sesión del humano o la conversación persistida
+      // del proyecto; nunca se elige por “el task más reciente”.
+      orchestratorId: activeTaskId ?? orchestratorTaskId ?? null,
       projectTasks: ordered,
     };
-  }, [activeTaskId, tasks]);
+  }, [activeTaskId, orchestratorTaskId, tasks]);
 
   useEffect(() => {
     if (!orchestratorId) {
@@ -69,48 +74,48 @@ function AutonWorkersSidebarContents({
   const groups = useMemo(
     () =>
       buildAutonWorkerGroups({
-        agentWorkers: projectProjectAgentWorkers(projectTasks, orchestratorId, now),
+        agentWorkers: projectProjectAgentWorkers(
+          workerTaskIds === undefined
+            ? projectTasks
+            : projectTasks.filter((task) => workerTaskIds.includes(task.taskId)),
+          orchestratorId,
+          now,
+        ),
         subagentWorkers: projectAutonWorkers(rows, now),
       }),
-    [now, orchestratorId, projectTasks, rows],
+    [now, orchestratorId, projectTasks, rows, workerTaskIds],
   );
 
-  const selectedWorker = useMemo(() => {
-    if (!selectedWorkerId) return undefined;
-    for (const group of groups) {
-      const worker = group.workers.find((item) => item.id === selectedWorkerId);
-      if (worker) return worker;
-    }
-    return undefined;
-  }, [groups, selectedWorkerId]);
+  const openWorker = useCallback(
+    (workerId: string) => {
+      for (const group of groups) {
+        const worker = group.workers.find((item) => item.id === workerId);
+        if (worker) {
+          useAutonWorkerFocusStore.getState().open(worker, workspacePath, workspaceIdentity);
+          return;
+        }
+      }
+    },
+    [groups, workspaceIdentity, workspacePath],
+  );
 
   const stopWorker = useCallback(
     (workerId: string) => {
       const task = projectTasks.find((entry) => entry.taskId === workerId);
       const service = services.zcodeTaskService;
-      if (!service || !task) return;
+      if (!service) return;
       void service
         .stopGeneration({
           taskId: workerId,
-          workspacePath: task.workspacePath,
-          ...(task.workspaceIdentity ? { workspaceIdentity: task.workspaceIdentity } : {}),
+          workspacePath: task?.workspacePath ?? workspacePath,
+          ...(task?.workspaceIdentity ?? workspaceIdentity
+            ? { workspaceIdentity: task?.workspaceIdentity ?? workspaceIdentity }
+            : {}),
         })
         .catch((error: unknown) => logger.warn("auton.worker.stop.failed", error));
     },
-    [projectTasks, services],
+    [projectTasks, services, workspaceIdentity, workspacePath],
   );
-
-  if (selectedWorker) {
-    return (
-      <div className="flex min-h-0 flex-1 flex-col" data-testid="auton-worker-detail-pane">
-        <AutonWorkerDetail
-          worker={selectedWorker}
-          now={now}
-          onBack={() => setSelectedWorkerId(null)}
-        />
-      </div>
-    );
-  }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col" data-testid="auton-workers-sidebar">
@@ -118,8 +123,8 @@ function AutonWorkersSidebarContents({
         <AutonWorkerPanel
           groups={groups}
           now={now}
-          selectedWorkerId={selectedWorkerId ?? undefined}
-          onOpenWorker={setSelectedWorkerId}
+          selectedWorkerId={focusedWorkerId}
+          onOpenWorker={openWorker}
           onStopWorker={stopWorker}
           embedded
         />

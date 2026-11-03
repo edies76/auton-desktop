@@ -12,6 +12,8 @@ import { TID_APP_HEADER } from "@zcode/shared/test-ids";
 // 保活：workspace tab 真正关闭时，按 workspaceKey 回收 side pane terminal 的常驻 PTY/xterm。
 // 对称下侧 Terminal.tsx 的 openWorkspaceKeys 回收。
 import { sidePaneTerminalSessionRegistry } from "@/terminal/sidePaneTerminalSessionRegistry.js";
+import { AutonWorkerFocusPane } from "@/auton/project-space/WorkerFocusPane.js";
+import { useAutonWorkerFocusStore } from "@/auton/project-space/workerFocusStore.js";
 import { V4ChatPane } from "@/v4/V4ChatPane.js";
 import { V4WorkspaceChatArea } from "@/v4/V4WorkspaceChatArea.js";
 import { V4SplitPaneEntryProvider } from "@/v4/splitPaneEntryContext.js";
@@ -526,6 +528,7 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
     onSessionMissing: () => handleStartDraftInWorkspace(workspaceAbsPath, workspaceIdentity),
   });
   const workspaceShellRef = useRef<HTMLDivElement | null>(null);
+  const focusedWorker = useAutonWorkerFocusStore((state) => state.worker);
   const workspaceSidebarPanelElementRef = useRef<HTMLDivElement | null>(null);
   const conversationPanelElementRef = useRef<HTMLDivElement | null>(null);
   const conversationAutoCollapseStateRef = useRef({
@@ -2608,6 +2611,9 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                         ) : (
                           <main className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden">
                             {renderChatFindDialog()}
+                            {focusedWorker ? (
+                              <AutonWorkerFocusPane isDesktop={isDesktop === true} />
+                            ) : (
                             <ScopedErrorBoundary
                               scope="workspace-chat"
                               resetKeys={workspaceDraftResetKeys}
@@ -2684,6 +2690,7 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                                 onSearchResultHighlightDone={onSearchResultHighlightDone}
                               />
                             </ScopedErrorBoundary>
+                            )}
                           </main>
                         )}
                       </div>

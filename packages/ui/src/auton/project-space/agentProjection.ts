@@ -100,7 +100,7 @@ export function buildAutonWorkerGroups(params: {
       kind: "subagent",
       label: "Subagentes",
       workers: [...params.subagentWorkers],
-      canStop: false,
+      canStop: true,
     },
     {
       kind: "muse",

@@ -26,6 +26,11 @@ export {
 } from "@/project-sidebar/ProjectDirectoryProvider.js";
 export { ProjectComposerMenu } from "@/project-sidebar/ProjectComposerMenu.js";
 import { AutonWorkersSidebar } from "@/project-sidebar/AutonWorkersSidebar.js";
+import {
+  ensureProjectConversation,
+  projectConversationKey,
+  rememberProjectOrchestrator,
+} from "@/project-sidebar/projectConversation.js";
 import { useProjectTaskNavigation } from "@/project-sidebar/useProjectTaskNavigation.js";
 import { useProjectFileTree } from "@/project-sidebar/useProjectFileTree.js";
 import {
@@ -101,9 +106,10 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     ),
   );
   const [remotePicker, setRemotePicker] = useState<RemoteProjectHost | null>(null);
-  const activeTaskId = useZCodeSessionStore(
-    (state) => state.getWorkspaceState(props.workspacePath, props.workspaceIdentity).activeTaskId,
-  );
+  const activeTaskId = useZCodeSessionStore((state) => {
+    const workspaceKey = props.workspaceIdentity?.trim() || props.workspacePath;
+    return state.workspaces[workspaceKey]?.activeTaskId ?? null;
+  });
   const lastOrchestratorRef = useRef<string | null>(null);
   const forcedWorkersRef = useRef(false);
   // El panel del proyecto arranca en workers, no en la lista de chats.
@@ -119,6 +125,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     lastOrchestratorRef.current = activeTaskId;
     if (view !== "workers") setView("workers");
   }, [activeTaskId, setView, view]);
+  const workspaceKey = props.workspaceIdentity?.trim() || props.workspacePath;
   const activeProject = useMemo(() => {
     const activeProjectId = activeTaskId
       ? tree.tasks.find((task) => task.taskId === activeTaskId)?.projectId
@@ -131,6 +138,58 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
       null
     );
   }, [activeTaskId, tree.projects, tree.tasks]);
+  const activeConversation = useMemo(() => {
+    if (!activeProject) return null;
+    const key = projectConversationKey(workspaceKey, activeProject.id);
+    const projectTasks = tree.tasks.filter((task) => task.projectId === activeProject.id);
+    return {
+      key,
+      conversation: ensureProjectConversation(key, projectTasks, activeTaskId),
+    };
+  }, [activeProject, activeTaskId, tree.tasks, workspaceKey]);
+  const autoOpenedRef = useRef<string | null>(null);
+  const createdConversationRef = useRef(false);
+  // Al abrir la app, el proyecto abre directo su única conversación de
+  // orquestador. No hay bienvenida con input en el centro.
+  useEffect(() => {
+    if (activeTaskId) return;
+    const orchestratorId = activeConversation?.conversation.orchestratorTaskId;
+    if (orchestratorId) {
+      if (autoOpenedRef.current === orchestratorId) return;
+      const orchestrator = tree.tasks.find((task) => task.taskId === orchestratorId);
+      if (!orchestrator) return;
+      autoOpenedRef.current = orchestratorId;
+      onSelectTask(
+        orchestrator.workspacePath,
+        orchestrator.taskId,
+        orchestrator.workspaceIdentity,
+      );
+      return;
+    }
+    // Proyecto sin conversación: se crea su chat principal. El orquestador
+    // queda disponible en ese único hilo, sin una bienvenida aparte.
+    if (!activeProject || createdConversationRef.current) return;
+    createdConversationRef.current = true;
+    props.onCreateTask({ projectId: activeProject.id, taskGroupId: null });
+  }, [
+    activeConversation,
+    activeProject,
+    activeTaskId,
+    onSelectTask,
+    props,
+    tree.tasks,
+  ]);
+  // La conversación que el humano abre pasa a ser la del orquestador; el chat
+  // anterior queda como legado y deja de mostrarse como worker.
+  useEffect(() => {
+    if (!activeTaskId || !activeConversation || !activeProject) return;
+    if (activeConversation.conversation.orchestratorTaskId === activeTaskId) return;
+    const belongs = tree.tasks.some(
+      (task) => task.taskId === activeTaskId && task.projectId === activeProject.id,
+    );
+    if (!belongs) return;
+    rememberProjectOrchestrator(activeConversation.key, activeTaskId);
+  }, [activeConversation, activeProject, activeTaskId, tree.tasks]);
   const { openFiles, openTaskFiles } = useProjectFileTree(props, directory, remoteService);
   const remoteControlEnabled = useWebRemoteControlFeatureEnabled();
   const mobileStatus = useWebRemoteControlStatus({
@@ -199,37 +258,46 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
       over,
     );
   };
-  const renderProject = (project: VirtualProject) => (
-    <ProjectSidebarNode
-      key={projectKey(project)}
-      project={project}
-      deviceLabel={deviceNames.get(projectSourceServerId(project) ?? "")}
-      remoteHost={directory.hosts.find((host) => host.id === project.hostId)}
-      diagnostics={diagnostics.get(project.hostId)}
-      expanded={preferences.isExpanded(project)}
-      onExpandedChange={preferences.setExpanded}
-      hasUnread={projectHasUnread(authoritativeTree, project)}
-      availability={availability.get(projectKey(project))}
-      tasks={selectProjectRows(tree, {
-        kind: "project",
-        projectId: project.id,
-        hostId: project.hostId,
-      })
-        .sort((left, right) => right.updatedAt - left.updatedAt)
-        .slice(0, 1)}
-      onSelect={onSelectTask}
-      refresh={refresh}
-      service={service}
-      remoteService={remoteService}
-      isDesktop={props.isDesktop}
-      isWebRemoteControl={props.isWebRemoteControl}
-      onCreateTask={props.onCreateTask}
-      onReconnectRemoteWorkspace={props.onReconnectRemoteWorkspace}
-      onEdit={setEditor}
-      onViewFiles={openFiles}
-      remoteActions={remoteSync.actions}
-    />
-  );
+  const renderProject = (project: VirtualProject) => {
+    const projectTasks = selectProjectRows(tree, {
+      kind: "project",
+      projectId: project.id,
+      hostId: project.hostId,
+    });
+    const conversation = ensureProjectConversation(
+      projectConversationKey(workspaceKey, project.id),
+      projectTasks,
+      activeTaskId,
+    );
+    const orchestratorTask = projectTasks.find(
+      (task) => task.taskId === conversation.orchestratorTaskId,
+    );
+    return (
+      <ProjectSidebarNode
+        key={projectKey(project)}
+        project={project}
+        deviceLabel={deviceNames.get(projectSourceServerId(project) ?? "")}
+        remoteHost={directory.hosts.find((host) => host.id === project.hostId)}
+        diagnostics={diagnostics.get(project.hostId)}
+        expanded={preferences.isExpanded(project)}
+        onExpandedChange={preferences.setExpanded}
+        hasUnread={projectHasUnread(authoritativeTree, project)}
+        availability={availability.get(projectKey(project))}
+        tasks={orchestratorTask ? [orchestratorTask] : []}
+        onSelect={onSelectTask}
+        refresh={refresh}
+        service={service}
+        remoteService={remoteService}
+        isDesktop={props.isDesktop}
+        isWebRemoteControl={props.isWebRemoteControl}
+        onCreateTask={props.onCreateTask}
+        onReconnectRemoteWorkspace={props.onReconnectRemoteWorkspace}
+        onEdit={setEditor}
+        onViewFiles={openFiles}
+        remoteActions={remoteSync.actions}
+      />
+    );
+  };
   const openSettings = useCallback(() => {
     tabStore.getState().openSettingsTab();
   }, [tabStore]);
@@ -288,6 +356,10 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
                           workspacePath={props.workspacePath}
                           workspaceIdentity={props.workspaceIdentity}
                           workspaceRemoteSessionId={props.workspaceRemoteSessionId}
+                          orchestratorTaskId={
+                            activeConversation?.conversation.orchestratorTaskId ?? null
+                          }
+                          workerTaskIds={activeConversation?.conversation.workerTaskIds ?? []}
                         />
                       ) : view === "projects" ? (
                         <>

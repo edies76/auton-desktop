@@ -93,10 +93,19 @@ function WorkerRow({
             <span className="min-w-0 truncate text-ui-base font-medium text-foreground">
               {worker.name}
             </span>
-            <span className="shrink-0 text-ui-sm text-foreground-subtlest">{meta.label}</span>
+            <span
+              className="shrink-0 text-ui-sm text-foreground-subtlest"
+              data-testid="auton-worker-status"
+              data-status={worker.status}
+            >
+              {meta.label}
+            </span>
           </span>
           {silent ? (
-            <span className="mt-0.5 block truncate text-ui-sm text-foreground-subtle">
+            <span
+              className="mt-0.5 block truncate text-ui-sm text-foreground-subtle animate-pulse"
+              data-testid="auton-worker-silence"
+            >
               {formatWorkerSilence(worker.lastSignalAt, now)}
             </span>
           ) : worker.lastLine ? (

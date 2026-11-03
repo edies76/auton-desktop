@@ -2,6 +2,7 @@
 import type { ProjectTask } from "@zcode/services";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { useAutonWorkerFocusStore } from "../src/auton/project-space/workerFocusStore.js";
 import { AutonWorkersSidebar } from "../src/project-sidebar/AutonWorkersSidebar.js";
 
 const NOW = Date.UTC(2026, 10, 3, 12, 0, 0);
@@ -28,8 +29,8 @@ vi.mock("@/hooks/useWorkspaceServices.js", () => ({
 }));
 
 vi.mock("@/store/zcodeSessionStore.js", () => ({
-  useZCodeSessionStore: (selector: (value: { getWorkspaceState: () => { activeTaskId: string } }) => unknown) =>
-    selector({ getWorkspaceState: () => ({ activeTaskId: "orch" }) }),
+  useZCodeSessionStore: (selector: (value: { workspaces: Record<string, { activeTaskId: string }> }) => unknown) =>
+    selector({ workspaces: { "/workspace/lunar": { activeTaskId: "orch" } } }),
 }));
 
 function task(
@@ -74,21 +75,28 @@ const TASKS = [
   task("worker-1", "Arreglar login", "running", NOW - 5_000, NOW - 200),
 ];
 
+function renderSidebar() {
+  return render(
+    <AutonWorkersSidebar
+      tasks={TASKS}
+      workspacePath="/workspace/lunar"
+      orchestratorTaskId="orch"
+      workerTaskIds={["worker-1"]}
+    />,
+  );
+}
+
 afterEach(() => {
   cleanup();
   state.rows = [];
   state.stopGeneration.mockClear();
+  useAutonWorkerFocusStore.getState().close();
 });
 
 describe("sidebar de workers del proyecto", () => {
-  it("muestra el proyecto, separa agentes de subagentes y excluye al orquestador", () => {
+  it("separa agentes de subagentes y excluye al orquestador", () => {
     state.rows = [subagentRow()];
-    render(
-      <AutonWorkersSidebar
-        tasks={TASKS}
-        workspacePath="/workspace/lunar"
-      />,
-    );
+    renderSidebar();
 
     expect(document.querySelector('[data-worker-id="orch"]')).toBeNull();
     expect(screen.getByTestId("auton-worker-group-agent").textContent).toContain("Arreglar login");
@@ -97,44 +105,39 @@ describe("sidebar de workers del proyecto", () => {
     expect(screen.getAllByTestId("auton-worker-row")).toHaveLength(2);
   });
 
-  it("abre el detalle del worker sin compositor y vuelve al panel", () => {
+  it("abre el worker en la interfaz del orquestador, no dentro del panel", () => {
     state.rows = [subagentRow()];
-    render(
-      <AutonWorkersSidebar
-        tasks={TASKS}
-        workspacePath="/workspace/lunar"
-
-      />,
-    );
+    renderSidebar();
 
     fireEvent.click(
       within(screen.getByTestId("auton-worker-group-agent")).getByTestId("auton-worker-open"),
     );
-    expect(screen.getByTestId("auton-worker-detail")).toBeTruthy();
-    expect(screen.queryByRole("textbox")).toBeNull();
-    fireEvent.click(screen.getByTestId("auton-worker-back"));
-    expect(screen.getByTestId("auton-worker-panel")).toBeTruthy();
+    expect(useAutonWorkerFocusStore.getState().worker?.id).toBe("worker-1");
+    expect(useAutonWorkerFocusStore.getState().mode).toBe("summary");
   });
 
   it("para un agente con la operación real de la sesión", () => {
-    render(
-      <AutonWorkersSidebar
-        tasks={TASKS}
-        workspacePath="/workspace/lunar"
+    renderSidebar();
 
-      />,
+    fireEvent.click(
+      within(screen.getByTestId("auton-worker-group-agent")).getByTestId("auton-worker-stop"),
     );
-
-    const agentGroup = screen.getByTestId("auton-worker-group-agent");
-    fireEvent.click(within(agentGroup).getByTestId("auton-worker-stop"));
     expect(state.stopGeneration).toHaveBeenCalledWith({
       taskId: "worker-1",
       workspacePath: "/workspace/lunar",
     });
-    expect(
-      within(screen.getByTestId("auton-worker-group-subagent")).queryByTestId(
-        "auton-worker-stop",
-      ),
-    ).toBeNull();
+  });
+
+  it("los subagentes también se pueden parar desde su fila", () => {
+    state.rows = [subagentRow()];
+    renderSidebar();
+
+    fireEvent.click(
+      within(screen.getByTestId("auton-worker-group-subagent")).getByTestId("auton-worker-stop"),
+    );
+    expect(state.stopGeneration).toHaveBeenCalledWith({
+      taskId: "sub-1",
+      workspacePath: "/workspace/lunar",
+    });
   });
 });
