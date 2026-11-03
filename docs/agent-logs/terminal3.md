@@ -25,6 +25,17 @@ Verificado con: `canal-tests.log` (59 en 9 archivos), `limits-tests.log` (10),
 paralelos fuera del alcance (live-loop en el runner, ZCode base, docs ajenas) se revirtieron o se
 dejaron fuera de este commit.
 
+## 2026-11-03 — el orquestador recupera la autonomía y el candado pasa a ser suyo
+
+Qué: el plan ya no bloquea el despacho por no tener límites versionados (queda "sin versión" y sigue);
+`SendMessage` acepta `requires_answer`, el task queda marcado esperando respuesta y se levanta con el
+`RespondToCoordinator` del worker. El encabezado de decisión requerida y el candado viven en
+`subagent/answer-lock.ts`.
+Por qué: la guardia genérica recortaba la autonomía del orquestador en un MVP; las reglas las pone él.
+Verificado con: `auton-answer-lock.test.ts` (6), `auton-plan-tool.test.ts` (10),
+`auton-limits-governance.test.ts` (15) y la corrida completa de 64 pruebas en verde; typecheck y lint
+en cero. Documentación pública y privada actualizada, incluida `docs/private/canal-rapido.md`.
+
 ## 2026-11-02 — documentación en dos árboles
 
 Qué: `docs/public/` (producto), `docs/private/` (implementación), y `site/build.mjs` genera `site/dist`
