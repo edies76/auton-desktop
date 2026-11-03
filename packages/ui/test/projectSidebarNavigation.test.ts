@@ -85,7 +85,7 @@ it("SBV02: la cabecera no ofrece las vistas nativas de ZCode", () => {
   expect(screen.getByTestId("sidebar-list-title").textContent).toBe("project.projects");
 });
 
-it("SBV03: en workers la cabecera muestra el proyecto como fila nativa, sin logo ni ruta", () => {
+it("SBV03: en workers la cabecera muestra el proyecto y su ruta, sin logo", () => {
   const onViewChange = vi.fn();
   render(
     createElement(
@@ -102,9 +102,33 @@ it("SBV03: en workers la cabecera muestra el proyecto como fila nativa, sin logo
   );
   const switcher = screen.getByTestId("auton-project-switcher");
   expect(switcher.textContent).toContain("Lunar");
-  expect(switcher.textContent).not.toContain("/workspace/lunar");
+  expect(switcher.textContent).toContain("/workspace/lunar");
   expect(switcher.querySelector("[data-desktop-logo-badge]")).toBeNull();
   expect(switcher.querySelector(".lucide-folder")).not.toBeNull();
   fireEvent.click(switcher);
   expect(onViewChange).toHaveBeenCalledWith("projects");
+});
+
+it("SBV04: la pantalla de entrada solo ofrece proyectos", () => {
+  render(
+    createElement(
+      TooltipProvider,
+      null,
+      createElement(ProjectSidebarNavigation, {
+        props: { onOpenAutomations: vi.fn(), onOpenPluginStore: vi.fn() },
+        home: true,
+        onCreate: vi.fn(),
+      }),
+      createElement(ProjectSidebarListHeader, {
+        onOpenCommandCenter: vi.fn(),
+        view: "projects",
+        home: true,
+        onViewChange: vi.fn(),
+      }),
+    ),
+  );
+
+  expect(screen.queryByTestId("plugin-store-sidebar-open")).toBeNull();
+  expect(screen.queryByTestId("sidebar-search-open")).toBeNull();
+  expect(screen.getByTestId("sidebar-list-title").textContent).toBe("project.projects");
 });

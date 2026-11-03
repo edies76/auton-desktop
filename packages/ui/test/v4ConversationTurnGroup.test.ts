@@ -3187,11 +3187,13 @@ describe("topic preparation flow membership", () => {
     expect(triggerIndex).toBeGreaterThan(openingIndex);
     expect(translationIndex).toBeGreaterThan(triggerIndex);
     expect(runningHtml).toContain('data-history-open="true"');
+    expect(runningHtml).toContain("Working");
     expect(runningHtml).toContain("Reporte del worker");
 
     const [completed] = buildConversationTurnRenderUnits(rowsFor("completedSuccess"));
     const completedHtml = renderUnit(completed!, { locale: "en-US" });
     expect(completedHtml).toContain('data-history-open="false"');
+    expect(completedHtml).toContain("Worked");
     expect(completedHtml).toContain("Traduzco: el README");
   });
 });

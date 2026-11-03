@@ -79,6 +79,10 @@ export interface V4WorkspaceChatAreaProps {
    * 仅下发给 primary pane——其余 pane 的 draft 不承载壳级 workspace 切换。
    */
   draftComposerHeader?: ReactNode;
+  /** Pantalla de entrada: el compositor no envía hasta elegir proyecto. */
+  submissionBlocked?: boolean;
+  /** Aviso sobre el compositor de la pantalla de entrada. */
+  draftNotice?: string;
   /** 桌面轻量草稿标题栏复用主草稿 composer 的 drop controller。 */
   onPrimaryDraftDropTargetControllerChange?: (
     controller: ConversationDropTargetController | null,
@@ -145,6 +149,8 @@ export function V4WorkspaceChatArea({
   onSessionCreated,
   onSessionDeleted,
   draftComposerHeader,
+  submissionBlocked = false,
+  draftNotice,
   onPrimaryDraftDropTargetControllerChange,
   gitSummary,
   gitDirtyFileCount,
@@ -273,6 +279,8 @@ export function V4WorkspaceChatArea({
       onSessionCreated,
       onSessionDeleted,
       draftComposerHeader,
+      submissionBlocked,
+      draftNotice,
       onPrimaryDraftDropTargetControllerChange,
       gitSummary,
       gitDirtyFileCount,
@@ -320,6 +328,8 @@ export function V4WorkspaceChatArea({
       onSessionCreated,
       onSessionDeleted,
       draftComposerHeader,
+      submissionBlocked,
+      draftNotice,
       onPrimaryDraftDropTargetControllerChange,
       gitSummary,
       gitDirtyFileCount,

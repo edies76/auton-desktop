@@ -4,6 +4,7 @@ import { forwardRef, type ReactNode, type Ref } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ProjectSidebarProps } from "@/project-sidebar/contract.js";
 import { ProjectSidebar } from "@/project-sidebar/index.js";
+import { useAutonHomeStore } from "@/auton/project-space/homeStore.js";
 
 const fixture = vi.hoisted(() => ({
   view: "workers" as "workers" | "projects",
@@ -134,7 +135,9 @@ vi.mock("@/project-sidebar/ProjectCreation.js", () => ({ ProjectCreation: () => 
 vi.mock("@/project-sidebar/ProjectEditor.js", () => ({ ProjectEditor: () => null }));
 vi.mock("@/project-sidebar/RemoteProjectPicker.js", () => ({ RemoteProjectPicker: () => null }));
 vi.mock("@/WorkspaceSidebarFooter.js", () => ({ WorkspaceSidebarFooter: () => null }));
-vi.mock("@/sidebar-activity/SidebarBottomActivity.js", () => ({ SidebarBottomActivity: () => null }));
+vi.mock("@/sidebar-activity/SidebarBottomActivity.js", () => ({
+  SidebarBottomActivity: () => null,
+}));
 
 function props(): ProjectSidebarProps {
   return {
@@ -157,6 +160,7 @@ function props(): ProjectSidebarProps {
 
 beforeEach(() => {
   localStorage.clear();
+  useAutonHomeStore.setState({ homeVisible: true });
   fixture.view = "workers";
   fixture.onSelectTask.mockClear();
   fixture.tree.tasks = [
@@ -171,46 +175,45 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe("panel del proyecto", () => {
-  it("workers por defecto: proyecto como fila y sin chats ni menú nativo", () => {
-    render(<ProjectSidebar {...props()} />);
-
-    expect(screen.getByTestId("workers-panel-placeholder")).toBeTruthy();
-    expect(screen.queryByTestId("auton-project-picker")).toBeNull();
-    expect(screen.queryByTestId("sidebar-view-menu")).toBeNull();
-    expect(screen.queryByText("Chat legado Lunar")).toBeNull();
-    expect(screen.queryByText("Orquestador Lunar")).toBeNull();
-
-    const switcher = screen.getByTestId("auton-project-switcher");
-    expect(switcher.textContent).toContain("Lunar");
-    expect(switcher.textContent).not.toContain("/workspace/lunar");
-    expect(switcher.querySelector("[data-desktop-logo-badge]")).toBeNull();
-  });
-
-  it("el selector de proyectos no lista chats, tareas ni crear tarea", () => {
-    fixture.view = "projects";
+  it("la app arranca en proyectos, sin chats ni menú nativo", () => {
     render(<ProjectSidebar {...props()} />);
 
     expect(screen.getByTestId("auton-project-picker")).toBeTruthy();
     expect(screen.getByRole("option", { name: /Lunar/ })).toBeTruthy();
     expect(screen.getByRole("option", { name: /Otro/ })).toBeTruthy();
-    expect(screen.queryByText("Orquestador Lunar")).toBeNull();
+    expect(screen.queryByTestId("workers-panel-placeholder")).toBeNull();
+    expect(screen.queryByTestId("auton-project-switcher")).toBeNull();
+    expect(screen.queryByTestId("sidebar-view-menu")).toBeNull();
     expect(screen.queryByText("Chat legado Lunar")).toBeNull();
+    expect(screen.queryByText("Orquestador Lunar")).toBeNull();
     expect(screen.queryByText("taskList.title")).toBeNull();
     expect(screen.queryByText("New task")).toBeNull();
     expect(screen.queryByTestId("virtual-project-create-task")).toBeNull();
   });
 
+  it("dentro del proyecto la cabecera muestra nombre y ruta, sin chats", () => {
+    useAutonHomeStore.setState({ homeVisible: false });
+    fixture.view = "workers";
+    render(<ProjectSidebar {...props()} />);
+
+    expect(screen.getByTestId("workers-panel-placeholder")).toBeTruthy();
+    expect(screen.queryByTestId("auton-project-picker")).toBeNull();
+    expect(screen.queryByText("Chat legado Lunar")).toBeNull();
+    expect(screen.queryByText("Orquestador Lunar")).toBeNull();
+
+    const switcher = screen.getByTestId("auton-project-switcher");
+    expect(switcher.textContent).toContain("Lunar");
+    expect(switcher.textContent).toContain("/workspace/lunar");
+    expect(switcher.querySelector("[data-desktop-logo-badge]")).toBeNull();
+  });
+
   it("elegir el proyecto abre su orquestador y vuelve a workers", () => {
-    fixture.view = "projects";
     render(<ProjectSidebar {...props()} />);
 
     fireEvent.click(screen.getByRole("option", { name: /Lunar/ }));
 
-    expect(fixture.onSelectTask).toHaveBeenCalledWith(
-      "/workspace/lunar",
-      "orch1",
-      undefined,
-    );
+    expect(fixture.onSelectTask).toHaveBeenCalledWith("/workspace/lunar", "orch1", undefined);
     expect(fixture.view).toBe("workers");
+    expect(useAutonHomeStore.getState().homeVisible).toBe(false);
   });
 });

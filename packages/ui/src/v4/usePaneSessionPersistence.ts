@@ -69,6 +69,8 @@ export interface UsePaneSessionPersistenceParams {
   enabled?: boolean;
   /** TabStore 恢复的启动激活页签；不用于显式打开项目或手机入口。 */
   restoreOnStartup?: boolean;
+  /** La pantalla de proyectos arranca en borrador: no reabre la última sesión. */
+  suppressRestore?: boolean;
   /** 恢复入口：与用户点击任务列表同一条选择路径，保证副作用（已读清理等）一致。 */
   selectSession: (sessionId: string) => void;
   /** 仅已挂回的远端提供权威查询；未就绪时不传，禁止本地 fallback。 */
@@ -82,9 +84,11 @@ export function shouldRestorePersistedPaneSession(params: {
   enabled: boolean;
   rendererReload: boolean;
   restoreOnStartup?: boolean;
+  suppressRestore?: boolean;
 }): boolean {
   return (
     params.enabled &&
+    params.suppressRestore !== true &&
     (params.rendererReload || params.restoreOnStartup === true) &&
     params.activeSessionId === null &&
     params.draftFocusVersion === 0
@@ -102,6 +106,7 @@ export function usePaneSessionPersistence({
   draftFocusVersion,
   enabled = true,
   restoreOnStartup = false,
+  suppressRestore = false,
   selectSession,
   lookupSession,
   onSessionMissing,
@@ -168,6 +173,7 @@ export function usePaneSessionPersistence({
         enabled,
         rendererReload: startupRestoreAvailable && isRendererReloadNavigation(),
         restoreOnStartup: startupRestoreAvailable && restoreOnStartup,
+        suppressRestore,
       })
     ) {
       // 显式 workspace-only 或新任务意图不能被上次运行留下的会话选择覆盖。
@@ -184,7 +190,7 @@ export function usePaneSessionPersistence({
     // activeSessionId/draftFocusVersion 故意不进依赖：恢复只看 workspace 首次挂载瞬间，
     // 之后的显式新建与选择变化走下面的持久化 effect。
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [enabled, restoreOnStartup, workspaceKey]);
+  }, [enabled, restoreOnStartup, suppressRestore, workspaceKey]);
 
   useEffect(() => {
     if (!enabled) return;

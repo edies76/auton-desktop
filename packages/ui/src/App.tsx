@@ -53,6 +53,7 @@ import { ZCODE_PRODUCT_DOCS_URL } from "@/lib/productDocs.js";
 import appLogoUrl from "@/assets/provider-icons/logo-zai.svg";
 import { resolveTheme } from "@/useTheme.js";
 import { WorkspaceShellLayout } from "@/app-shell/WorkspaceShellLayout.js";
+import { useAutonHomeStore } from "@/auton/project-space/homeStore.js";
 import { useAppChromeState } from "@/app-shell/useAppChromeState.js";
 import { useWorkspaceSessionReload } from "@/app-shell/useWorkspaceSessionReload.js";
 import { useWorkspaceShellLifecycle } from "@/app-shell/useWorkspaceShellLifecycle.js";
@@ -587,6 +588,9 @@ export function App({
   );
   const handleCreateTaskIfWritable = useCallback(
     (request?: Parameters<typeof onCreateTask>[0]) => {
+      // En la pantalla de proyectos no hay tarea sin proyecto: el atajo y la
+      // paleta esperan a que el humano elija o cree uno.
+      if (useAutonHomeStore.getState().homeVisible) return;
       if (!workspaceReadOnlyReason) {
         onCreateTask(request);
       }

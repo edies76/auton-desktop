@@ -360,6 +360,10 @@ export interface SessionPaneProps {
   rootSessionId?: string;
   /** subagent 右侧详情等观察视图：不显示 composer/input，也不发送行内编辑类命令。 */
   readOnly?: boolean;
+  /** Pantalla de entrada: el compositor se ve, pero no envía hasta elegir proyecto. */
+  submissionBlocked?: boolean;
+  /** Aviso breve sobre el compositor de la pantalla de entrada. */
+  draftNotice?: string;
   /** 观察视图的显式例外：允许文件摘要恢复 workspace，但不开放会话编辑能力。 */
   allowWorkspaceFileRewind?: boolean;
   /** 框选副屏：保留普通 composer/tools，但隐藏并禁止 edit/retry/fork/goal。 */
@@ -608,6 +612,8 @@ export function SessionPane({
   openTrigger,
   rootSessionId,
   readOnly = false,
+  submissionBlocked = false,
+  draftNotice,
   allowWorkspaceFileRewind = false,
   selectionSideChat = false,
   activeSelectionSideChatSessionId = null,
@@ -5417,7 +5423,9 @@ export function SessionPane({
       composerDraft={composerDraft}
       rootDraftScopeKey={composerScopeKey(newTaskComposerScope)}
       replaceComposerDraft={replaceComposerDraft}
-      submissionReady={composerSubmissionReady && runtimeReady && !recoveringDraft}
+      submissionReady={
+        composerSubmissionReady && runtimeReady && !recoveringDraft && !submissionBlocked
+      }
       updateComposerContent={updateComposerContent}
       createSubmissionFromComposer={createSubmissionFromComposer}
       telemetryDraftConfig={telemetryDraftConfig}
@@ -5627,10 +5635,19 @@ export function SessionPane({
           }
         />
       ) : null}
+      {isDraft && draftNotice ? (
+        <p
+          className="mx-auto mb-2 w-full max-w-2xl px-4 text-center text-ui-sm text-foreground-subtle"
+          data-testid="auton-draft-notice"
+        >
+          {draftNotice}
+        </p>
+      ) : null}
       {composerNode}
       {/* 办公模式显示主动任务推荐；编程模式保留原有小型场景入口。 */}
       {/* 完整视图浮窗只露出输入框，草稿推荐提示不进入浮窗。 */}
       {isDraft &&
+      !submissionBlocked &&
       !isFloatingPresentation &&
       (!isOfficeMode || sharedSettings?.proactiveSuggestionsEnabled === true) ? (
         <ConversationDraftSuggestedPromptsContainer

@@ -40,6 +40,10 @@ export interface V4ChatPaneProps {
   /** Prompt 模板埋点当前仅覆盖 Desktop。 */
   isDesktop?: boolean;
   readOnly?: boolean;
+  /** Pantalla de entrada: el compositor no envía hasta elegir proyecto. */
+  submissionBlocked?: boolean;
+  /** Aviso sobre el compositor de la pantalla de entrada. */
+  draftNotice?: string;
   allowEscapeStopOutsidePane?: boolean;
   compactForRemoteControl?: boolean;
   /** CLI session id；null = draft 首发。 */
@@ -93,6 +97,8 @@ export function V4ChatPane({
   workspaceIdentity,
   isDesktop = false,
   readOnly = false,
+  submissionBlocked = false,
+  draftNotice,
   allowEscapeStopOutsidePane = false,
   compactForRemoteControl = false,
   sessionId,
@@ -155,6 +161,8 @@ export function V4ChatPane({
       <SessionPane
         paneId="workspace-main"
         readOnly={readOnly}
+        submissionBlocked={submissionBlocked}
+        draftNotice={draftNotice}
         allowEscapeStopOutsidePane={allowEscapeStopOutsidePane}
         sessionId={sessionId}
         openTrigger={openTrigger}

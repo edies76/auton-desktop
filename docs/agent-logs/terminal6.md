@@ -251,3 +251,30 @@ typecheck raíz 0 y lint raíz 0 errores/103 avisos. En vivo: `worker-full-optio
 muestra `Add context`, `Full access`, `Computer Use`, modelo `deepseek-v4.1-flash`, esfuerzo
 `High` y `Send`. El menú de modelo abre la lista completa y el esfuerzo; se cerró con Escape sin
 cambiar la selección.
+## 2026-11-03 - la app arranca en proyectos
+
+Qué: el arranque de la app pasa por la pantalla de proyectos. Un store nuevo (`homeStore`) marca
+`homeVisible`; el shell suprime la restauración de la última sesión y fuerza un borrador mientras
+la pantalla está visible. El panel izquierdo muestra solo proyectos (nombre y ruta), con el botón
+`+` para crear; se ocultan New task, Automations, Plugin Marketplace y el buscador de tareas. El
+centro conserva el compositor normal de ZCode, sin el selector de proyecto encima del input. El
+envío queda deshabilitado con un aviso hasta elegir o crear un proyecto; las sugerencias del draft
+también se ocultan. Al elegir una fila o crear un proyecto se cierra la pantalla de entrada, se
+abre el orquestador y el panel cambia a workers. Dentro del proyecto la cabecera muestra nombre y
+ruta.
+
+Por qué: el usuario pidió que la app abra en proyectos, que solo salgan proyectos en el sidebar y
+que no se pueda avanzar sin un proyecto activo. La pantalla reutiliza el draft existente; no se
+creó una vista paralela.
+
+Verificado con: `autonProjectSidebarVisibility` (3), `projectSidebarNavigation` (6),
+`usePaneSessionPersistence` (15) y la suite `auton*` 90/90. Typecheck raíz 0 y lint raíz 0
+errores/103 avisos. En vivo: `home-projects-ready.png`; el home muestra solo `Projects` + `Lunar`
+con su ruta, sin selector encima del input, con el aviso y el envío deshabilitado. Al escribir
+texto el envío sigue deshabilitado; al elegir Lunar cambia a workers, muestra nombre+ruta y el
+envío se habilita al escribir.
+
+Nota de convivencia: el compañero sigue editando el render de V4. Para poder arrancar la app se
+movió `orderedBodyRows` antes de su primer uso en `conversationTurnRenderUnits.ts` y se añadió la
+rama `assistantReasoning` en `ConversationShareReadonlyTimeline.tsx`; no se revirtió ninguno de sus
+cambios y esos dos archivos quedan sin commitear junto con los suyos.

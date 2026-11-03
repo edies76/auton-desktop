@@ -20,6 +20,7 @@ export {
 export { ProjectComposerMenu } from "@/project-sidebar/ProjectComposerMenu.js";
 import { AutonWorkersSidebar } from "@/project-sidebar/AutonWorkersSidebar.js";
 import { AutonProjectPicker } from "@/project-sidebar/AutonProjectPicker.js";
+import { useAutonHomeStore } from "@/auton/project-space/homeStore.js";
 import {
   claimProjectConversationCreation,
   ensureProjectConversation,
@@ -75,7 +76,11 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
   const setTheme = useZCodeStore((state) => state.setTheme);
   const { openCodingPlanUpgrade } = useCodingPlanUpgradeDialog();
   const { view: storedView, setView } = preferences;
-  const view = storedView === "projects" ? "projects" : "workers";
+  const homeVisible = useAutonHomeStore((state) => state.homeVisible);
+  const enterProject = useAutonHomeStore((state) => state.enterProject);
+  // El arranque vive en la pantalla de proyectos; dentro de un proyecto manda
+  // la preferencia guardada (workers por defecto).
+  const view = homeVisible ? "projects" : storedView === "projects" ? "projects" : "workers";
   const scrollRef = useRef<HTMLDivElement>(null);
   const [editor, setEditor] = useState<{ project: VirtualProject | null } | null>(null);
   const [creating, setCreating] = useState(false);
@@ -93,14 +98,6 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     return state.workspaces[workspaceKey]?.activeTaskId ?? null;
   });
   const workspaceKey = props.workspaceIdentity?.trim() || props.workspacePath;
-  const forcedWorkersRef = useRef(false);
-  // Al abrir la app, el panel entra en workers; el selector de proyectos solo
-  // se abre cuando el humano lo pide.
-  useEffect(() => {
-    if (forcedWorkersRef.current) return;
-    forcedWorkersRef.current = true;
-    if (view === "projects") setView("workers");
-  }, [setView, view]);
   const activeProject = useMemo(() => {
     const activeProjectId = activeTaskId
       ? tree.tasks.find((task) => task.taskId === activeTaskId)?.projectId
@@ -152,9 +149,10 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
   }, [activeConversation, activeProject, workspaceKey]);
   const autoOpenedRef = useRef<string | null>(null);
   const createdConversationRef = useRef<Set<string>>(new Set());
-  // Al abrir la app, el proyecto abre directo su única conversación de
-  // orquestador. No hay bienvenida con input en el centro.
+  // Al abrir un proyecto, se abre directo su única conversación de orquestador.
+  // En la pantalla de proyectos no se crea ni se abre nada.
   useEffect(() => {
+    if (homeVisible) return;
     const orchestratorId = activeConversation?.conversation.orchestratorTaskId;
     if (orchestratorId) {
       if (autoOpenedRef.current === orchestratorId) return;
@@ -193,6 +191,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     activeConversation,
     activeProject,
     activeTaskId,
+    homeVisible,
     onSelectTask,
     props,
     tree.tasks,
@@ -220,6 +219,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
   const projects = preferences.sort(selectSortedProjects(tree));
   const selectProject = useCallback(
     (project: VirtualProject) => {
+      enterProject();
       const key = projectConversationKey(workspaceKey, project.id);
       const projectTasks = tree.tasks.filter((task) => task.projectId === project.id);
       const conversation = ensureProjectConversation(key, projectTasks, activeTaskId);
@@ -241,7 +241,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
       }
       setView("workers");
     },
-    [activeTaskId, onSelectTask, props, setView, tree.tasks, workspaceKey],
+    [activeTaskId, enterProject, onSelectTask, props, setView, tree.tasks, workspaceKey],
   );
   const openSettings = useCallback(() => {
     tabStore.getState().openSettingsTab();
@@ -273,7 +273,11 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
               className="absolute inset-0 flex min-h-0 flex-col"
             >
               {/* 原因：顶层新建显式传 null 会抹掉当前项目；省略归属，让 Root 与快捷键共用继承路径。 */}
-              <ProjectSidebarNavigation props={props} onCreate={() => props.onCreateTask()} />
+              <ProjectSidebarNavigation
+                props={props}
+                home={homeVisible}
+                onCreate={() => props.onCreateTask()}
+              />
               <div
                 data-testid="sidebar-task-list-region"
                 className="flex min-h-0 flex-1 flex-col border-t border-border/50 pt-3 [anchor-name:--sidebar-task-list-divider]"
@@ -281,6 +285,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
                 <ProjectSidebarListHeader
                   onOpenCommandCenter={props.onOpenCommandCenter}
                   view={view}
+                  home={homeVisible}
                   onViewChange={setView}
                   projectName={activeProject?.name}
                   projectPath={activeProject?.roots[0]?.rootPath}
@@ -296,7 +301,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
                       ) : view === "projects" ? (
                         <AutonProjectPicker
                           projects={projects}
-                          activeProjectId={activeProject?.id ?? null}
+                          activeProjectId={homeVisible ? null : (activeProject?.id ?? null)}
                           onSelect={selectProject}
                         />
                       ) : (
@@ -348,7 +353,11 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
             <ProjectCreation
               workspacePath={props.workspacePath}
               workspaceIdentity={props.workspaceIdentity}
-              onCreateTask={props.onCreateTask}
+              onCreateTask={(request) => {
+                enterProject();
+                setView("workers");
+                props.onCreateTask(request);
+              }}
               directory={directory}
               defaultDeviceId={
                 hasActiveRemoteTask && props.workspaceIdentity

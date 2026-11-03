@@ -64,6 +64,19 @@ describe("pane last-session restore precedence", () => {
       }),
     ).toBe(false);
   });
+
+  it("la pantalla de proyectos no reabre la última sesión", () => {
+    expect(
+      shouldRestorePersistedPaneSession({
+        activeSessionId: null,
+        draftFocusVersion: 0,
+        enabled: true,
+        rendererReload: true,
+        restoreOnStartup: true,
+        suppressRestore: true,
+      }),
+    ).toBe(false);
+  });
 });
 
 afterEach(() => {

@@ -19,6 +19,11 @@ export function AutonProjectPicker({
 }: AutonProjectPickerProps) {
   return (
     <div className="px-1.5" data-testid="auton-project-picker" role="listbox" aria-label="Projects">
+      {projects.length === 0 ? (
+        <p className="px-2.5 py-2 text-ui-sm text-foreground-subtle">
+          Todavía no hay proyectos. Crea uno con el botón +.
+        </p>
+      ) : null}
       {projects.map((project) => {
         const selected = project.id === activeProjectId;
         const path = project.roots[0]?.rootPath;
@@ -38,7 +43,12 @@ export function AutonProjectPicker({
             )}
           >
             <Folder className="size-4 shrink-0 text-foreground-subtle" aria-hidden="true" />
-            <span className="min-w-0 flex-1 truncate">{project.name}</span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate">{project.name}</span>
+              {path ? (
+                <span className="block truncate text-ui-sm text-foreground-subtlest">{path}</span>
+              ) : null}
+            </span>
             {selected ? (
               <Check className="size-4 shrink-0 text-foreground-subtle" aria-hidden="true" />
             ) : null}

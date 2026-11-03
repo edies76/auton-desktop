@@ -9,6 +9,7 @@ import { WebRemoteControlDeviceHeader } from "@/web-remote-control/WebRemoteCont
 /** 顶部导航只展示 Shell 的选中状态，路由仍由 Shell 唯一持有。 */
 export function ProjectSidebarNavigation({
   props,
+  home = false,
   onCreate,
 }: {
   props: Pick<
@@ -20,6 +21,8 @@ export function ProjectSidebarNavigation({
     | "pluginStoreActive"
     | "webRemoteControlWorkspaceSwitcher"
   >;
+  /** Pantalla de entrada: solo proyectos, sin tareas ni accesos globales. */
+  home?: boolean;
   onCreate(): void;
 }) {
   const { intl } = useZCodeIntl();
@@ -31,32 +34,36 @@ export function ProjectSidebarNavigation({
     >
       {/* Relay V2 远控：当前电脑是项目与任务的上一级，放在导航首行；手机端占用原顶部留白。 */}
       {deviceNavigation ? <WebRemoteControlDeviceHeader navigation={deviceNavigation} /> : null}
-      <NewTaskButtonGroup onCreateTask={onCreate} />
-      {props.onOpenAutomations ? (
-        <Button
-          variant="ghost"
-          size="lg"
-          className={`w-full justify-start gap-2 ${props.automationsActive ? "bg-selected text-foreground" : ""}`}
-          aria-pressed={props.automationsActive ?? false}
-          data-testid={TID_AUTOMATIONS_OPEN}
-          // 点击事件不能进入业务导航的可选 automationId 参数。
-          onClick={() => props.onOpenAutomations?.()}
-        >
-          <CalendarClock className="size-4" />
-          {intl.formatMessage({ id: "workspace.openScheduledSettings" })}
-        </Button>
-      ) : null}
-      <Button
-        variant="ghost"
-        size="lg"
-        className={`w-full justify-start gap-2 ${props.pluginStoreActive ? "bg-selected text-foreground" : ""}`}
-        aria-pressed={props.pluginStoreActive ?? false}
-        data-testid="plugin-store-sidebar-open"
-        onClick={() => props.onOpenPluginStore?.()}
-      >
-        <Blocks className="size-4" />
-        {intl.formatMessage({ id: "workspace.openPluginsSettings" })}
-      </Button>
+      {home ? null : (
+        <>
+          <NewTaskButtonGroup onCreateTask={onCreate} />
+          {props.onOpenAutomations ? (
+            <Button
+              variant="ghost"
+              size="lg"
+              className={`w-full justify-start gap-2 ${props.automationsActive ? "bg-selected text-foreground" : ""}`}
+              aria-pressed={props.automationsActive ?? false}
+              data-testid={TID_AUTOMATIONS_OPEN}
+              // 点击事件不能进入业务导航的可选 automationId 参数。
+              onClick={() => props.onOpenAutomations?.()}
+            >
+              <CalendarClock className="size-4" />
+              {intl.formatMessage({ id: "workspace.openScheduledSettings" })}
+            </Button>
+          ) : null}
+          <Button
+            variant="ghost"
+            size="lg"
+            className={`w-full justify-start gap-2 ${props.pluginStoreActive ? "bg-selected text-foreground" : ""}`}
+            aria-pressed={props.pluginStoreActive ?? false}
+            data-testid="plugin-store-sidebar-open"
+            onClick={() => props.onOpenPluginStore?.()}
+          >
+            <Blocks className="size-4" />
+            {intl.formatMessage({ id: "workspace.openPluginsSettings" })}
+          </Button>
+        </>
+      )}
     </div>
   );
 }

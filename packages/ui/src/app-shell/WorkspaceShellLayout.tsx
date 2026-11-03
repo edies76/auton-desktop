@@ -13,6 +13,7 @@ import { TID_APP_HEADER } from "@zcode/shared/test-ids";
 // 对称下侧 Terminal.tsx 的 openWorkspaceKeys 回收。
 import { sidePaneTerminalSessionRegistry } from "@/terminal/sidePaneTerminalSessionRegistry.js";
 import { resolveCenterView } from "@/auton/project-space/centerView.js";
+import { useAutonHomeStore } from "@/auton/project-space/homeStore.js";
 import { AutonWorkerSurface } from "@/auton/project-space/WorkerSurface.js";
 import {
   closeWorkerFocusForWorkspace,
@@ -475,6 +476,8 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
   const [draftHeaderDropTargetController, setDraftHeaderDropTargetController] =
     useState<ConversationDropTargetController | null>(null);
   const workspaceKey = workspaceIdentity?.trim() || workspaceAbsPath;
+  const homeVisible = useAutonHomeStore((state) => state.homeVisible);
+  const homeDraftBlocked = homeVisible && activeTaskId === null;
   const fileTreeOpenRequestIdRef = useRef(0);
   const [fileTreeOpenRequest, setFileTreeOpenRequest] = useState<SidebarFileTreeOpenRequest | null>(
     () =>
@@ -531,10 +534,23 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
     draftFocusVersion: workspaceShellZCodeState.draftFocusVersion,
     enabled: !isWebRemoteControlShell,
     restoreOnStartup: Boolean(isDesktop && restorePaneSession),
+    suppressRestore: homeVisible,
     selectSession: (sessionId) => handleSelectTask(workspaceAbsPath, sessionId, workspaceIdentity),
     lookupSession: isDesktop ? lookupPaneSession : undefined,
     onSessionMissing: () => handleStartDraftInWorkspace(workspaceAbsPath, workspaceIdentity),
   });
+  // La pantalla de entrada siempre es un borrador. Si el shell restaura una
+  // sesión, se cierra hasta que el humano elija o cree un proyecto.
+  useEffect(() => {
+    if (!homeVisible || activeTaskId === null) return;
+    handleStartDraftInWorkspace(workspaceAbsPath, workspaceIdentity);
+  }, [
+    activeTaskId,
+    handleStartDraftInWorkspace,
+    homeVisible,
+    workspaceAbsPath,
+    workspaceIdentity,
+  ]);
   const workspaceShellRef = useRef<HTMLDivElement | null>(null);
   const selectedWorkerId = useAutonWorkerFocusStore((state) => state.selectedWorkerId);
   const selectionOrigin = useAutonWorkerFocusStore((state) => state.selectionOrigin);
@@ -2240,10 +2256,14 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                   isDesktop={isDesktop === true}
                   compactForRemoteControl={isWebRemoteControlShell}
                   sessionId={activeTaskId}
+                  submissionBlocked={homeDraftBlocked}
+                  draftNotice={
+                    homeDraftBlocked ? "Elige un proyecto de la izquierda para empezar." : undefined
+                  }
                   provider={activeTaskProvider ?? undefined}
                   onSessionCreated={handleV4SessionCreated}
                   onSessionDeleted={handleV4SessionDeleted}
-                  draftComposerHeader={draftComposerHeader}
+                  draftComposerHeader={homeDraftBlocked ? undefined : draftComposerHeader}
                   gitSummary={gitState.summary}
                   gitDirtyFileCount={gitDirtyFileCount}
                   gitWorktreeReviewSourceId={gitWorktreeReviewSourceId}
@@ -2704,11 +2724,19 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                                 remoteSessionId={workspaceRemoteSessionId}
                                 compactForRemoteControl={isWebRemoteControlShell}
                                 sessionId={activeTaskId}
+                                submissionBlocked={homeDraftBlocked}
+                                draftNotice={
+                                  homeDraftBlocked
+                                    ? "Elige un proyecto de la izquierda para empezar."
+                                    : undefined
+                                }
                                 activeSelectionSideChatSessionId={activeSelectionSideChatSessionId}
                                 provider={activeTaskProvider ?? undefined}
                                 onSessionCreated={handleV4SessionCreated}
                                 onSessionDeleted={handleV4SessionDeleted}
-                                draftComposerHeader={draftComposerHeader}
+                                draftComposerHeader={
+                                  homeDraftBlocked ? undefined : draftComposerHeader
+                                }
                                 onPrimaryDraftDropTargetControllerChange={
                                   setDraftHeaderDropTargetController
                                 }

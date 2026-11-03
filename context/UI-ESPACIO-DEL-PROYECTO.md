@@ -16,13 +16,18 @@ Es **el primer gran cambio de UI de Auton**: el espacio de trabajo de un proyect
 Y una regla que no se negocia: **de un vistazo tiene que quedar claro qué es el orquestador y qué es un
 worker.** Etiqueta, color o forma distinta. No basta con el nombre.
 
-## Pantalla 1 — Lista de proyectos
+## Pantalla 1 — Entrada de la app: proyectos
 
-- Los proyectos, ordenados (por lo más reciente).
-- **Botón de crear proyecto** que pide **dos cosas obligatorias**: **nombre** y **ruta** de la carpeta. Sin
-  las dos, no se abre nada. *(Esto es lo que evita que un proyecto herede cosas de otro.)*
-- Cada fila: nombre, ruta, y si tuvo actividad reciente.
-- Al hacer clic: entra al espacio del proyecto.
+- La app abre aquí, con el proyecto anterior cerrado. **No hay chat activo ni workers a la vista.**
+- El panel izquierdo muestra **solo proyectos**: nombre, ruta y botón `+` para crear uno. Sin chats,
+  tareas, Automations, Plugin Marketplace ni buscador de tareas.
+- El centro conserva **el compositor normal de ZCode**, centrado, con su estado de bienvenida. El
+  selector de proyecto que vivía encima del input se retira: los proyectos están en el panel.
+- **Enviar sin proyecto no avanza.** El compositor deja escribir, pero el botón de envío queda
+  deshabilitado y un aviso pide elegir un proyecto.
+- **Crear proyecto** pide nombre y ruta; al guardarlo se entra al proyecto. **Elegir una fila** también
+  entra. En ese momento el panel cambia a workers y aparece el hilo del orquestador.
+- La pantalla se reutiliza del draft existente; no se crea una vista nueva desde cero.
 
 ## Pantalla 2 — Espacio del proyecto
 
@@ -30,8 +35,7 @@ Es **el espacio de un proyecto, y solo uno a la vez**. Se compone de tres zonas:
 
 ### 2.1 El hilo del orquestador (centro, lo principal)
 
-- Es **una conversación**, no un panel de control. Arriba del hilo, el nombre del proyecto y la etiqueta
-  **Orquestador**, que lo distingue de un worker.
+- Es **una conversación**, no un panel de control. Arriba del hilo, el nombre del proyecto.
 - Aquí vive **la narración del orquestador** y, **anidados en el hilo**, los **bloques de trabajo**.
 - **El humano solo escribe aquí.** No hay otro campo de texto en la pantalla.
 
