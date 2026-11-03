@@ -33,6 +33,7 @@ import {
   type AutonWorkerMode,
   type AutonWorkerPlacement,
 } from "./worker-mode.js";
+import { resolveAutonWorkerEngine } from "./workerEngine.js";
 
 export interface AutonSessionWorkerRunResult {
   response: string;
@@ -65,6 +66,8 @@ export type AutonSessionWorkerFactory = (
 
 export interface CreateAutonSessionWorkerPortOptions {
   factory: AutonSessionWorkerFactory;
+  /** Motor externo; ausente significa que Muse no está cableado. */
+  museFactory?: AutonSessionWorkerFactory;
   registry: RuntimeTaskRegistry;
   emitParentEvent: (event: SessionEvent, traceContext: SubagentRunRequest["trace"]) => Promise<void>;
   enqueueParentTaskNotification?: (notification: {
@@ -135,7 +138,15 @@ export function createAutonSessionWorkerPort(
       workerSessionId: sessionId,
     });
     const abort = new AbortController();
-    const handle = await options.factory({
+    const engine = resolveAutonWorkerEngine(request.engine);
+    const factory = engine === "muse" ? options.museFactory : options.factory;
+    if (!factory) {
+      throw new Error(
+        `El motor ${engine} no está disponible en este runtime. ` +
+          "Despacha con engine: \"zcode\" o configura el adaptador.",
+      );
+    }
+    const handle = await factory({
       request,
       placement,
       agentId,

@@ -11,6 +11,7 @@ import {
   AutonWorkerTaskModeSchema,
   DEFAULT_AUTON_WORKER_TASK_MODE,
 } from "../auton/task-mode.js";
+import { AutonWorkerEngineSchema } from "../auton/engine.js";
 
 export const AgentType = {
   GeneralPurpose: "general-purpose",
@@ -69,6 +70,13 @@ export const AgentInputSchema = z.object({
         "dispatched by the orchestrator: they answer to the orchestrator, not to the human, and close " +
         "with a REPORTE block (STATUS/HICE/PROBE/ARCHIVOS/DUDAS).",
     ),
+  engine: AutonWorkerEngineSchema.optional().describe(
+    "Engine that runs subagent_type=auton-worker. zcode (default) uses the in-process ZCode " +
+      "session. muse runs Muse Code headless in the worker's own workspace with the same brief, " +
+      "mode, effort and REPORTE contract, but it is one-shot: it does not accept mid-run messages " +
+      "in this environment. Use muse when the sprint should run on the Meta engine. An unknown or " +
+      "unavailable engine fails explicitly; it never falls back to another engine.",
+  ),
   worker_mode: z
     .enum(["subagent", "session"])
     .optional()

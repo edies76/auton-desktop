@@ -19,6 +19,7 @@ export * from "./skill.js";
 export * from "./todo.js";
 export * from "../auton/plan.js";
 export * from "../auton/task-mode.js";
+export * from "../auton/engine.js";
 export * from "../auton/limits.js";
 export * from "../auton/revert.js";
 export * from "./automation.js";

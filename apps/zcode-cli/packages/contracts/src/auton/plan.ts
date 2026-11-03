@@ -9,6 +9,7 @@ import { z } from "zod";
 import type { ToolCallId, TraceId } from "../interfaces/shared.js";
 import { toToolJsonSchema } from "../tools/json-schema.js";
 import { AutonWorkerTaskModeSchema } from "./task-mode.js";
+import { AutonWorkerEngineSchema } from "./engine.js";
 
 export const AUTON_PLAN_TOOL_NAME = "AutonPlan";
 
@@ -73,6 +74,9 @@ export const AutonPlanItemSchema = z
       "Class of work for this item: build (default) writes code, read explores and reports, " +
         "research compares outside options, debug reproduces a failure, refactor changes shape " +
         "without changing behavior. Separate from effort. An unknown value falls back to build.",
+    ),
+    engine: AutonWorkerEngineSchema.optional().describe(
+      "Engine for this item: zcode (default) or muse (Muse Code, one-shot headless).",
     ),
     owner: AutonOwnerSchema
       .optional()
@@ -307,8 +311,9 @@ export function formatAutonPlanForModel(plan: AutonPlan): string {
   for (const item of plan.items) {
     const effort = item.effort ? ` [${item.effort}]` : "";
     const mode = item.mode ? ` mode ${item.mode}` : "";
+    const engine = item.engine && item.engine !== "zcode" ? ` engine ${item.engine}` : "";
     const budget = plan.limits ? ` attempts ${item.attempts}/${plan.limits.maxAttempts}` : ` attempts ${item.attempts}`;
-    lines.push(`- ${item.id} (${item.status})${effort}${mode}${budget} ${item.title}`);
+    lines.push(`- ${item.id} (${item.status})${effort}${mode}${engine}${budget} ${item.title}`);
     if (item.files?.length) lines.push(`    files: ${item.files.join(", ")}`);
     if (item.needsApproval?.length) {
       lines.push(`    needs approval: ${item.needsApproval.join(", ")}`);

@@ -22,6 +22,7 @@ import { resolveSubagentSelection } from "../helpers/subagent-selection.js";
 import { deriveChildClientPorts } from "../helpers/child-client-ports.js";
 import { createCoordinatorResponsePort } from "../../subagent/coordinator-response.js";
 import { buildAutonWorkerPromptForRequest } from "../../auton/workerPolicy.js";
+import { createMuseWorkerHandle } from "../../auton/museWorker.js";
 import { resolveWorkerBrowserScope } from "../../auton/worker-mode.js";
 import { modeDisallowedTools } from "../../auton/workerTaskMode.js";
 import {
@@ -54,7 +55,40 @@ export function createDefaultAutonSessionWorkerPort(
       return undefined;
     },
     factory: async (input) => createWorkerSessionRuntime(this, deps, input),
+    museFactory: async (input) =>
+      createMuseWorkerHandle({
+        input,
+        prompt: buildMuseWorkerPrompt(this, input),
+      }),
   });
+}
+
+/** Muse no separa system prompt: la capa de Auton abre el turno. */
+function buildMuseWorkerPrompt(
+  parent: AgentRuntimeInternal,
+  input: AutonSessionWorkerFactoryInput,
+): string {
+  const { request } = input;
+  const layer = buildAutonWorkerPromptForRequest({
+    effort: request.effort,
+    brief: request.prompt,
+    description: request.description,
+    reasoningLevel: request.thinkingLevel,
+    ...(request.mode === undefined ? {} : { mode: request.mode }),
+  });
+  const configured = parent.config.userInstructions;
+  const instructions =
+    parent.contextSourceSnapshot?.userInstructions ??
+    (isResolvedUserInstructions(configured) ? configured : undefined);
+  return [
+    layer,
+    "",
+    "## ENCARGO",
+    request.prompt,
+    ...(instructions
+      ? ["", "## INSTRUCCIONES DEL PROYECTO", instructions.content]
+      : []),
+  ].join("\n");
 }
 
 async function createWorkerSessionRuntime(

@@ -178,6 +178,9 @@ describe("el registro y el contrato declaran el modo", () => {
     expect(assembled).toContain("`debug`: cuando hay un fallo");
     expect(assembled).toContain("`refactor`: cuando hay que cambiar la forma");
     expect(assembled).toContain("`worker_mode` es otra cosa");
+    expect(assembled).toContain("## Motor del worker");
+    expect(assembled).toContain("Muse Code");
+    expect(assembled).toContain("one-shot");
     // La sección sigue existiendo por separado; el ensamblado la incluye.
     expect(buildAutonSection().content).toContain("## Modos de trabajo de los workers");
   });

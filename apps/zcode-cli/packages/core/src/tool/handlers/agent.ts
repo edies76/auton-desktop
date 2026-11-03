@@ -17,6 +17,7 @@ import {
 import { TASK_TOOL_NAME } from "../compat.js";
 import { rememberAgentItem } from "../../auton/journal.js";
 import { resolveAutonWorkerMode } from "../../auton/worker-mode.js";
+import { resolveAutonWorkerEngine } from "../../auton/workerEngine.js";
 import { AUTON_WORKER_AGENT_TYPE } from "../../auton/workerPolicy.js";
 import type { ToolEntry, ToolHandler } from "../types.js";
 
@@ -176,8 +177,12 @@ const agentHandler: ToolHandler = async (input, context) => {
     requested: parsed.worker_mode,
     env: context.autonWorkerMode,
   });
+  const engine = resolveAutonWorkerEngine(parsed.engine);
+  // Muse Code es un motor externo de sesión: no tiene sentido por la ruta de
+  // subagente, así que su elección fuerza el worker de sesión.
   const wantsSession =
-    agentType === AUTON_WORKER_AGENT_TYPE && workerMode === "session";
+    agentType === AUTON_WORKER_AGENT_TYPE &&
+    (workerMode === "session" || engine === "muse");
   const subagentPort = wantsSession
     ? (context.autonSessionWorkerPort ?? context.subagentPort)
     : context.subagentPort;
@@ -206,6 +211,7 @@ const agentHandler: ToolHandler = async (input, context) => {
     effort: parsed.effort,
     thinkingLevel: parsed.thinking_level,
     mode: parsed.mode,
+    ...(parsed.engine ? { engine: parsed.engine } : {}),
     prompt: parsed.prompt,
     callerCanReadOutputFile: canReadBackgroundOutputFile(context.providerVisibleToolNames),
     workingDirectory: context.workingDirectory,
