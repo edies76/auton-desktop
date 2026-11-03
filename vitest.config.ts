@@ -106,6 +106,16 @@ export default defineConfig({
     // 密集 spawn shell 的用例最后串行 fork，避免跨用例误杀、进程级状态竞争和系统
     // spawn 队列饥饿。
     projects: [
+      // Las pruebas de componente de Auton viven en .test.tsx y montan jsdom.
+      // Se agrupan aparte para no depender del include de .test.ts del resto.
+      {
+        extends: true,
+        test: {
+          name: "ui-auton",
+          include: ["packages/ui/test/auton*.test.tsx"],
+          sequence: { groupOrder: 0 },
+        },
+      },
       {
         extends: true,
         test: {

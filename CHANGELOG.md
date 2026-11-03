@@ -4,6 +4,20 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases públicas.
 
+## [0.4.0] — 2026-11-02
+
+El primer cambio grande de interfaz: el espacio de trabajo de un proyecto.
+
+### Añadido
+
+- **Lista de proyectos**: ordenada por actividad, con nombre y ruta; crear exige
+  las dos cosas y al entrar se puede volver a la lista.
+- **El espacio del proyecto**: el hilo del orquestador como única conversación,
+  con el panel izquierdo rehecho como lista de workers en vivo (estado, reloj,
+  aviso de silencio y control de parada).
+- **Detalle del worker**: su conversación y su actividad, en solo lectura.
+- **Bloques anidados en el hilo**: trabajo, plan y evidencia.
+
 ## [0.3.0] — 2026-11-02
 
 Los límites dejan de ser texto en el prompt y pasan a gobernar el despacho. La

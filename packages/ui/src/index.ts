@@ -119,3 +119,22 @@ export { GlobalDatabaseStartupLoading } from "./root/GlobalDatabaseStartupLoadin
 
 export { LocalTtftObserver, setLocalTtftObserver } from "@/v4/telemetry/localTtftObserver.js";
 export { ensurePendingTaskDraft } from "@/v4/composer/composerDraftStore.js";
+
+export {
+  AutonWorkspaceApp,
+  AutonProjectsScreen,
+  AutonProjectSpace,
+  AutonWorkerPanel,
+  AutonWorkerDetail,
+  AutonWorkBlock,
+  AutonPlanBlock,
+  AutonEvidenceBlock,
+  demoDataForProject,
+  demoProjects,
+} from "./auton/project-space/index.js";
+export type {
+  AutonProject,
+  AutonProjectSpaceData,
+  AutonWorkerView,
+  AutonWorkerStatus,
+} from "./auton/project-space/index.js";
