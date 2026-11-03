@@ -108,9 +108,17 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
 - **Hecho — fila de evento despertador**: `packages/ui/src/auton/WakeEventRow.tsx`
   (pregunta, cierre y latido, centrada, con acción). Prueba:
   `ui/test/autonWakeEventRow.test.tsx`.
-- **Bloqueado — turno que no se cierra**: el ciclo del turno vive en el runtime de
-  ZCode y no tiene punto de enganche; mantenerlo abierto exige reescribir el bucle
-  del agente. `applyLoopEvent` no tiene llamadas desde el runtime.
+- **Hecho — latido enganchado al runtime**: `core/src/auton/live-loop.ts` mantiene
+  un reloj por sesión del orquestador, y el port de subagentes lo alimenta al
+  despachar un worker en background y al cerrarlo (completado o fallido). A los
+  90 s de silencio con trabajo vivo publica una línea de estado por la misma cola
+  que el aviso de cierre, así que despierta al orquestador sin abrir un mensaje
+  del humano. Pruebas: `core/tests/auton-live-loop.test.ts` (6) y
+  `core/tests/auton-live-loop-wiring.test.ts` (3).
+- **Parcial — turno que no se cierra**: el turno del modelo sigue emitiendo su
+  cierre; lo que se mantiene vivo es la conversación, porque el latido entra como
+  notificación y despierta al orquestador. Además, un mensaje del worker todavía
+  no reinicia el reloj (solo lo hacen despacho y cierre).
 - **Bloqueado — prueba de integración del canal rápido**: exige el arnés completo
   de runtime de subagentes, que hoy no existe; el mecanismo (ZCode
   `RespondToCoordinator` / `SendMessage`) sí está operativo y los mensajes quedan
