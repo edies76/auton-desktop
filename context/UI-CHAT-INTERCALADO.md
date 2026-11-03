@@ -25,18 +25,17 @@ Una sola secuencia cronológica de entradas. No hay un bloque "trabajo" que envu
 el turno, ni una respuesta separada al final. Cada entrada se pinta en el orden en
 que ocurrió:
 
-1. **Narración**: un mensaje normal del orquestador (1-2 líneas). Nunca se colapsa.
-2. **Canal de worker**: una entrada por worker, con cabecera (nombre, estado y
-   reloj) y, dentro, sus tool calls y sus mensajes. Es lo único que se colapsa;
-   el bloque es del worker, no del turno.
-3. **Evento de worker**: el aviso de que el worker escribió al orquestador, su
-   cierre o el latido. Fila normal del trabajo, con icono, sin color propio, sin
-   botón de responder al humano.
-4. **Pregunta al humano**: cuando el orquestador necesita una decisión, usa la
-   tool nativa de preguntas de ZCode; su bloque nativo se pinta en la secuencia.
-   El worker nunca pregunta al humano.
-5. **Cierre del turno**: el mensaje final del orquestador es otra narración, no
-   una sección aparte.
+| Tipo | Qué es | De dónde sale |
+| --- | --- | --- |
+| **narración** | Un mensaje del orquestador (1-2 líneas). Nunca se colapsa. | `assistantText` |
+| **canal de worker** | Una entrada por worker, con cabecera (nombre, estado y reloj) y, dentro, sus tool calls y mensajes. Es lo único que se colapsa; el bloque es del worker, no del turno. | `subagent` + su `Agent` |
+| **evento de worker** | El aviso de que el worker escribió al orquestador, su cierre o el latido. Fila normal del trabajo, con icono, sin color propio, sin botón de responder al humano. | eventos derivados |
+| **pregunta al humano** | Cuando el orquestador necesita una decisión, usa la tool nativa de preguntas de ZCode; su bloque nativo se pinta en la secuencia. El worker nunca pregunta al humano. | `AskUserQuestion` |
+| **systemEvent** | Los avisos que el runtime ya emite: reinicio a mitad de turno, límite alcanzado, presupuesto agotado. | `timelineMarker` / avisos |
+| **evidence** | El cierre de un sprint con su prueba: comando, salida y archivos. | bloque de evidencia |
+| **plan** | El plan cuando cambia: sprints, estados y criterio de hecho. | tarjeta del plan |
+
+El mensaje final del orquestador es otra **narración**, no una sección aparte.
 
 ### Reglas de composición
 
@@ -44,11 +43,29 @@ que ocurrió:
   hacer y con quién, después para contar qué encontró y qué decidió.
 - Dos workers producen dos canales intercalados con la narración, no un bloque
   único con dos tarjetas dentro.
-- El reloj del canal mide su propio trabajo; el del turno desaparece como bloque.
-- La secuencia respeta el orden temporal de los eventos, con la prioridad ya
-  definida: humano, pregunta de worker, cierre/fallo, latido.
+- El reloj del canal mide su propio trabajo. Hay tiempo por worker, por sprint y
+  por tarea; **no hay un único reloj global** que sustituya a los tres.
+- **El orden de la pantalla es siempre temporal.** La prioridad (humano, pregunta,
+  cierre, latido) sirve para encolar y despertar al orquestador, no para pintar.
+  Si un latido ocurrió antes que una pregunta, el latido va arriba aunque la
+  pregunta tenga más prioridad.
 - Se reutilizan los componentes y tokens de ZCode: tipografía, espaciado, iconos
   y filas de tool. Sin colores nuevos ni píldoras centradas.
+
+### Orden exacto
+
+Con un chat vivo llegan eventos en el mismo milisegundo. La marca de tiempo no
+ordena: hace falta un número de orden monótono compartido por mensajes y entradas.
+El producto ya lo tiene: **`rowId`**, asignado por la proyección con un contador
+que crece con cada fila (mensaje, tool, canal, evento). La secuencia se ordena por
+`rowId`, no por hora. Si dos entradas comparten `rowId`, gana la que se insertó
+primero en la lista.
+
+### Scroll
+
+Auto-scroll **solo si el humano ya está abajo**. Si subió a leer, no se le mueve la
+pantalla; aparece el botón de volver abajo. `ConversationTimeline` ya tiene esta
+regla (`following` / `isAtBottom`): no se reimplementa, se respeta y se prueba.
 
 ## Cómo se implementa
 
@@ -74,8 +91,19 @@ que ocurrió:
 - El aviso del worker no tiene botón de responder; la pregunta al humano usa el
   bloque nativo.
 - Ningún color nuevo: se ven los tokens de ZCode.
-- Pruebas: una de mapeo (las entradas salen en orden y con el tipo correcto) y una
-  de render del hilo real con dos canales y una pregunta.
+- **Orden**: dos eventos con la misma marca de tiempo quedan en el orden en que
+  ocurrieron (`rowId`), y un latido no adelanta a una pregunta anterior.
+- **Scroll**: si el humano subió, la pantalla no salta; si está abajo, sigue el
+  final.
+- Pruebas: una de mapeo (las entradas salen en orden y con el tipo correcto), una
+  de render del hilo real con dos canales y una pregunta, y **una de orden** con
+  marcas de tiempo empatadas.
+
+## Autoridad de la spec
+
+`UI-ESPACIO-DEL-PROYECTO.md` 2.4, 2.5 y 2.6 son **punteros** a este documento.
+No repiten reglas de layout: dos documentos con el mismo contenido acaban
+contradiciéndose. Si cambia el layout, se cambia aquí y el otro solo enlaza.
 
 ## Riesgos y dudas abiertas
 

@@ -42,17 +42,19 @@ Es **el espacio de un proyecto, y solo uno a la vez**. Se compone de tres zonas:
   que lista **solo proyectos**; no hay chats, tareas ni botón de crear tarea dentro del proyecto.
 - **Una fila por worker**, con el estilo de lista del chat normal de ZCode:
   - icono de estado a la izquierda,
-  - su nombre (`worker 1`, `worker 2`… o el que el orquestador le ponga),
-  - **su estado en vivo** (`trabajando`, `preguntando`, `esperando`, `bloqueado`, `terminado`) y
-    **su tiempo corriendo** (o el silencio) a la derecha,
+  - **el nombre real del encargo/chat** (la descripción con la que se creó), no `worker N`,
+  - **su estado en vivo** en el icono (`trabajando`, `preguntando`, `esperando`, `bloqueado`,
+    `terminado`) y **su reloj** a la derecha; el silencio se marca con un punto pulsante,
+  - **cuántos subagentes creó** (icono de rama + número, solo cuando hay),
   - y **su control de parada**, visible al pasar el ratón.
+- En la **vista del orquestador no se listan subagentes**: solo agentes completos. Al abrir un worker,
+  sus subagentes aparecen en el panel izquierdo y se abren a la derecha como un chat normal.
 - Los workers se agrupan por rol/motor (`Agentes ZCode`, `Subagentes`, `Muse Code`) con cabeceras
   plegables. La cabecera **Workers** también se pliega para ocultar la lista completa.
 - **No hay vistas nativas de ZCode** (`Timeline`, agrupado, lista de tareas) ni sección `Tasks` en este
-  panel. El proyecto es el encabezado; el orquestador es el hilo del centro.
-- **Clicable**: al abrir una fila se ve **su conversación completa** y **lo que hace en tiempo real** —
-  igual que el chat de un proyecto normal, pero **sin campo de texto**: al worker no se le escribe.
-- Desde la fila se puede **volver al hilo** del orquestador ("atrás" del panel).
+  panel. El proyecto es el encabezado; el hilo central no lleva la etiqueta `Orquestador`.
+- **Clicable**: al abrir una fila se ve **su conversación completa directamente**, sin resumen ni
+  cabecera separadora; la vuelta es un botón flotante sobre el chat. El chat es de solo lectura.
 - Referencia visual que pidió Edi: la lista de chats normal de ZCode (icono, nombre y acción), no una
   tarjeta con badge y segunda línea.
 
