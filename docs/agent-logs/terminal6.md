@@ -170,3 +170,4 @@ Verificado con: `centerView.test.ts` (15 filas, incluida sesión activa + selecc
 `workerFocusStore.test.ts` (3), `autonWorkersSidebar.test.tsx` (4) y la suite de UI 92/92. Typecheck
 raíz 0 con 8 GB y lint raíz 0 errores/105 avisos.
 - El sidebar lee siempre la conversación del orquestador, aunque la tarea activa sea una sesión de worker; la sesión activa solo es respaldo si aún no hay conversación publicada. Prueba: `autonWorkersSidebar.test.tsx` 5/5 verifica `acquire("orch")`.
+- Al abrir el proyecto, una sesión de worker restaurada no se queda como centro: `shouldOpenProjectOrchestrator` detecta el prefijo de sesión hija y abre la conversación del orquestador. Prueba: `projectConversation.test.ts` 12/12.
