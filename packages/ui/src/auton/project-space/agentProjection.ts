@@ -88,19 +88,22 @@ export function buildAutonWorkerGroups(params: {
   agentWorkers: readonly AutonWorkerView[];
   subagentWorkers: readonly AutonWorkerView[];
   museWorkers?: readonly AutonWorkerView[];
+  /** Sin turno de orquestador no hay a quién interrumpir al parar un worker. */
+  canStop?: boolean;
 }): AutonWorkerGroup[] {
+  const canStop = params.canStop ?? true;
   return [
     {
       kind: "agent",
       label: "Agentes ZCode",
       workers: [...params.agentWorkers],
-      canStop: true,
+      canStop,
     },
     {
       kind: "subagent",
       label: "Subagentes",
       workers: [...params.subagentWorkers],
-      canStop: true,
+      canStop,
     },
     {
       kind: "muse",

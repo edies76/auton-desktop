@@ -276,12 +276,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
         if (worker) {
           useAutonWorkerFocusStore
             .getState()
-            .open(
-              worker,
-              task.workspacePath,
-              task.workspaceIdentity,
-              conversation.orchestratorTaskId || undefined,
-            );
+            .select(worker.id, task.workspacePath, task.workspaceIdentity);
         }
         return;
       }

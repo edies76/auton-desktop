@@ -10,14 +10,19 @@ import {
   formatWorkerSilence,
   isWorkerSilent,
   workerElapsed,
+  type AutonWorkerView,
 } from "./model.js";
-import { focusedWorker, useAutonWorkerFocusStore } from "./workerFocusStore.js";
+import { useAutonWorkerFocusStore } from "./workerFocusStore.js";
 
 export interface AutonWorkerFocusPaneProps {
+  worker: AutonWorkerView;
+  workspacePath: string;
+  workspaceIdentity?: string;
+  /** Turno del orquestador que controla al worker; requerido para parar. */
+  stopTaskId: string | null;
+  canStop: boolean;
   isDesktop?: boolean;
-  /** Vuelta al orquestador; en una sesión de worker abierta como tarea se
-   *  navega al chat publicado en vez de cerrar sobre la sesión del worker. */
-  onBack?: () => void;
+  onBack: () => void;
   canGoBack?: boolean;
 }
 
@@ -26,30 +31,29 @@ export interface AutonWorkerFocusPaneProps {
  * chat completo de solo lectura; el compositor del orquestador no se toca.
  */
 export function AutonWorkerFocusPane({
+  worker,
+  workspacePath,
+  workspaceIdentity,
+  stopTaskId,
+  canStop,
   isDesktop = false,
   onBack,
   canGoBack = true,
 }: AutonWorkerFocusPaneProps) {
-  const worker = useAutonWorkerFocusStore(focusedWorker);
-  const workspacePath = useAutonWorkerFocusStore((state) => state.workspacePath);
-  const workspaceIdentity = useAutonWorkerFocusStore((state) => state.workspaceIdentity);
-  const stopTaskId = useAutonWorkerFocusStore((state) => state.stopTaskId);
   const mode = useAutonWorkerFocusStore((state) => state.mode);
   const setMode = useAutonWorkerFocusStore((state) => state.setMode);
-  const close = useAutonWorkerFocusStore((state) => state.close);
   const services = useBaseWorkspaceServices();
 
   const now = useAutonClock();
-  if (!worker) return null;
   const meta = AUTON_WORKER_STATUS_META[worker.status];
   const silent = isWorkerSilent(worker, now);
 
   const stop = () => {
     const service = services.zcodeTaskService;
-    if (!service) return;
+    if (!service || !stopTaskId || !canStop) return;
     void service
       .stopGeneration({
-        taskId: stopTaskId ?? worker.id,
+        taskId: stopTaskId,
         workspacePath,
         ...(workspaceIdentity ? { workspaceIdentity } : {}),
       })
@@ -89,7 +93,7 @@ export function AutonWorkerFocusPane({
           <Button
             variant="ghost"
             size="sm"
-            onClick={onBack ?? close}
+            onClick={onBack}
             data-testid="auton-worker-focus-back"
           >
             <ArrowLeft className="size-3.5" />
@@ -100,7 +104,10 @@ export function AutonWorkerFocusPane({
           {worker.name}
         </span>
         <span className="text-ui-sm text-foreground-subtlest">{meta.label}</span>
-        {worker.status !== "terminado" && worker.status !== "bloqueado" ? (
+        {canStop &&
+        stopTaskId &&
+        worker.status !== "terminado" &&
+        worker.status !== "bloqueado" ? (
           <Button
             variant="ghost"
             size="sm"

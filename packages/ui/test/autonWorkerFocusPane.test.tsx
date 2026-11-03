@@ -32,6 +32,19 @@ const WORKER: AutonWorkerView = {
   transcript: [{ id: "e1", at: NOW - 50_000, kind: "message", text: "Empiezo por el login" }],
 };
 
+function renderPane(overrides: Partial<Parameters<typeof AutonWorkerFocusPane>[0]> = {}) {
+  return render(
+    <AutonWorkerFocusPane
+      worker={WORKER}
+      workspacePath="/workspace/lunar"
+      stopTaskId="orch"
+      canStop
+      onBack={vi.fn()}
+      {...overrides}
+    />,
+  );
+}
+
 afterEach(() => {
   cleanup();
   stopGeneration.mockClear();
@@ -40,8 +53,8 @@ afterEach(() => {
 
 describe("resumen del worker en el área del orquestador", () => {
   it("muestra estado y resumen, y abre el chat completo de solo lectura", () => {
-    useAutonWorkerFocusStore.getState().open(WORKER, "/workspace/lunar");
-    render(<AutonWorkerFocusPane />);
+    const onBack = vi.fn();
+    renderPane({ onBack });
 
     expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Trabajando");
     expect(screen.getByTestId("auton-worker-summary").textContent).toContain(
@@ -56,51 +69,49 @@ describe("resumen del worker en el área del orquestador", () => {
     expect(screen.getByTestId("auton-worker-summary")).toBeTruthy();
 
     fireEvent.click(screen.getByTestId("auton-worker-focus-back"));
-    expect(useAutonWorkerFocusStore.getState().workerId).toBeNull();
+    expect(onBack).toHaveBeenCalledTimes(1);
   });
 
   it("se actualiza con la proyección viva: estado y reloj no quedan congelados", () => {
-    useAutonWorkerFocusStore.getState().open(WORKER, "/workspace/lunar");
-    render(<AutonWorkerFocusPane />);
+    const { rerender } = renderPane();
     expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Trabajando");
 
-    act(() => {
-      useAutonWorkerFocusStore.getState().setLiveWorkers([
-        { ...WORKER, status: "terminado", lastSignalAt: NOW },
-      ]);
-    });
+    rerender(
+      <AutonWorkerFocusPane
+        worker={{ ...WORKER, status: "terminado", lastSignalAt: NOW }}
+        workspacePath="/workspace/lunar"
+        stopTaskId="orch"
+        canStop
+        onBack={vi.fn()}
+      />,
+    );
 
     expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Terminado");
     expect(screen.getByTestId("auton-worker-summary").textContent).not.toContain("Trabajando");
   });
 
   it("parar interrumpe el turno del orquestador que controla al worker", () => {
-    useAutonWorkerFocusStore.getState().open(WORKER, "/workspace/lunar", undefined, "orch");
-    render(<AutonWorkerFocusPane />);
+    renderPane();
 
     fireEvent.click(screen.getByTestId("auton-worker-focus-stop"));
     expect(stopGeneration).toHaveBeenCalledWith({
       taskId: "orch",
       workspacePath: "/workspace/lunar",
     });
+  });
 
-    act(() => {
-      useAutonWorkerFocusStore
-        .getState()
-        .setLiveWorkers([{ ...WORKER, status: "bloqueado", lastLine: "Detenido por el orquestador" }]);
-    });
-    expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Bloqueado");
-    expect(screen.getByTestId("auton-worker-summary").textContent).not.toContain("Parar");
+  it("sin turno de orquestador no ofrece parada ni cae al id del worker", () => {
+    renderPane({ stopTaskId: null, canStop: false });
+
+    expect(screen.queryByTestId("auton-worker-focus-stop")).toBeNull();
+    expect(stopGeneration).not.toHaveBeenCalled();
   });
 
   it("el reloj del resumen avanza con la sesión viva", () => {
     vi.useFakeTimers();
     vi.setSystemTime(NOW);
     try {
-      useAutonWorkerFocusStore
-        .getState()
-        .open({ ...WORKER, lastSignalAt: NOW }, "/workspace/lunar");
-      render(<AutonWorkerFocusPane />);
+      renderPane({ worker: { ...WORKER, lastSignalAt: NOW } });
       expect(screen.getByTestId("auton-worker-summary").textContent).toContain("01:00");
 
       act(() => {

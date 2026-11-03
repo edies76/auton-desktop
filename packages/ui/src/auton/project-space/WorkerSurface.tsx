@@ -1,64 +1,80 @@
 import type { ZCodeTaskMeta } from "@zcode/shared";
-import { isWorkerSessionTaskId } from "@/project-sidebar/projectConversation.js";
+import { useEffect, useMemo } from "react";
+import { workerFromTaskMeta, type CenterView } from "./centerView.js";
+import type { AutonWorkerView } from "./model.js";
 import { AutonWorkerFocusPane } from "./WorkerFocusPane.js";
-import { AutonWorkerSessionPane } from "./WorkerSessionPane.js";
 import { useAutonWorkerFocusStore } from "./workerFocusStore.js";
 
 export interface AutonWorkerSurfaceProps {
-  activeTaskId: string | null;
+  view: CenterView;
   activeTaskTitle: string;
   activeTaskMeta?: ZCodeTaskMeta | null;
   workspacePath: string;
   workspaceIdentity?: string;
   isDesktop?: boolean;
-  orchestratorTaskId: string | null;
   onSelectOrchestrator: () => void;
 }
 
-/** Condición que usa el shell para decidir si el centro es un worker. */
-export function shouldRenderAutonWorkerSurface(
-  activeTaskId: string | null,
-  focusedWorkerId: string | null,
-): boolean {
-  return Boolean((activeTaskId && isWorkerSessionTaskId(activeTaskId)) || focusedWorkerId);
-}
-
 /**
- * La superficie del área central cuando el proyecto muestra un worker: una
- * sesión de worker abierta como tarea activa o el foco elegido en el panel.
- * Devuelve null cuando el centro debe ser el chat del orquestador.
+ * Renderiza exactamente el tipo que devolvió `resolveCenterView`. El worker se
+ * busca en la proyección viva o se deriva de la meta de la sesión; la
+ * superficie no escribe selección ni reabre el worker por su cuenta.
  */
 export function AutonWorkerSurface({
-  activeTaskId,
+  view,
   activeTaskTitle,
   activeTaskMeta,
   workspacePath,
   workspaceIdentity,
   isDesktop = false,
-  orchestratorTaskId,
   onSelectOrchestrator,
 }: AutonWorkerSurfaceProps) {
-  const focusedWorker = useAutonWorkerFocusStore((state) => state.workerId);
+  const liveWorkers = useAutonWorkerFocusStore((state) => state.liveWorkers);
+  const worker = useMemo<AutonWorkerView | null>(() => {
+    if (view.kind === "worker-session") {
+      return (
+        liveWorkers.find((entry) => entry.id === view.taskId) ??
+        workerFromTaskMeta({
+          taskId: view.taskId,
+          title: activeTaskTitle,
+          meta: activeTaskMeta,
+        })
+      );
+    }
+    if (view.kind === "worker-focus") {
+      return liveWorkers.find((entry) => entry.id === view.workerId) ?? null;
+    }
+    return null;
+  }, [activeTaskMeta, activeTaskTitle, liveWorkers, view]);
 
-  if (activeTaskId && isWorkerSessionTaskId(activeTaskId)) {
-    return (
-      <AutonWorkerSessionPane
-        taskId={activeTaskId}
-        title={activeTaskTitle}
-        meta={activeTaskMeta}
-        workspacePath={workspacePath}
-        workspaceIdentity={workspaceIdentity}
-        isDesktop={isDesktop}
-        stopTaskId={orchestratorTaskId ?? undefined}
-        canGoBack={Boolean(orchestratorTaskId)}
-        {...(orchestratorTaskId ? { onBack: onSelectOrchestrator } : {})}
-      />
-    );
-  }
+  const setMode = useAutonWorkerFocusStore((state) => state.setMode);
+  const workerId = worker?.id ?? null;
+  useEffect(() => {
+    // Cambiar de worker vuelve al resumen; el chat es una decisión por worker.
+    setMode("summary");
+  }, [setMode, workerId]);
 
-  if (focusedWorker) {
-    return <AutonWorkerFocusPane isDesktop={isDesktop} />;
-  }
+  if (!worker || view.kind === "orchestrator") return null;
 
-  return null;
+  const close = useAutonWorkerFocusStore.getState().close;
+  const onBack =
+    view.kind === "worker-session"
+      ? () => {
+          close();
+          onSelectOrchestrator();
+        }
+      : close;
+
+  return (
+    <AutonWorkerFocusPane
+      worker={worker}
+      workspacePath={workspacePath}
+      workspaceIdentity={workspaceIdentity}
+      stopTaskId={view.stopTaskId}
+      canStop={view.canStop}
+      isDesktop={isDesktop}
+      onBack={onBack}
+      canGoBack={view.kind === "worker-session" ? view.canGoBack : true}
+    />
+  );
 }

@@ -17,23 +17,35 @@ const WORKER: AutonWorkerView = {
 
 afterEach(() => {
   useAutonWorkerFocusStore.getState().close();
+  useAutonWorkerFocusStore.getState().setLiveWorkers([]);
 });
 
 describe("foco del worker por workspace", () => {
   it("cierra el foco al cambiar de proyecto y lo conserva en el mismo", () => {
     const store = useAutonWorkerFocusStore.getState();
-    store.open(WORKER, "workspace-a");
+    store.setLiveWorkers([WORKER]);
+    store.select(WORKER.id, "workspace-a");
     closeWorkerFocusForWorkspace("workspace-a");
-    expect(useAutonWorkerFocusStore.getState().workerId).toBe("worker-1");
+    expect(useAutonWorkerFocusStore.getState().selectedWorkerId).toBe("worker-1");
 
     closeWorkerFocusForWorkspace("workspace-b");
-    expect(useAutonWorkerFocusStore.getState().workerId).toBeNull();
+    expect(useAutonWorkerFocusStore.getState().selectedWorkerId).toBeNull();
+    expect(useAutonWorkerFocusStore.getState().liveWorkers).toEqual([]);
   });
 
-  it("el resumen lee el worker vivo por id, no el snapshot de apertura", () => {
+  it("la selección lee el worker vivo por id, no un snapshot de apertura", () => {
     const store = useAutonWorkerFocusStore.getState();
-    store.open(WORKER, "workspace-a");
     store.setLiveWorkers([{ ...WORKER, status: "terminado" }]);
+    store.select(WORKER.id, "workspace-a");
     expect(focusedWorker(useAutonWorkerFocusStore.getState())?.status).toBe("terminado");
+  });
+
+  it("seleccionar una fila no reemplaza la lista viva del panel", () => {
+    const store = useAutonWorkerFocusStore.getState();
+    store.setLiveWorkers([WORKER, { ...WORKER, id: "worker-2", name: "Otro" }]);
+    store.select("worker-2", "workspace-a");
+
+    expect(useAutonWorkerFocusStore.getState().liveWorkers).toHaveLength(2);
+    expect(focusedWorker(useAutonWorkerFocusStore.getState())?.name).toBe("Otro");
   });
 });

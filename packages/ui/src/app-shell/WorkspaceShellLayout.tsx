@@ -12,10 +12,8 @@ import { TID_APP_HEADER } from "@zcode/shared/test-ids";
 // 保活：workspace tab 真正关闭时，按 workspaceKey 回收 side pane terminal 的常驻 PTY/xterm。
 // 对称下侧 Terminal.tsx 的 openWorkspaceKeys 回收。
 import { sidePaneTerminalSessionRegistry } from "@/terminal/sidePaneTerminalSessionRegistry.js";
-import {
-  AutonWorkerSurface,
-  shouldRenderAutonWorkerSurface,
-} from "@/auton/project-space/WorkerSurface.js";
+import { resolveCenterView } from "@/auton/project-space/centerView.js";
+import { AutonWorkerSurface } from "@/auton/project-space/WorkerSurface.js";
 import {
   closeWorkerFocusForWorkspace,
   useAutonWorkerFocusStore,
@@ -539,13 +537,23 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
     onSessionMissing: () => handleStartDraftInWorkspace(workspaceAbsPath, workspaceIdentity),
   });
   const workspaceShellRef = useRef<HTMLDivElement | null>(null);
-  const focusedWorker = useAutonWorkerFocusStore((state) => state.workerId);
-  const workerSurfaceActive = shouldRenderAutonWorkerSurface(activeTaskId, focusedWorker);
+  const selectedWorkerId = useAutonWorkerFocusStore((state) => state.selectedWorkerId);
+  const selectionOrigin = useAutonWorkerFocusStore((state) => state.selectionOrigin);
   const isProjectOrchestrator = useAutonProjectConversationStore((state) =>
     isPublishedOrchestrator(state, workspaceKey, activeTaskId),
   );
   const publishedOrchestratorId = useAutonProjectConversationStore((state) =>
     state.workspaceKey === workspaceKey ? state.orchestratorTaskId : null,
+  );
+  const centerView = useMemo(
+    () =>
+      resolveCenterView({
+        activeTaskId,
+        selectedWorkerId,
+        selectionOrigin,
+        orchestratorTaskId: publishedOrchestratorId,
+      }),
+    [activeTaskId, publishedOrchestratorId, selectedWorkerId, selectionOrigin],
   );
   const isLegacyTaskActive = useAutonProjectConversationStore((state) =>
     isPublishedLegacyTask(state, workspaceKey, activeTaskId),
@@ -2649,15 +2657,14 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                         ) : (
                           <main className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden">
                             {renderChatFindDialog()}
-                            {workerSurfaceActive ? (
+                            {centerView.kind !== "orchestrator" ? (
                               <AutonWorkerSurface
-                                activeTaskId={activeTaskId}
+                                view={centerView}
                                 activeTaskTitle={activeTaskTitle}
                                 activeTaskMeta={resolvedActiveTaskMeta}
                                 workspacePath={workspaceAbsPath}
                                 workspaceIdentity={workspaceIdentity}
                                 isDesktop={isDesktop === true}
-                                orchestratorTaskId={publishedOrchestratorId}
                                 onSelectOrchestrator={() => {
                                   if (!publishedOrchestratorId) return;
                                   handleSelectTask(

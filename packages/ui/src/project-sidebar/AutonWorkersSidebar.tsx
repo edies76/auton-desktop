@@ -35,7 +35,7 @@ function AutonWorkersSidebarContents({
   });
   const { layer } = useV4Conversation();
   const [lease, setLease] = useState<SessionLease | null>(null);
-  const focusedWorkerId = useAutonWorkerFocusStore((state) => state.worker?.id);
+  const focusedWorkerId = useAutonWorkerFocusStore((state) => state.selectedWorkerId);
   const projection = useConversationProjection(lease);
   const rows = projection.snapshot?.rows.window ?? [];
   const now = useAutonClock();
@@ -71,8 +71,9 @@ function AutonWorkersSidebarContents({
     return buildAutonWorkerGroups({
       agentWorkers: conversationWorkers.filter((worker) => worker.kind === "agent"),
       subagentWorkers: conversationWorkers.filter((worker) => worker.kind !== "agent"),
+      canStop: Boolean(orchestratorId),
     });
-  }, [now, rows]);
+  }, [now, orchestratorId, rows]);
 
   useEffect(() => {
     useAutonWorkerFocusStore
@@ -87,23 +88,23 @@ function AutonWorkersSidebarContents({
         if (worker) {
           useAutonWorkerFocusStore
             .getState()
-            .open(worker, workspacePath, workspaceIdentity, orchestratorId ?? undefined);
+            .select(worker.id, workspacePath, workspaceIdentity);
           return;
         }
       }
     },
-    [groups, orchestratorId, workspaceIdentity, workspacePath],
+    [groups, workspaceIdentity, workspacePath],
   );
 
   const stopWorker = useCallback(
-    (workerId: string) => {
+    () => {
       // Los workers son canales hijos del turno del orquestador; parar uno
-      // interrumpe ese turno, que es quien los controla.
+      // interrumpe ese turno. Sin orquestador no hay parada posible.
       const service = services.zcodeTaskService;
-      if (!service) return;
+      if (!service || !orchestratorId) return;
       void service
         .stopGeneration({
-          taskId: orchestratorId ?? workerId,
+          taskId: orchestratorId,
           workspacePath,
           ...(workspaceIdentity ? { workspaceIdentity } : {}),
         })

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import type { ZCodeTaskMeta } from "@zcode/shared";
-import { agentTramo, projectAgentWorkers } from "../src/auton/project-space/agentProjection.js";
+import {
+  agentTramo,
+  buildAutonWorkerGroups,
+  projectAgentWorkers,
+} from "../src/auton/project-space/agentProjection.js";
 
 const NOW = Date.UTC(2026, 10, 3, 12, 0, 0);
 
@@ -78,5 +82,16 @@ describe("workers = agentes completos de ZCode", () => {
     expect(workers[0]?.lastLine).toContain("2 archivos");
     expect(workers[1]?.lastLine).toBe("el build falló");
     expect(workers[1]?.transcript.at(-1)?.kind).toBe("close");
+  });
+
+  it("sin turno de orquestador los grupos no ofrecen parada", () => {
+    const workers = projectAgentWorkers([task("s1", "A", "running", -10_000)], NOW);
+    const groups = buildAutonWorkerGroups({
+      agentWorkers: workers,
+      subagentWorkers: workers,
+      canStop: false,
+    });
+
+    expect(groups.map((group) => group.canStop)).toEqual([false, false, false]);
   });
 });

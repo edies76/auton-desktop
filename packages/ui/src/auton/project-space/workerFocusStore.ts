@@ -1,66 +1,64 @@
+import type { CenterSelectionOrigin } from "@/auton/project-space/centerView.js";
 import type { AutonWorkerView } from "@/auton/project-space/model.js";
 import { create } from "zustand";
 
 export type AutonWorkerFocusMode = "summary" | "chat";
 
 interface AutonWorkerFocusState {
-  workerId: string | null;
-  /** Snapshot inicial; la verdad viva está en liveWorkers. */
-  worker: AutonWorkerView | null;
+  /** Intención del humano: la fila que eligió en el panel. */
+  selectedWorkerId: string | null;
+  selectionOrigin: CenterSelectionOrigin;
+  /** Datos de la proyección viva; los escribe solo el sidebar. */
   liveWorkers: AutonWorkerView[];
   workspacePath: string;
   workspaceIdentity?: string;
-  /** Un subagente se para interrumpiendo el turno del orquestador. */
-  stopTaskId?: string;
   mode: AutonWorkerFocusMode;
-  open(
-    worker: AutonWorkerView,
-    workspacePath: string,
-    workspaceIdentity?: string,
-    stopTaskId?: string,
-  ): void;
+  select(workerId: string, workspacePath: string, workspaceIdentity?: string): void;
   setLiveWorkers(workers: AutonWorkerView[]): void;
   setMode(mode: AutonWorkerFocusMode): void;
   close(): void;
 }
 
 /**
- * El worker seleccionado en el panel izquierdo se abre en el área del
- * orquestador: primero un resumen, después su chat real de solo lectura. El
- * sidebar publica la proyección viva para que estado y reloj no se congelen.
+ * El panel izquierdo guarda la selección; la lista viva es un dato aparte que
+ * escribe la proyección. Elegir una fila no inventa ni reemplaza esa lista.
  */
 export const useAutonWorkerFocusStore = create<AutonWorkerFocusState>((set) => ({
-  workerId: null,
-  worker: null,
+  selectedWorkerId: null,
+  selectionOrigin: null,
   liveWorkers: [],
   workspacePath: "",
   mode: "summary",
-  open: (worker, workspacePath, workspaceIdentity, stopTaskId) =>
+  select: (workerId, workspacePath, workspaceIdentity) =>
     set({
-      workerId: worker.id,
-      worker,
-      liveWorkers: [worker],
+      selectedWorkerId: workerId,
+      selectionOrigin: "panel",
       workspacePath,
       workspaceIdentity,
-      stopTaskId,
       mode: "summary",
     }),
   setLiveWorkers: (workers) => set({ liveWorkers: workers }),
   setMode: (mode) => set({ mode }),
   close: () =>
-    set({ workerId: null, worker: null, liveWorkers: [], stopTaskId: undefined, mode: "summary" }),
+    set({
+      selectedWorkerId: null,
+      selectionOrigin: null,
+      mode: "summary",
+    }),
 }));
 
 export function focusedWorker(state: AutonWorkerFocusState): AutonWorkerView | null {
-  if (!state.workerId) return null;
+  if (!state.selectedWorkerId) return null;
   return (
-    state.liveWorkers.find((worker) => worker.id === state.workerId) ??
-    (state.worker?.id === state.workerId ? state.worker : null)
+    state.liveWorkers.find((worker) => worker.id === state.selectedWorkerId) ?? null
   );
 }
 
-/** Al cambiar de workspace/proyecto, el foco del worker anterior se cierra. */
+/** Al cambiar de workspace/proyecto, el foco y sus datos viejos se cierran. */
 export function closeWorkerFocusForWorkspace(workspacePath: string): void {
   const state = useAutonWorkerFocusStore.getState();
-  if (state.workspacePath && state.workspacePath !== workspacePath) state.close();
+  if (state.workspacePath && state.workspacePath !== workspacePath) {
+    state.close();
+    state.setLiveWorkers([]);
+  }
 }

@@ -124,7 +124,7 @@ describe("sidebar de workers del proyecto", () => {
     fireEvent.click(
       within(screen.getByTestId("auton-worker-group-agent")).getByTestId("auton-worker-open"),
     );
-    expect(useAutonWorkerFocusStore.getState().workerId).toBe("auton-1");
+    expect(useAutonWorkerFocusStore.getState().selectedWorkerId).toBe("auton-1");
     expect(useAutonWorkerFocusStore.getState().mode).toBe("summary");
   });
 

@@ -24,7 +24,7 @@ export interface AutonWorkerPanelProps {
   /** Canales agrupados por rol/motor (sidebar del proyecto). */
   groups?: readonly AutonWorkerGroup[];
   now: number;
-  selectedWorkerId?: string;
+  selectedWorkerId?: string | null;
   onOpenWorker: (workerId: string) => void;
   onStopWorker: (workerId: string) => void;
   /** En un panel de solo lectura no se ofrece una parada que no puede ejecutarse. */
