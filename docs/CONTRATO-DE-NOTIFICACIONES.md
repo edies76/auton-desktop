@@ -93,7 +93,20 @@ convierta en una consola.
 
 Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
 
-## 8. Relación con los otros documentos
+## 8. Estado de implementación
+
+- **Hecho**: el núcleo de decisión del bucle, en
+  `apps/zcode-cli/packages/core/src/auton/loop.ts` — recibe eventos (humano,
+  pregunta de worker, cierre, despacho, latido), aplica la tabla de prioridades y
+  decide si el orquestador narra, si interrumpe y en qué fase queda. Constante de
+  latido: `LOOP_HEARTBEAT_MS = 90_000`. Tests en `tests/auton-loop.test.ts`.
+- **Hecho**: la doctrina del orquestador ya narra por sprints y prohíbe cerrar en
+  silencio (`context/sections/auton.ts`, sección "El bucle vivo").
+- **Pendiente**: conectar ese núcleo al runtime (que los eventos entren de verdad
+  y que el turno no se cierre con trabajo en marcha) y la superficie de canales
+  anidados en el hilo.
+
+## 9. Relación con los otros documentos
 
 - [`ARQUITECTURA-ORQUESTADOR.md`](./ARQUITECTURA-ORQUESTADOR.md): el cambio de
   fondo, los tres relojes y el orden de construcción.
