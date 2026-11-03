@@ -56,18 +56,19 @@ Verificado con: `autonWorkerPanel.test.tsx` (8), `autonWorkerFocusPane.test.tsx`
 `autonWorkersSidebar.test.tsx` (4), `projectSidebarHomeOnlyWorkspaces.test.ts` (11);
 capturas `launch-1.png`, `launch-2.png`, `worker-summary.png`, `worker-chat.png`, `worker-stopped.png`.
 Nota: el orquestador vivo crea subagentes como canales worker; los agentes completos de ZCode se
-muestran en su grupo cuando el runtime los marca en `workerTaskIds`.
+muestran en su grupo cuando la fila viva es `auton-worker`.
 
 - Worker completo de ZCode probado en vivo: el orquestador lanzó `Agent` con `subagent_type
   auton-worker`; la sesión real (`sess_auton_*`) apareció en `Agentes ZCode 1` como `worker 4`,
   Trabajando 00:23, con el hilo del orquestador abierto y fuera de la lista. El resumen y
-  "Ver chat completo" usaron su conversación real sin compositor; parar la dejó Terminado.
+  "Ver chat completo" usaron su conversación real sin compositor; parar interrumpió el turno del
+  orquestador y la dejó Bloqueada.
   Capturas: `launch-full-worker.png`, `launch-full-worker-summary.png`,
   `launch-full-worker-chat.png`, `full-worker-stopped2.png`.
 
 - Segunda corrida completa: `Agentes ZCode 2` (un `auton-worker` terminado y otro trabajando) con el
   hilo del orquestador abierto y fuera de la lista; captura `launch-full-worker-2.png`. La parada
-  del worker completo usa su propia sesión (worker 4 pasó a Terminado 01:25).
+  de cualquier worker interrumpe el turno del orquestador, que es quien lo controla.
 
 ## 2026-11-03 — paridad visual y decisión aprobada por el usuario
 
@@ -96,3 +97,20 @@ Verificación final: `projectConversation` 6/6, `projectSidebarHomeOnlyWorkspace
 `autonWorkerPanel` 8/8, `autonAgentProjection` 3/3, `autonSpaceProjection` 7/7; tsc y lint limpios.
 El foco vivo pasó de Trabajando a Bloqueado tras parar (resumen derivado de `liveWorkers`), y la app
 quedó en el chat único del proyecto con `Agentes ZCode` de sesiones `auton-worker` reales.
+
+## 2026-11-03 - clasificación tras reinicio y etiqueta de rol
+
+Qué: la hidratación en frío del transcript ahora lee `subagent_type` del tool `Agent` para recuperar
+`agentType`; antes de eso, al reiniciar la app los `auton-worker` volvían al estado `subagent` y el
+grupo `Agentes ZCode` quedaba vacío. El hilo central muestra la etiqueta `Orquestador` junto al
+título, para distinguirlo de un worker.
+
+Por qué: el worker completo de ZCode debe seguir siendo agente después de cerrar y abrir la app, y
+la spec exige distinguir de un vistazo el orquestador del worker.
+
+Verificado con: `transcript-hydration.test.ts` 80/80, `workspaceHeaderTitleSection.test.ts` 9/9 y la
+suite Auton de UI 55/55. Dos arranques limpios de `pnpm dev:desktop` (`launch-1.*`, `launch-2.*`)
+mostraron el mismo proyecto, un solo chat, `WORKERS` por defecto, `Agentes ZCode` 6,
+`Subagentes` 3, `Muse Code` 0 y cero excepciones de renderer. La interacción por CDP
+(`launch-1-state.json`, `launch-2-state.json`) abrió un worker, comprobó el resumen sin compositor,
+el chat completo sin `textarea` y la vuelta al orquestador con compositor.
