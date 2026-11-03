@@ -69,13 +69,13 @@ describe("resumen del worker en el área del orquestador", () => {
     expect(screen.getByTestId("auton-worker-summary").textContent).not.toContain("Trabajando");
   });
 
-  it("parar llama a la operación real de la sesión", () => {
-    useAutonWorkerFocusStore.getState().open(WORKER, "/workspace/lunar");
+  it("parar interrumpe el turno del orquestador que controla al worker", () => {
+    useAutonWorkerFocusStore.getState().open(WORKER, "/workspace/lunar", undefined, "orch");
     render(<AutonWorkerFocusPane />);
 
     fireEvent.click(screen.getByTestId("auton-worker-focus-stop"));
     expect(stopGeneration).toHaveBeenCalledWith({
-      taskId: "worker-1",
+      taskId: "orch",
       workspacePath: "/workspace/lunar",
     });
   });

@@ -128,7 +128,7 @@ describe("sidebar de workers del proyecto", () => {
     expect(useAutonWorkerFocusStore.getState().mode).toBe("summary");
   });
 
-  it("para un agente completo en su propia sesión", () => {
+  it("para un agente completo interrumpiendo el turno del orquestador", () => {
     state.rows = [fullWorkerRow()];
     renderSidebar();
 
@@ -136,7 +136,7 @@ describe("sidebar de workers del proyecto", () => {
       within(screen.getByTestId("auton-worker-group-agent")).getByTestId("auton-worker-stop"),
     );
     expect(state.stopGeneration).toHaveBeenCalledWith({
-      taskId: "auton-1",
+      taskId: "orch",
       workspacePath: "/workspace/lunar",
     });
   });

@@ -87,12 +87,7 @@ function AutonWorkersSidebarContents({
         if (worker) {
           useAutonWorkerFocusStore
             .getState()
-            .open(
-              worker,
-              workspacePath,
-              workspaceIdentity,
-              worker.kind === "subagent" ? (orchestratorId ?? undefined) : worker.id,
-            );
+            .open(worker, workspacePath, workspaceIdentity, orchestratorId ?? undefined);
           return;
         }
       }
@@ -102,23 +97,19 @@ function AutonWorkersSidebarContents({
 
   const stopWorker = useCallback(
     (workerId: string) => {
-      // Un subagente no tiene sesión propia: se detiene interrumpiendo el turno
-      // del orquestador. Un auton-worker sí tiene su propia sesión.
-      const isSubagent = groups.some(
-        (group) =>
-          group.kind === "subagent" && group.workers.some((worker) => worker.id === workerId),
-      );
+      // Los workers son canales hijos del turno del orquestador; parar uno
+      // interrumpe ese turno, que es quien los controla.
       const service = services.zcodeTaskService;
       if (!service) return;
       void service
         .stopGeneration({
-          taskId: isSubagent ? (orchestratorId ?? workerId) : workerId,
+          taskId: orchestratorId ?? workerId,
           workspacePath,
           ...(workspaceIdentity ? { workspaceIdentity } : {}),
         })
         .catch((error: unknown) => logger.warn("auton.worker.stop.failed", error));
     },
-    [groups, orchestratorId, services, workspaceIdentity, workspacePath],
+    [orchestratorId, services, workspaceIdentity, workspacePath],
   );
 
   return (
