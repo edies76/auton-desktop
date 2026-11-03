@@ -28,3 +28,16 @@ mostraba varios chats.
 Verificado con: `autonWorkersSidebar.test.tsx` (3), `projectSidebarNavigation.test.ts` (5),
 `autonSpaceLive.test.tsx` (2); tsc y lint de `@zcode/ui` sin errores; app del fork con el panel
 neutral.
+
+## 2026-11-03 — una conversación por proyecto y resumen del worker
+
+Qué: cada proyecto tiene una sola conversación de orquestador persistida; al abrir la app se abre
+directo ese chat (sin bienvenida con input en el centro), los chats anteriores quedan como legado y
+no se listan como workers. Al hacer clic en un worker, el área del orquestador muestra su resumen
+(estado, recap y últimas señales), desde donde se abre su chat completo de solo lectura y se puede
+parar. Los subagentes también tienen parada.
+Por qué: los chats viejos se mostraban como workers y el chat activo no tenía una identidad de
+orquestador; el detalle del worker no era la conversación real.
+Verificado con: `projectConversation.test.ts` (4), `projectSidebarHomeOnlyWorkspaces.test.ts` (11),
+`autonWorkersSidebar.test.tsx` (4), `autonWorkerFocusPane.test.tsx` (2), `autonWorkerPanel.test.tsx`
+(8); tsc y lint de `@zcode/ui`.
