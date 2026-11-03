@@ -167,8 +167,23 @@ publicado, la parada caía al worker. Eran combinaciones ilegales de los mismos 
 
 Verificado con: `centerView.test.ts` (15 filas, incluida sesión activa + selección distinta),
 `workerCenterTransitions.test.tsx` (5 secuencias), `autonWorkerFocusPane.test.tsx` (5),
-`workerFocusStore.test.ts` (3), `autonWorkersSidebar.test.tsx` (4) y la suite de UI 92/92. Typecheck
+`workerFocusStore.test.ts` (3), `autonWorkersSidebar.test.tsx` (4) y la suite de UI 97/97. Typecheck
 raíz 0 con 8 GB y lint raíz 0 errores/105 avisos.
 - El sidebar lee siempre la conversación del orquestador, aunque la tarea activa sea una sesión de worker; la sesión activa solo es respaldo si aún no hay conversación publicada. Prueba: `autonWorkersSidebar.test.tsx` 5/5 verifica `acquire("orch")`.
 - Al abrir el proyecto, una sesión de worker restaurada no se queda como centro: `shouldOpenProjectOrchestrator` detecta el prefijo de sesión hija y abre la conversación del orquestador. Prueba: `projectConversation.test.ts` 12/12.
 - Arranque limpio final tras la regla de apertura (`launch-final4.png`, `launch-final4.log`): chat del orquestador abierto, `Orquestador` + `WORKERS 9`, foco cerrado y compositor visible; cero excepciones de renderer.
+
+## 2026-11-03 - tercera auditoría: leer, caducar y volver
+
+Qué: el sidebar separa `leaseTaskId` (puede caer en la sesión activa) de `stopTaskId` (solo el
+orquestador publicado); sin orquestador no hay `Parar`. `resolveCenterView` recibe
+`selectedWorkerExists` y una selección que desapareció cae al orquestador en vez de dejar el centro
+vacío. La vista de foco expone `backToOrchestrator`/`backLabel`: sobre un worker activo vuelve al
+orquestador en una acción y, sin orquestador, se etiqueta `Volver` y regresa a la sesión activa.
+
+Por qué: el sidebar todavía podía parar el worker activo cuando no había orquestador; una selección
+caduca dejaba la superficie en null con el shell en la rama de worker; y volver desde una selección
+sobre un worker activo mostraba la sesión de worker en vez del orquestador.
+
+Verificado con: `autonWorkersSidebar` (6), `centerView` (17), `workerCenterTransitions` (7) y la
+suite de UI 97/97. Typecheck raíz 0 con 8 GB; lint raíz 0 errores/105 avisos.
