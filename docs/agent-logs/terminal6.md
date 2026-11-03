@@ -188,3 +188,28 @@ sobre un worker activo mostraba la sesión de worker en vez del orquestador.
 Verificado con: `autonWorkersSidebar` (6), `centerView` (17), `workerCenterTransitions` (7) y la
 suite de UI 97/97. Typecheck raíz 0 con 8 GB; lint raíz 0 errores/105 avisos.
 - Arranque limpio final (`launch-final5.png`, `launch-final5.log`): chat del orquestador, `Orquestador` + `WORKERS 9`, foco cerrado y compositor visible; cero excepciones de renderer.
+
+## 2026-11-03 - sidebar nativo, workers por defecto y subagentes por worker
+
+Qué: la cabecera del sidebar muestra el proyecto como fila nativa (carpeta + nombre, sin logo ZCode) y
+abre un selector que solo lista proyectos, sin chats, tareas ni botón de crear tarea dentro del
+proyecto. Las filas de worker usan el nombre real del encargo (descripción del `Agent`, no `worker N`),
+icono de estado, reloj, silencio y parada al hover; el grupo Subagentes se oculta en la vista del
+orquestador y aparece al abrir un worker, con contador de rama cuando hay subagentes. La cabecera
+Workers y cada grupo se pliegan. Quité las vistas nativas de ZCode y la sección `Tasks`.
+
+El resumen del worker desapareció: al abrir una fila se monta directamente el `V4ChatPane` de su sesión,
+sin cabecera separadora, con un botón flotante `Volver`. La etiqueta `Orquestador` del header también
+se retiró. La sesión se deriva de `entityId` (`sess_auton_` para `auton-worker`) cuando la fila histórica
+trae el prefijo antiguo; eso corrigió `fault.subscribe.sessionNotFound` al abrir worker 4.
+
+Por qué: el usuario pidió que el sidebar se parezca al chat normal de ZCode, que los workers sean
+agentes completos con nombre, que los subagentes no aparezcan en la vista del orquestador, que se abran
+como chat normal sin resumen y que se elimine la cabecera fea y el rol visible.
+
+Verificado con: `autonSpaceProjection` (8), `autonWorkersSidebar` (7), `autonWorkerPanel` (9),
+`workerCenterTransitions` (6), `autonWorkerFocusPane` (3), `projectSidebarTaskVisibility` (3),
+`projectSidebarNavigation` (5), `workspaceHeaderTitleSection` (9) y la suite de UI 100/100. Typecheck
+raíz 0; lint raíz 0 errores/104 avisos. En vivo: `sidebar-redesign.png`, `project-picker.png`,
+`sidebar-workers-final.png`, `worker-fullchat-final.png`; abrir worker 4 cargó su chat real sin
+`sessionNotFound`. La auditoría D9 de contadores queda pendiente para la siguiente ronda.
