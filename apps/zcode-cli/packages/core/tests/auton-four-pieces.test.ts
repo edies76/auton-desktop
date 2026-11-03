@@ -41,9 +41,11 @@ describe("las cuatro piezas del núcleo", () => {
 
   it("las dos secciones se ensamblan en el prompt real", () => {
     expect(builderSource).toContain("buildAutonSection()");
-    expect(builderSource).toContain("buildOrchestratorSection()");
+    expect(builderSource).toContain("buildOrchestratorSection({ workingDirectory:");
     expect(builderSource).toMatch(/sections\.push\(buildAutonSection\(\)\)/);
-    expect(builderSource).toMatch(/sections\.push\(buildOrchestratorSection\(\)\)/);
+    expect(builderSource).toMatch(
+      /sections\.push\(buildOrchestratorSection\(\{ workingDirectory: this\.config\.workingDirectory \}\)\)/,
+    );
   });
 
   it("el contrato y el diario se nombran en el prompt (el orquestador sabe que existen)", () => {

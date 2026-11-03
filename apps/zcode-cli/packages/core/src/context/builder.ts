@@ -123,7 +123,7 @@ export class ContextBuilder {
     } else {
       sections.push(buildIdentitySection(activeOutputStyle));
       sections.push(buildAutonSection());
-      sections.push(buildOrchestratorSection());
+      sections.push(buildOrchestratorSection({ workingDirectory: this.config.workingDirectory }));
     }
 
     // 3. Dynamic system context

@@ -44,6 +44,7 @@ const PRIVATE_PAGES = [
   { slug: "protocolo-de-reporte", file: "docs/private/protocolo-de-reporte.md", title: "Protocolo de reporte", blurb: "Qué puede un worker y cómo reporta un límite mal calibrado." },
   { slug: "verificacion-y-pruebas", file: "docs/private/verificacion-y-pruebas.md", title: "Verificación y pruebas", blurb: "Qué cubre cada suite y qué no se probó." },
   { slug: "nucleo-bucle-vivo", file: "docs/private/nucleo-bucle-vivo.md", title: "Núcleo en vivo: implementación", blurb: "Bucle, latido, canales y canal rápido, con sus pruebas." },
+  { slug: "orquestador-planea", file: "docs/private/orquestador-planea.md", title: "El orquestador que planea", blurb: "Cinco pasos, proporción y los dos mecanismos de la D7." },
   { slug: "deuda-y-riesgos", file: "docs/private/deuda-y-riesgos.md", title: "Deuda y riesgos", blurb: "Lo que falta y lo que puede romperse." },
 ];
 

@@ -8,14 +8,17 @@ Escribes lo que quieres construir, en tus palabras, y las restricciones que impo
 
 ## 2. Auton propone la dirección
 
-Antes de mover una línea de código, Auton convierte el objetivo en un plan:
+Antes de escribir código, Auton conversa y planea como un ingeniero:
 
-- piezas de trabajo con un resultado comprobable;
-- dependencias entre ellas;
-- alcance permitido para cada pieza;
-- qué evidencia demuestra que está hecha.
+- **Entiende la intención**: pregunta qué problema quieres resolver y para quién. Si el pedido es amplio, la primera respuesta es una pregunta con dos opciones y una recomendación, no una lista de tareas.
+- **Propone alternativas**: ventajas, límites y una recomendación con su razón.
+- **Conversa sobre producto**: la experiencia la decides con él; las decisiones técnicas se quedan de su lado.
+- **Construye el plan**: resultados, prioridades, dependencias, encargos y cómo se comprueba cada entrega. Cada pieza lleva su "hecho cuando" observable.
+- **Lo mantiene vivo**: si algo cambia, actualiza el plan y explica qué cambió, sin empezar de cero.
 
-Si el objetivo es grande, el plan es grande. Auton no encoge el problema para que parezca fácil.
+Antes de proponer, Auton ya sabe qué hay en tu proyecto. Al crearlo hace un **escaneo barato y sin modelo** (stack, tamaño, archivos clave) que queda en el registro del proyecto. En la primera petición real avisa, manda a un programador de solo lectura y guarda su resumen con rutas; después ya no lo pide otra vez.
+
+La proporción importa: cambiar el texto de un botón se resuelve con **un encargo sencillo**; replantear el modo de estudio de una app merece **una conversación y un plan más profundo**. Auton lo justifica en una línea: "es un archivo, así que un encargo".
 
 Cuando la dirección del producto importa, el plan se te presenta para que lo apruebes. Tú decides si el camino es el correcto.
 

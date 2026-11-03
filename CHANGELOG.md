@@ -4,6 +4,40 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases públicas.
 
+## [0.6.0] — 2026-11-03
+
+El orquestador que sabe planear y conversar: cinco pasos, proporción obligatoria
+y un registro del proyecto que se llena sin modelo.
+
+### Añadido
+
+- **Los cinco pasos en el prompt**: entender la intención (con pregunta de
+  producto y recomendación), proponer alternativas con ventajas y límites,
+  conversar sobre producto, construir el plan con dependencias y "hecho cuando"
+  observable, y mantenerlo vivo sin empezar de cero.
+- **La proporción**: un cambio de un botón es un encargo; replantear el modo de
+  estudio de una app merece conversación y plan profundo. Se justifica en una
+  línea ("es un archivo, así que un encargo").
+- **Compañero, no formulario**: pregunta una vez con recomendación, dice qué no
+  entra, admite lo que no sabe y avisa antes de investigar.
+- **Registro del proyecto**: escaneo determinista y sin modelo al crear el
+  proyecto (stack, tamaño, archivos clave) guardado en `.auton/project.json`.
+- **Análisis de solo lectura**: en la primera petición real el orquestador avisa,
+  manda un worker de lectura y guarda su resumen con rutas en
+  `.auton/project-analysis.md`; la próxima vez lo lee del registro.
+
+### Cambiado
+
+- El prompt del orquestador se ensambla con el registro del proyecto
+  (`buildOrchestratorSection({ workingDirectory })`); una sección que nadie
+  incluye no llega al modelo.
+
+### Conocido
+
+- La escritura del análisis depende del prompt; no hay enforcement en el runtime.
+- La prueba 20 (el humano no rehace el plan) queda parcial: el corte se sostiene,
+  el revisor pide precisar dos criterios.
+
 ## [0.5.0] — 2026-11-03
 
 El chat vivo: la conversación del orquestador se mantiene abierta mientras hay

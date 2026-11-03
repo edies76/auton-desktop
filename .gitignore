@@ -78,3 +78,6 @@ __pycache__/
 
 site/dist/
 site/private-dist/
+
+# Datos locales de Auton en un proyecto (registro, plan, diario)
+.auton/

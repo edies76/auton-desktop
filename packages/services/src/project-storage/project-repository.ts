@@ -23,8 +23,25 @@ import {
   assertRemoteProjectRoots,
   assertRemoteTaskDirectories,
 } from "#src/project-storage/remote-policy.js";
+import { ensureProjectFacts } from "@zcode/shared/auton-project-facts";
 
 const executionDirectoriesSchema = z.array(z.string().min(1)).max(256);
+
+/**
+ * Escaneo determinista al crear el proyecto (D7): stack, tamaño y archivos
+ * clave, sin modelo, guardado en `.auton/project.json`. Un fallo del registro
+ * no puede impedir crear el proyecto.
+ */
+function warmProjectFacts(project: VirtualProject): void {
+  const root =
+    project.roots.find((entry) => entry.isPrimary)?.rootPath ?? project.roots[0]?.rootPath;
+  if (!root) return;
+  try {
+    ensureProjectFacts(root);
+  } catch {
+    // El registro es una ayuda; la creación del proyecto manda.
+  }
+}
 
 function transaction<T>(db: DatabaseSync, body: () => T, write = true): T {
   db.exec(write ? "BEGIN IMMEDIATE" : "BEGIN");
@@ -225,7 +242,7 @@ export class ProjectRepository implements ProjectRepositoryContract {
   }
 
   saveProject(input: SaveProjectInput): VirtualProject {
-    return transaction(this.db, () => {
+    const project = transaction(this.db, () => {
       const old =
         input.id || input.restoreProjectId
           ? requireProject(this.db, input.id ?? input.restoreProjectId!)
@@ -295,10 +312,12 @@ export class ProjectRepository implements ProjectRepositoryContract {
       );
       return requireProject(this.db, id);
     });
+    warmProjectFacts(project);
+    return project;
   }
 
   initializeProjectRoot(id: string, path: string): VirtualProject {
-    return transaction(this.db, () => {
+    const project = transaction(this.db, () => {
       const project = requireProject(this.db, id);
       if (project.hostId !== (this.ownerHostId ?? "local"))
         throw new Error("project.cross-host-move");
@@ -314,6 +333,8 @@ export class ProjectRepository implements ProjectRepositoryContract {
       }
       return requireProject(this.db, id);
     });
+    warmProjectFacts(project);
+    return project;
   }
 
   deleteProject(id: string): void {

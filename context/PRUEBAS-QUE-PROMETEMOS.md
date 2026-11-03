@@ -151,6 +151,44 @@ Esto es lo que hace que el multiagente **se sienta** y no se administre.
 
 ---
 
+### 18. La proporción manda **[auto]**
+- **Qué prometemos**: no infla lo pequeño ni aplanes lo grande, y lo justifica.
+- **Cómo se prueba**: dos encargos. Uno de una línea ("cambia este texto del
+  botón") y uno grande ("quiero mejorar el modo de estudio de Lunar").
+- **Qué tiene que verse**:
+  - En el pequeño: **un encargo**, sin exploración previa ni plan largo, y la
+    frase que lo justifica: **"es un archivo, así que un encargo"**.
+  - En el grande: **conversación**, alternativas con ventajas y límites, y un
+    plan con dependencias y verificación. **No** una lista de veinte tareas.
+- **Cómo se comprueba sin modelo**: `auton-orchestrator-planning.test.ts` exige
+  que la sección ensamblada tenga la regla, el ejemplo y la frase de
+  justificación. La corrida con modelo se anota abajo.
+
+### 19. Los cinco pasos, en orden
+- **Qué prometemos**: planear y conversar como un ingeniero, no transcribir.
+- **Cómo se prueba**: el ejemplo de Lunar, de principio a fin.
+- **Qué tiene que verse**, en este orden: **(1)** entender la intención con una
+  pregunta que trae recomendación; **(2)** alternativas con ventajas y límites;
+  **(3)** conversación de producto (la experiencia), sin pasarle al humano las
+  decisiones técnicas; **(4)** plan con resultados, prioridades, dependencias,
+  encargos y cómo se comprueba cada entrega; **(5)** si algo cambia, el plan se
+  actualiza y se explica qué cambió, sin empezar de cero.
+- **Cómo se comprueba sin modelo**: `auton-orchestrator-planning.test.ts` verifica
+  que los cinco pasos están en el prompt y en ese orden, y que el plan pide las
+  cinco piezas.
+
+### 20. El humano no rehace el plan
+- **Qué prometemos**: el plan está pensado, no copiado del pedido.
+- **Cómo se prueba**: un tercero lee el plan y anota **qué le cambiaría**.
+- **Qué tiene que verse**: se lee en 30 segundos (tres o cinco líneas arriba y
+  los sprints debajo), cada sprint tiene un criterio de hecho comprobable, lo
+  que **no** entra en la entrega está escrito, y el tercero **no cambiaría el
+  corte**. Si le cambia algo, el orquestador transcribió.
+- **Cómo se comprueba sin modelo**: la prueba estructural exige esas piezas en el
+  prompt; la lectura del tercero es la corrida manual.
+
+---
+
 ## Cobertura automatizada
 
 | Prueba | Archivo |
@@ -162,14 +200,17 @@ Esto es lo que hace que el multiagente **se sienta** y no se administre.
 | 9. Si no sabe decidir, pregunta | `core/tests/auton-limits-governance.test.ts`, `auton-four-pieces.test.ts` |
 | 14. Deshacer devuelve los archivos idénticos | `core/tests/auton-revert.test.ts`, `auton-revert-e2e.test.ts`, `adapters/tests/auton-revert-bytes.test.ts` |
 | 17. El orquestador elige la herramienta | `core/tests/auton-four-pieces.test.ts` |
+| 18. La proporción manda | `core/tests/auton-orchestrator-planning.test.ts` (estructura) |
+| 19. Los cinco pasos, en orden | `core/tests/auton-orchestrator-planning.test.ts` (estructura) |
+| 20. El humano no rehace el plan | `core/tests/auton-orchestrator-planning.test.ts` (estructura) + lectura manual |
 
-Las pruebas 1, 5, 6, 7, 10, 11, 12, 13, 15 y 16 siguen siendo corridas a mano con modelo real.
+Las pruebas que no tienen columna automática se corren a mano con modelo real.
 
 ---
 
 ## Lo que estas pruebas protegen
 
 No son para la demo: son para **no engañarnos**. El día que se cambie el prompt del orquestador, estas
-dieciséis pruebas dicen si mejoró o si solo cambió. Y el día de la demo, son la respuesta a la pregunta
+pruebas dicen si mejoró o si solo cambió. Y el día de la demo, son la respuesta a la pregunta
 incómoda del jurado: **"¿y cómo sé que eso es cierto?"** — porque hay una prueba por promesa, y se corrió
 ayer.
