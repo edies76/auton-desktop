@@ -96,3 +96,4 @@ herramienta; (3) línea en la doctrina del orquestador con el cuándo de cada mo
 de `context/PRUEBAS-QUE-PROMETEMOS.md`.
 Verificado con: `auton-worker-task-mode` (10), `auton-worker-mode-safety` (4) y
 `auton-worker-dispatch` (10); capturado en mode-prompt.log, mode-safety.log y mode-dispatch.log.
+Lanzamiento: `pnpm dev:desktop` con el modo sesión se quedó en el build a los 150 s; capturado en mode-launch.log con timeout, PID, veredicto y stderr. Typecheck UI: se ajustó el tipo local de la fila del canal al protocolo actual (lastActivityAt y waitingForAnswer son opcionales).

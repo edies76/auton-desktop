@@ -1,4 +1,7 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { AgentInputSchema, AutonPlanItemSchema, AutonPlanSchema, formatAutonPlanForModel } from "@zcode/contracts";
 import { buildAutonWorkerPromptForRequest } from "../src/auton/workerPolicy.js";
 import {
@@ -143,5 +146,12 @@ describe("el registro y el contrato declaran el modo", () => {
     expect(section).toContain("`debug`: cuando hay un fallo");
     expect(section).toContain("`refactor`: cuando hay que cambiar la forma");
     expect(section).toContain("`worker_mode` es otra cosa");
+
+    // La sección llega al ensamblado: el builder la empuja al prompt.
+    const builder = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), "../src/context/builder.ts"),
+      "utf8",
+    );
+    expect(builder).toMatch(/sections\.push\(buildAutonSection\(\)\)/);
   });
 });
