@@ -23,6 +23,7 @@ import { deriveChildClientPorts } from "../helpers/child-client-ports.js";
 import { createCoordinatorResponsePort } from "../../subagent/coordinator-response.js";
 import { buildAutonWorkerPromptForRequest } from "../../auton/workerPolicy.js";
 import { resolveWorkerBrowserScope } from "../../auton/worker-mode.js";
+import { modeDisallowedTools } from "../../auton/workerTaskMode.js";
 import {
   createAutonSessionWorkerPort,
   type AutonSessionWorkerFactoryInput,
@@ -76,6 +77,7 @@ async function createWorkerSessionRuntime(
     brief: request.prompt,
     description: request.description,
     reasoningLevel: request.thinkingLevel,
+    ...(request.mode === undefined ? {} : { mode: request.mode }),
   });
 
   // El worker recibe su propio control de navegador ligado a su sesión; las
@@ -142,6 +144,9 @@ async function createWorkerSessionRuntime(
         ...(parent.config.toolDisallowlist ?? []),
         ENTER_PLAN_MODE_TOOL_NAME,
         EXIT_PLAN_MODE_TOOL_NAME,
+        // El modo de trabajo manda: read y research pierden toda herramienta
+        // que pueda escribir en el espacio.
+        ...modeDisallowedTools(request.mode),
       ],
       embeddedSearchBackend: parent.config.embeddedSearchBackend,
       nativeSearchEnhancementsEnabled: parent.config.nativeSearchEnhancementsEnabled,

@@ -48,6 +48,7 @@ import {
   filterSubagentChildToolNames,
 } from "../../subagent/tool-policy.js";
 import { isSubagentDispatchToolName } from "../../tool/compat.js";
+import { applyModeToToolNames } from "../../auton/workerTaskMode.js";
 import { resolveEmbeddedSearchBranchCapability } from "../../embedded-search/capability.js";
 import { getSessionShellEnvironment } from "./session-shell-environment.js";
 import { deriveChildClientPorts } from "../helpers/child-client-ports.js";
@@ -187,12 +188,18 @@ export function createDefaultSubagentPort(
           request,
           officialCuaServerNames,
         );
-        const childToolAllowlist = resolveSubagentToolAllowlist.call(
+        const baseChildToolAllowlist = resolveSubagentToolAllowlist.call(
           this,
           request,
           childMcpAccess.snapshot?.tools.map((descriptor) => toMcpToolName(descriptor)) ?? [],
         );
-        validateSubagentMcpRequirements(request, childToolAllowlist, childMcpAccess);
+        validateSubagentMcpRequirements(request, baseChildToolAllowlist, childMcpAccess);
+        // El modo de trabajo recorta el juego antes de crear el runtime: read y
+        // research no reciben herramientas que puedan escribir.
+        const childToolAllowlist = applyModeToToolNames(
+          baseChildToolAllowlist,
+          request.mode,
+        );
         const childMode = resolveSubagentPermissionMode(
           this.getPlanEnabled() ? "plan" : this.config.mode,
           request.permissionMode,

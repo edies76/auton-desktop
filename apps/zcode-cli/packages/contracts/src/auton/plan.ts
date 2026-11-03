@@ -8,6 +8,7 @@
 import { z } from "zod";
 import type { ToolCallId, TraceId } from "../interfaces/shared.js";
 import { toToolJsonSchema } from "../tools/json-schema.js";
+import { AutonWorkerTaskModeSchema } from "./task-mode.js";
 
 export const AUTON_PLAN_TOOL_NAME = "AutonPlan";
 
@@ -68,6 +69,11 @@ export const AutonPlanItemSchema = z
     detail: z.string().optional().describe("Scope, definition of done and constraints"),
     status: AutonPlanItemStatusSchema.describe("Current state of this work item"),
     effort: AutonEffortSchema.optional().describe("How hard the programmer should work"),
+    mode: AutonWorkerTaskModeSchema.optional().describe(
+      "Class of work for this item: build (default) writes code, read explores and reports, " +
+        "research compares outside options, debug reproduces a failure, refactor changes shape " +
+        "without changing behavior. Separate from effort.",
+    ),
     owner: AutonOwnerSchema
       .optional()
       .describe("Who does the work: orchestrator only for small single-file items"),
@@ -300,8 +306,9 @@ export function formatAutonPlanForModel(plan: AutonPlan): string {
   lines.push("Work items (authoritative):");
   for (const item of plan.items) {
     const effort = item.effort ? ` [${item.effort}]` : "";
+    const mode = item.mode ? ` mode ${item.mode}` : "";
     const budget = plan.limits ? ` attempts ${item.attempts}/${plan.limits.maxAttempts}` : ` attempts ${item.attempts}`;
-    lines.push(`- ${item.id} (${item.status})${effort}${budget} ${item.title}`);
+    lines.push(`- ${item.id} (${item.status})${effort}${mode}${budget} ${item.title}`);
     if (item.files?.length) lines.push(`    files: ${item.files.join(", ")}`);
     if (item.needsApproval?.length) {
       lines.push(`    needs approval: ${item.needsApproval.join(", ")}`);

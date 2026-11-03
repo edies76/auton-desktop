@@ -110,6 +110,30 @@ describe("el despacho elige el puerto según el interruptor", () => {
     expect(session.port.launch).toHaveBeenCalledTimes(1);
     expect(subagent.port.launch).not.toHaveBeenCalled();
   });
+
+  it("el modo de trabajo viaja en el encargo y no se inventa cuando falta", async () => {
+    const withMode = fakePort("session-mode");
+    await agentToolEntry.handler(
+      { ...INPUT, worker_mode: "session", mode: "read" },
+      context({
+        autonWorkerMode: "session",
+        autonSessionWorkerPort: withMode.port,
+        subagentPort: fakePort("sub").port,
+      }),
+    );
+    expect((withMode.launched[0] as { mode?: string }).mode).toBe("read");
+
+    const withoutMode = fakePort("session-plain");
+    await agentToolEntry.handler(
+      { ...INPUT, worker_mode: "session" },
+      context({
+        autonWorkerMode: "session",
+        autonSessionWorkerPort: withoutMode.port,
+        subagentPort: fakePort("sub2").port,
+      }),
+    );
+    expect((withoutMode.launched[0] as { mode?: string }).mode).toBeUndefined();
+  });
 });
 
 describe("herramientas del worker según el modo", () => {

@@ -5,6 +5,12 @@
 // pero "la tarea" la define el encargo, no tu criterio.
 // ============================================================
 
+import {
+  buildAutonWorkerTaskModeSection,
+  resolveAutonWorkerTaskMode,
+} from "./workerTaskMode.js";
+import type { AutonWorkerTaskMode } from "@zcode/contracts";
+
 export const AUTON_WORKER_AGENT_TYPE = "auton-worker" as const;
 
 export type WorkerEffortPolicy = "minimal" | "standard" | "thorough";
@@ -73,13 +79,15 @@ export function buildAutonWorkerSystemPrompt(
   options: {
     description?: string;
     reasoningLevel?: string;
+    mode?: AutonWorkerTaskMode;
   } = {},
 ): string {
+  const mode = resolveAutonWorkerTaskMode(options.mode);
   const identity = [
     "Eres un programmer de Auton dentro de un sistema multiagente.",
     "Tu jefe directo es el ORQUESTADOR. El humano le habla al orquestador; tú trabajas por debajo y le reportas a él.",
     `Tu trabajo en este sistema: ${options.description?.trim() || "ejecutar el encargo recibido"}.`,
-    "El orquestador controla tu encargo: scope, effort, modelo, thinking, herramientas y publicación.",
+    "El orquestador controla tu encargo: scope, effort, mode, modelo, thinking, herramientas y publicación.",
     "No hablas con el humano ni giras instrucciones en su nombre. Si necesitas una decisión, la elevas al orquestador.",
   ];
   if (options.reasoningLevel) {
@@ -87,6 +95,8 @@ export function buildAutonWorkerSystemPrompt(
   }
   return [
     ...identity,
+    "",
+    buildAutonWorkerTaskModeSection(mode),
     "",
     "Operas con autonomía total sobre tu encargo: actúa sin pedir permiso para lo",
     "reversible, reintenta tras errores con otra hipótesis, reúne tú la información",
@@ -131,10 +141,12 @@ export function buildAutonWorkerPromptForRequest(input: {
   brief: string;
   description?: string;
   reasoningLevel?: string;
+  mode?: AutonWorkerTaskMode;
 }): string {
   return buildAutonWorkerSystemPrompt(resolveWorkerEffort(input), {
     description: input.description,
     reasoningLevel: input.reasoningLevel,
+    ...(input.mode === undefined ? {} : { mode: input.mode }),
   });
 }
 
