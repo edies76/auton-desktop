@@ -21,6 +21,7 @@ import {
   type AutonPlanOutput,
 } from "@zcode/contracts";
 import type { ToolEntry, ToolHandler } from "../tool/types.js";
+import { isAutonWorkerSession } from "./journal.js";
 
 const MAX_AUTON_PLAN_MODEL_BYTES = 60_000;
 
@@ -88,6 +89,20 @@ export const autonPlanHandler: ToolHandler = async (input, context) => {
   };
 
   await mkdir(dirname(path), { recursive: true });
+
+  // Un programador puede reportar que un límite está mal calibrado, nunca
+  // cambiarlo: los límites son el contrato que el orquestador acuerda con el humano.
+  if (isAutonWorkerSession(context.sessionId)) {
+    const limitsChanged =
+      JSON.stringify(plan.limits ?? null) !== JSON.stringify(previous.limits ?? null);
+    const historyChanged = plan.limitHistory.length !== previous.limitHistory.length;
+    if (limitsChanged || historyChanged) {
+      throw new Error(
+        "Un programador no puede cambiar los límites del plan. Puede reportarlo en el REPORTE y el orquestador decide.",
+      );
+    }
+  }
+
   await writeFile(path, `${JSON.stringify(plan, null, 2)}\n`, "utf8");
 
   return {

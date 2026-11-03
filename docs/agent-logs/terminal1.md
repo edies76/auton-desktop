@@ -18,6 +18,15 @@ Por qué: el humano tiene que poder deshacer el trabajo de un programador sin to
 Verificado con: `auton-revert.test.ts` (6), `auton-revert-e2e.test.ts` (2) y
 `adapters/tests/auton-revert-bytes.test.ts` (4, adaptador real: CRLF, mixtos y no-UTF-8).
 
+## 2026-11-02 — límites: el programador no los toca
+
+Qué: `AutonPlan` rechaza cualquier cambio de `limits` o `limitHistory` hecho desde una sesión
+`auton_*`; el programador puede reportarlo en su REPORTE, el orquestador decide.
+Por qué: era la única línea del criterio de hecho de los límites que quedaba sin enforcement real.
+Verificado con: `tests/auton-limits-guard.test.ts` (3) + `auton-plan-tool.test.ts` (6), typecheck limpio.
+Nota: el resto de los límites versionados ya estaba (plan.limits + limitHistory + unknownHandling);
+descarté mi implementación paralela para no dejar dos sistemas de límites.
+
 ## 2026-11-02 — contrato de notificaciones
 
 Qué: D5 y `docs/CONTRATO-DE-NOTIFICACIONES.md`: el orquestador no cierra el turno, publica cuatro
