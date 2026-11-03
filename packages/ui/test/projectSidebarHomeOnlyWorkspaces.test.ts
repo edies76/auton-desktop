@@ -63,6 +63,15 @@ vi.mock("@/store/StoreProvider.js", () => ({
 vi.mock("@/v4/useWorkspaceSessionsIndexItems.js", () => ({
   useWorkspaceSessionsIndexItems: () => ({ items: [] }),
 }));
+vi.mock("@/v4/V4ConversationContext.js", () => ({
+  V4PaneConversationProvider: ({ children }: { children: unknown }) => children,
+  useV4Conversation: () => ({
+    layer: { acquire: () => ({ release: () => undefined }) },
+  }),
+}));
+vi.mock("@/v4/useConversationProjection.js", () => ({
+  useConversationProjection: () => ({ snapshot: { rows: { window: [] } } }),
+}));
 vi.mock("@/i18n/IntlProvider.js", () => ({
   useZCodeIntl: () => ({
     intl: { formatMessage: ({ id }: { id: string }) => id },
@@ -362,10 +371,18 @@ describe("ProjectSidebar home-only workspace list", () => {
     };
     const { switcher } = createSwitcher();
     const onSelectTask = vi.fn();
+    localStorage.setItem(
+      "zcode-project-sidebar-preferences",
+      JSON.stringify({ order: [], view: "workers" }),
+    );
     render(
       createElement(
         Sidebar,
-        props(switcher, { isWebRemoteControl: false, onSelectTask }),
+        props(switcher, {
+          isWebRemoteControl: false,
+          webRemoteControlWorkspaceSwitcher: undefined,
+          onSelectTask,
+        }),
       ),
     );
 
@@ -376,5 +393,7 @@ describe("ProjectSidebar home-only workspace list", () => {
         undefined,
       ),
     );
+    expect(await screen.findByTestId("auton-worker-panel")).toBeTruthy();
+    expect(screen.getByTestId("auton-worker-count").textContent).toBe("0");
   });
 });
