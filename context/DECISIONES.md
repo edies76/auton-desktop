@@ -159,3 +159,46 @@ worker** → y cierra con la propuesta y con **lo que deja fuera de esta entrega
 
 **Qué la cambiaría**: que el escaneo inicial resulte caro en proyectos enormes. Entonces el escaneo pasa a
 ser dirigido (solo manifiestos y carpetas de primer nivel).
+
+## D8. Modos de trabajo: el esfuerzo es cuánto, el modo es qué
+
+**Se decide** (Edi propone los modos, aceptado con una corrección): **no se meten dentro del esfuerzo**.
+Son **dos ejes distintos** y mezclarlos en un campo sería el error clásico (un nombre para dos cosas).
+
+- **Esfuerzo** = **cuánto** trabaja: `minimal` · `standard` · `thorough`. Ya existe.
+- **Modo** = **qué clase de trabajo** hace: `build` · `read` · `research` · `debug` · `refactor`. Nuevo.
+
+Y se combinan: `read + minimal` es un barrido rápido; `research + thorough` es comparar tres alternativas
+con fuentes; `debug + thorough` es reproducir y aislar la causa raíz con su test.
+
+### Los modos
+
+| Modo | Qué hace | Su criterio de hecho | Qué NO hace |
+|---|---|---|---|
+| **build** (por defecto) | Escribe el código del encargo | El criterio del sprint, con su prueba | Salirse del scope |
+| **read** | Lee y resume: qué hay, dónde y cómo está montado | Un resumen **con rutas** y nada más | **No escribe ni un archivo.** Es el worker que le da contexto al orquestador |
+| **research** | Investiga fuera (web, documentación de terceros) | **Recomendación con razones y fuentes** | **No toca código.** Y no devuelve una lista de enlaces |
+| **debug** | Reproduce el fallo y encuentra la causa raíz | **El comando que lo reproduce** y la causa señalada | Arreglar solo lo trivial; el arreglo va en un `build` |
+| **refactor** | Cambia la forma sin cambiar el comportamiento | **Los tests siguen pasando** y lo observable no cambia | Mezclar refactor con features nuevas en el mismo encargo |
+
+El modo **`read` es el que faltaba** para la D7: es el que le entrega el contexto al orquestador, rápido y
+barato, y con la prohibición de escribir, así que no puede estropear nada mientras investiga.
+
+### Cómo se implementa (regla de las cuatro piezas)
+
+1. **El campo y su efecto**: el encargo y el contrato llevan `mode`, y el **prompt del worker se construye
+   desde ese modo** (igual que ya se construye desde el esfuerzo), con su criterio de hecho y sus
+   prohibiciones.
+2. **El registro**: el parámetro `mode` en la herramienta con la que el orquestador despacha, **más una
+   línea en su prompt** que diga cuándo usar cada uno. Sin esa línea, no los usa.
+3. **Las pruebas** (en `context/PRUEBAS-QUE-PROMETEMOS.md`), una por modo:
+   - `read`: entrega resumen con rutas y **no tocó un solo archivo** (se comprueba con el diario).
+   - `research`: trae recomendación **con razones** y **no** una lista de enlaces; y no tocó código.
+   - `debug`: trae **el comando que reproduce** el fallo, y la causa raíz señalada.
+   - `refactor`: **los tests siguen en verde** y el comportamiento observable no cambió.
+4. **La documentación**: esta decisión y su tabla.
+
+### Lo que se deja para después
+
+Modos de diseño visual, de migración de datos y de auditoría de seguridad. Se implementan igual cuando
+hagan falta; hoy no se necesitan y cada modo es trabajo real.
