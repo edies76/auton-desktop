@@ -121,7 +121,7 @@ export function AutonWorkerPanel({
                     ) : null}
                   </span>
                 </button>
-                {canStop ? (
+                {canStop && worker.status !== "terminado" ? (
                   <Button
                     type="button"
                     variant="ghost"

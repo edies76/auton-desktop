@@ -25,6 +25,7 @@ export {
   useOptionalProjectDirectory,
 } from "@/project-sidebar/ProjectDirectoryProvider.js";
 export { ProjectComposerMenu } from "@/project-sidebar/ProjectComposerMenu.js";
+import { AutonWorkersSidebar } from "@/project-sidebar/AutonWorkersSidebar.js";
 import { useProjectTaskNavigation } from "@/project-sidebar/useProjectTaskNavigation.js";
 import { useProjectFileTree } from "@/project-sidebar/useProjectFileTree.js";
 import {
@@ -247,6 +248,13 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
                     <div className="flex flex-col gap-3 pb-3">
                       {homeOnlySwitcher ? (
                         <HomeOnlyWorkspaceRows switcher={homeOnlySwitcher} />
+                      ) : view === "workers" ? (
+                        <AutonWorkersSidebar
+                          tasks={tree.tasks}
+                          workspacePath={props.workspacePath}
+                          workspaceIdentity={props.workspaceIdentity}
+                          onSelectTask={onSelectTask}
+                        />
                       ) : view === "projects" ? (
                         <>
                           <ProjectTaskRows

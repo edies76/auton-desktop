@@ -82,8 +82,11 @@ it("SBV02: filter has project, group and recent update choices", async () => {
   const trigger = screen.getByTestId("sidebar-view-menu");
   fireEvent.keyDown(trigger, { key: "ArrowDown" });
   const choices = await screen.findAllByRole("menuitemradio");
-  expect(choices).toHaveLength(3);
+  expect(choices).toHaveLength(4);
   expect(choices[0]?.getAttribute("aria-checked")).toBe("true");
   fireEvent.click(screen.getByTestId("sidebar-view-timeline"));
   expect(onViewChange).toHaveBeenCalledWith("timeline");
+  fireEvent.keyDown(trigger, { key: "ArrowDown" });
+  fireEvent.click(await screen.findByTestId("sidebar-view-workers"));
+  expect(onViewChange).toHaveBeenCalledWith("workers");
 });

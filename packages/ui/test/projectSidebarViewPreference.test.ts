@@ -13,6 +13,7 @@ it("migrates the previous group selection and keeps a subsequent explicit choice
   expect(readProjectSidebarView(storage({ view: "projects" }, { organizeBy: "grouped" }))).toBe(
     "projects",
   );
+  expect(readProjectSidebarView(storage({ view: "workers" }, null))).toBe("workers");
 });
 it("maps the old project and timeline values, and tolerates invalid or blocked storage", () => {
   expect(readProjectSidebarView(storage(null, { organizeBy: "chronological" }))).toBe("timeline");
