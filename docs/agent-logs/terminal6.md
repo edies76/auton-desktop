@@ -268,7 +268,7 @@ que no se pueda avanzar sin un proyecto activo. La pantalla reutiliza el draft e
 creó una vista paralela.
 
 Verificado con: `autonProjectSidebarVisibility` (3), `projectSidebarNavigation` (6),
-`usePaneSessionPersistence` (15) y la suite `auton*` 90/90. Typecheck raíz 0 y lint raíz 0
+`usePaneSessionPersistence` (15) y la suite `auton*` 69/69. Typecheck raíz 0 y lint raíz 0
 errores/103 avisos. En vivo: `home-projects-ready.png`; el home muestra solo `Projects` + `Lunar`
 con su ruta, sin selector encima del input, con el aviso y el envío deshabilitado. Al escribir
 texto el envío sigue deshabilitado; al elegir Lunar cambia a workers, muestra nombre+ruta y el
