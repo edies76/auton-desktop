@@ -4,8 +4,44 @@ import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { AutonProjectsScreen } from "../src/auton/project-space/ProjectListScreen.js";
+import { AutonProjectList } from "../src/auton/project-space/AutonProjectList.js";
 import { AutonWorkspaceApp } from "../src/auton/project-space/AutonWorkspaceApp.js";
 import type { AutonProject } from "../src/auton/project-space/model.js";
+
+const projectTreeMock = vi.hoisted(() => ({
+  tree: {
+    projects: [
+      {
+        id: "old",
+        name: "Antiguo",
+        roots: [{ rootPath: "C:\\old", position: 0, isPrimary: true }],
+        position: 0,
+        pinned: false,
+        deleted: false,
+        createdAt: 1,
+        updatedAt: 1,
+      },
+      {
+        id: "recent",
+        name: "Reciente",
+        roots: [{ rootPath: "C:\\recent", position: 0, isPrimary: true }],
+        position: 1,
+        pinned: false,
+        deleted: false,
+        createdAt: 2,
+        updatedAt: 2,
+      },
+    ],
+    tasks: [
+      { taskId: "t-old", projectId: "old", title: "Vieja", updatedAt: 10 },
+      { taskId: "t-recent", projectId: "recent", title: "Nueva", updatedAt: 20 },
+    ],
+  },
+}));
+
+vi.mock("@/project-sidebar/useProjectTree.js", () => ({
+  useProjectTree: () => ({ tree: projectTreeMock.tree, loading: false }),
+}));
 
 const NOW = Date.UTC(2026, 10, 2, 12, 0, 0);
 
@@ -23,6 +59,32 @@ beforeEach(() => {
 });
 
 afterEach(cleanup);
+
+describe("lista real de proyectos", () => {
+  it("ordena por la task más reciente y abre el proyecto con su ruta y task", () => {
+    const onOpenProject = vi.fn();
+    const onOpenWorkspace = vi.fn();
+    renderUi(
+      <AutonProjectList
+        onOpenProject={onOpenProject}
+        onOpenWorkspace={onOpenWorkspace}
+      />,
+    );
+
+    const rows = screen.getAllByTestId("auton-project-row");
+    expect(rows.map((row) => row.dataset.projectId)).toEqual(["recent", "old"]);
+    expect(rows[0]!.textContent).toContain("Reciente");
+    expect(rows[0]!.textContent).toContain("C:\\recent");
+
+    fireEvent.click(rows[0]!);
+    expect(onOpenProject).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "recent" }),
+      "C:\\recent",
+      "t-recent",
+    );
+    expect(onOpenWorkspace).not.toHaveBeenCalled();
+  });
+});
 
 describe("lista de proyectos", () => {
   it("ordena por actividad reciente y muestra nombre y ruta", () => {

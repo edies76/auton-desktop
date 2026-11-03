@@ -70,6 +70,17 @@ export function AutonThreadView({
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4" data-testid="auton-thread-scroll">
         <ol className="mx-auto max-w-3xl space-y-4">
+          {data.messages.length === 0 &&
+          data.tramos.length === 0 &&
+          !data.plan &&
+          !data.evidence ? (
+            <li
+              data-testid="auton-thread-empty"
+              className="rounded-lg border border-border border-dashed px-4 py-8 text-center text-ui-sm text-foreground-subtle"
+            >
+              El orquestador todavía no ha abierto trabajo en este proyecto.
+            </li>
+          ) : null}
           {data.messages.map((message) => {
             const orchestrator = message.role === "orchestrator";
             return (

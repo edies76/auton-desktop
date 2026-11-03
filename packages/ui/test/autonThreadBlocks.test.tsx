@@ -158,6 +158,21 @@ describe("hilo del orquestador", () => {
     expect(plan.compareDocumentPosition(evidence) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it("sin trabajo muestra un estado vacío claro", () => {
+    renderUi(
+      <AutonThreadView
+        project={PROJECT}
+        data={{ messages: [], workers: [], tramos: [] }}
+        now={NOW}
+        onBack={vi.fn()}
+        onStopWorker={vi.fn()}
+      />,
+    );
+    expect(screen.getByTestId("auton-thread-empty").textContent).toContain(
+      "El orquestador todavía no ha abierto trabajo",
+    );
+  });
+
   it("el compositor es el único campo y envía al orquestador", () => {
     const onSend = vi.fn();
     const { container } = renderUi(

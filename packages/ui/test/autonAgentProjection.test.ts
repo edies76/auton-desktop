@@ -29,20 +29,23 @@ describe("workers = agentes completos de ZCode", () => {
         task("s1", "Revisar el diseño", "running", -120_000),
         task("s2", "Arreglar el login", "completed", -300_000),
         task("s3", "Romper el build", "error", -60_000),
+        task("s4", "Sin estado todavía", undefined, -30_000),
       ],
       NOW,
     );
 
-    expect(workers.map((worker) => worker.id)).toEqual(["s1", "s2", "s3"]);
+    expect(workers.map((worker) => worker.id)).toEqual(["s1", "s2", "s3", "s4"]);
     expect(workers.map((worker) => worker.name)).toEqual([
       "Revisar el diseño",
       "Arreglar el login",
       "Romper el build",
+      "Sin estado todavía",
     ]);
     expect(workers.map((worker) => worker.status)).toEqual([
       "trabajando",
       "terminado",
       "bloqueado",
+      "esperando",
     ]);
     expect(workers[0]?.startedAt).toBe(NOW - 120_000);
     expect(workers[0]?.lastSignalAt).toBe(NOW - 90_000);

@@ -31,7 +31,13 @@ function latestTask(tasks: readonly ProjectTask[], projectId: string): ProjectTa
  */
 export function AutonProjectList({ onOpenProject, onOpenWorkspace }: AutonProjectListProps) {
   const { tree, loading } = useProjectTree();
-  const projects = tree.projects.filter((project) => !project.deleted);
+  const projects = [...tree.projects]
+    .filter((project) => !project.deleted)
+    .sort((left, right) => {
+      const leftAt = latestTask(tree.tasks, left.id)?.updatedAt ?? left.updatedAt;
+      const rightAt = latestTask(tree.tasks, right.id)?.updatedAt ?? right.updatedAt;
+      return rightAt - leftAt;
+    });
 
   return (
     <div className="mx-auto flex h-full w-full max-w-4xl flex-col px-6 py-8">
@@ -63,6 +69,8 @@ export function AutonProjectList({ onOpenProject, onOpenWorkspace }: AutonProjec
                 <Button
                   type="button"
                   variant="ghost"
+                  data-testid="auton-project-row"
+                  data-project-id={project.id}
                   className="group flex h-auto w-full items-center gap-3 rounded-md px-2 py-3 text-left hover:bg-muted/40"
                   onClick={() =>
                     task && path

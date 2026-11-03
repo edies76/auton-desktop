@@ -239,7 +239,6 @@ export default defineConfig(({ mode }) => {
         // 多入口：主窗口 + 进程监控 + CUA 权限拖拽浮窗
         input: {
           index: resolve(__dirname, "src/renderer/index.html"),
-          "auton-space": resolve(__dirname, "src/renderer/auton-space.html"),
           "resource-manager": resolve(__dirname, "src/renderer/resource-manager.html"),
           "cua-permission-panel": resolve(__dirname, "src/renderer/cua-permission-panel.html"),
           // 插件 UI 沙箱的受信 shell，经 zcode-sandbox:// 提供
