@@ -51,4 +51,29 @@ describe("las cuatro piezas del núcleo", () => {
     expect(autonSection).toContain(".auton/changes.jsonl");
     expect(autonSection).toContain(".auton/reverts.jsonl");
   });
+
+  it("los límites llegan al modelo: registro, prompt y prueba", () => {
+    const plan = builtInTools.find((tool) => tool.metadata.name === "AutonPlan")!;
+    const schema = JSON.stringify(plan.inputSchema);
+
+    // Registro: la forma de los argumentos que el modelo ve.
+    expect(schema).toContain("not_evaluable");
+    expect(schema).toContain("attempts");
+    expect(schema).toContain("limitReports");
+    expect(plan.metadata.description).toContain("not_evaluable");
+    expect(plan.metadata.description).toContain("limitReports");
+
+    // Prompt: la sección ensamblada dice cuándo usarlos.
+    expect(autonSection).toContain("not_evaluable");
+    expect(autonSection).toContain("limitReports");
+    expect(autonSection).toContain("Los intentos los cuenta el plan");
+
+    // Prueba: la promesa está en el catálogo, no solo en el código.
+    const pruebas = readFileSync(
+      resolve(here, "../../../../../context/PRUEBAS-QUE-PROMETEMOS.md"),
+      "utf8",
+    );
+    expect(pruebas).toContain("### 8. Los límites se escriben");
+    expect(pruebas).toContain("### 9. Si no sabe decidir");
+  });
 });

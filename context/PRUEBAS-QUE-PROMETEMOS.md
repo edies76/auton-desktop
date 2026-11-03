@@ -152,10 +152,11 @@ Esto es lo que hace que el multiagente **se sienta** y no se administre.
 | 3. Canales anidados | `ui/test/autonThreadChannels.test.tsx`, `ui/test/autonSubagentChannel.test.ts` |
 | 4. Canal rápido bidireccional | `core/tests/auton-fast-channel-runtime.test.ts` |
 | 8. Límites versionados y no relajables | `core/tests/auton-limits-guard.test.ts`, `auton-plan-tool.test.ts` |
+| 9. Si no sabe decidir, pregunta | `core/tests/auton-limits-governance.test.ts`, `auton-four-pieces.test.ts` |
 | 14. Deshacer devuelve los archivos idénticos | `core/tests/auton-revert.test.ts`, `auton-revert-e2e.test.ts`, `adapters/tests/auton-revert-bytes.test.ts` |
 | 17. El orquestador elige la herramienta | `core/tests/auton-four-pieces.test.ts` |
 
-Las pruebas 1, 5, 6, 7, 9, 10, 11, 12, 13, 15 y 16 siguen siendo corridas a mano con modelo real.
+Las pruebas 1, 5, 6, 7, 10, 11, 12, 13, 15 y 16 siguen siendo corridas a mano con modelo real.
 
 ---
 
