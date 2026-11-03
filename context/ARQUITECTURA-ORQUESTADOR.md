@@ -171,6 +171,20 @@ Dirige **herramientas de Meta** en vez de competir con ellas, y puede mostrarlo:
 mismo protocolo de reporte y de evidencia, dos motores distintos, y Auton dirigiendo a los dos igual.*
 Para la hackathon es el argumento del 25% (uso de herramientas de IA de Meta) sin regalar el resto.
 
+
+### El trabajo se abre en vivo (D9)
+
+**No hay un plan de N sprints decidido al principio**, ni un mensaje al que se le asignen N sprints o N
+workers: la sesión es viva e indefinida. El orquestador **abre trabajo cuando hace falta y lo cierra cuando
+está**. Por eso:
+
+- **Un sprint es una unidad de trabajo abierta**, no una fila de una lista fija: si pide tres, son tres; si
+  mañana pide dos más, se abren; si una sobra, se cierra.
+- **Ningún número decide en el código.** Los números son orientación en el prompt; el que decide es el
+  criterio.
+- Lo que se firma es el **contrato del goal** (qué se construye, restricciones, fuera de alcance). El plan
+  es **el estado actual del trabajo**, y se puede leer.
+
 ## 12. Sprints, TODOs y modo goal: cómo se unifican
 
 | Pieza | Qué es |

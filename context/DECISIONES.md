@@ -202,3 +202,26 @@ barato, y con la prohibición de escribir, así que no puede estropear nada mien
 
 Modos de diseño visual, de migración de datos y de auditoría de seguridad. Se implementan igual cuando
 hagan falta; hoy no se necesitan y cada modo es trabajo real.
+
+## D9. El trabajo se abre en vivo: no hay un plan de N sprints
+
+**Se decide** (Edi, y corrige la idea anterior): **no existe "un mensaje" al que se le asignen N sprints ni
+N workers.** La sesión es **viva e indefinida**: el orquestador **abre trabajo cuando hace falta y lo cierra
+cuando está**, y eso cambia según lo que va pasando. Un plan de diez filas decidido al principio es una
+cadena, y una cadena no hace a un director.
+
+**Consecuencias, y son duras:**
+
+1. **Ningún número en el código.** Nada de topes ni rangos programados (ni 4, ni 12, ni "entre 8 y 24"). Los
+   números pueden existir como **orientación en el prompt**, nunca como lógica que decide. El que decide es
+   el **criterio**, no un contador.
+2. **Un sprint es una unidad de trabajo abierta**, no una fila de una lista fija. Si el trabajo pide tres,
+   son tres; si mañana pide dos más, se abren; y si uno sobra, se cierra sin más.
+3. **Lo que sí es obligatorio en cada unidad abierta**: dueño, criterio de hecho, y evidencia para cerrarla.
+4. **El plan deja de ser un contrato firmado al inicio** y pasa a ser **el estado actual del trabajo**: se
+   puede leer, y evoluciona. Lo que se firma es el **contrato del goal** (qué se construye, restricciones,
+   fuera de alcance), no la lista de trabajos.
+5. **Y se descarta medir un plan por su cantidad de filas** — ni en las pruebas ni en la presentación.
+
+**Qué la cambiaría**: nada de esto. Lo que cambia es la forma de trabajarlo, no la idea.
+
