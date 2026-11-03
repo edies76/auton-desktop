@@ -27,6 +27,8 @@ worker.** Etiqueta, color o forma distinta. No basta con el nombre.
   deshabilitado y un aviso pide elegir un proyecto.
 - **Crear proyecto** pide nombre y ruta; al guardarlo se entra al proyecto. **Elegir una fila** también
   entra. En ese momento el panel cambia a workers y aparece el hilo del orquestador.
+- El texto escrito en la entrada **viaja al compositor del proyecto**. Si el proyecto ya tenía un
+  borrador con texto, ese borrador manda y no se pisa.
 - La pantalla se reutiliza del draft existente; no se crea una vista nueva desde cero.
 
 ## Pantalla 2 — Espacio del proyecto

@@ -30,8 +30,6 @@ export interface AutonConversationSource {
   now?: number;
 }
 
-const MAX_MESSAGES = 40;
-
 function timeOf(value: string | number | undefined, fallback: number): number {
   if (value === undefined) return fallback;
   if (typeof value === "number") return Number.isFinite(value) ? value : fallback;
@@ -92,7 +90,8 @@ export function projectAutonMessages(rows: readonly ConversationRow[]): AutonThr
       });
     }
   }
-  return messages.slice(-MAX_MESSAGES);
+  // D9: la sesión es viva e indefinida; la crónica no se recorta por un tope fijo.
+  return messages;
 }
 
 function subagentStatus(row: SubagentRow): AutonWorkerStatus {
@@ -219,7 +218,8 @@ export function projectAutonTramos(rows: readonly ConversationRow[]): AutonWorkT
     list.push(row);
     groups.set(key, list);
   }
-  return [...groups.entries()].slice(-3).map(([key, group]) => {
+  // D9: todos los tramos siguen visibles; el hilo no decide cuántos sprints hubo.
+  return [...groups.entries()].map(([key, group]) => {
     const starts = group.map((row) => timeOf(row.startedAt ?? row.createdAt, 0));
     const ended = group.every((row) => Boolean(row.endedAt));
     return {

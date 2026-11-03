@@ -4,7 +4,7 @@
  */
 export const cliAutonCoreModule = {
   id: "cli-auton-core",
-  requires: ["zcode-cli"],
+  requires: ["zcode-cli", "shared"],
   provides: ["cli-auton-core"],
   publicEntrypoints: ["index.ts", "contract.ts"],
 } as const;

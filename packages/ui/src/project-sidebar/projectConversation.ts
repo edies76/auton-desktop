@@ -1,4 +1,11 @@
-import type { ProjectTask } from "@zcode/services";
+import { isWorkerSessionTaskId } from "@/auton/index.js";
+
+/** Lo mínimo que la conversación necesita de una tarea del proyecto. */
+export interface ProjectConversationTask {
+  taskId: string;
+  projectId?: string | null;
+  createdAt: number;
+}
 
 /**
  * Cada proyecto tiene UNA conversación de orquestador. Las sesiones que no son
@@ -35,13 +42,13 @@ export function projectConversationKey(workspaceKey: string, projectId: string):
   return `${workspaceKey}::${projectId}`;
 }
 
-function oldestTask(tasks: readonly ProjectTask[]): ProjectTask | undefined {
+function oldestTask(tasks: readonly ProjectConversationTask[]): ProjectConversationTask | undefined {
   return [...tasks].sort((left, right) => left.createdAt - right.createdAt)[0];
 }
 
 export function ensureProjectConversation(
   key: string,
-  tasks: readonly ProjectTask[],
+  tasks: readonly ProjectConversationTask[],
   activeTaskId?: string | null,
 ): ProjectConversation {
   const all = readAll();
@@ -89,16 +96,6 @@ export function isLegacyProjectTask(key: string, taskId: string | null): boolean
   return readAll()[key]?.legacyTaskIds.includes(taskId) ?? false;
 }
 
-/**
- * Las sesiones hijas del orquestador (`auton-worker` y subagentes) son canales
- * de trabajo, no chats del proyecto. Nunca se listan ni se editan como tarea.
- */
-export function isWorkerSessionTaskId(taskId: string | null | undefined): boolean {
-  return Boolean(
-    taskId && (taskId.startsWith("sess_auton_") || taskId.startsWith("sess_subagent_")),
-  );
-}
-
 /** Una tarea solo puede ser el chat del proyecto si no es legado ni worker. */
 export function isPromotableProjectTask(input: {
   taskId: string;
@@ -142,7 +139,7 @@ export function resolveProjectTaskSelection(input: {
  */
 export function hiddenProjectTaskIds(
   workspaceKey: string,
-  tasks: readonly ProjectTask[],
+  tasks: readonly ProjectConversationTask[],
   activeTaskId?: string | null,
 ): Set<string> {
   const hidden = new Set<string>();

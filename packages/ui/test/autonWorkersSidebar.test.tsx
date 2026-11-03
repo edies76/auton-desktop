@@ -1,5 +1,4 @@
 // @vitest-environment jsdom
-import type { ProjectTask } from "@zcode/services";
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useAutonWorkerFocusStore } from "../src/auton/project-space/workerFocusStore.js";
@@ -48,20 +47,6 @@ vi.mock("@/store/zcodeSessionStore.js", () => ({
     selector({ workspaces: { "/workspace/lunar": { activeTaskId: state.activeTaskId ?? "" } } }),
 }));
 
-function task(taskId: string, title: string): ProjectTask {
-  return {
-    taskId,
-    title,
-    status: "running",
-    createdAt: NOW - 5_000,
-    updatedAt: NOW - 200,
-    workspacePath: "/workspace/lunar",
-    projectId: "p1",
-    hostId: "local",
-    archived: false,
-  } as unknown as ProjectTask;
-}
-
 function subagentRow() {
   return {
     kind: "subagent",
@@ -105,12 +90,9 @@ function fullWorkerRow(
   };
 }
 
-const TASKS = [task("orch", "Orquestador"), task("legacy", "Chat legado")];
-
 function renderSidebar(orchestratorTaskId: string | null = "orch") {
   return render(
     <AutonWorkersSidebar
-      tasks={TASKS}
       workspacePath="/workspace/lunar"
       orchestratorTaskId={orchestratorTaskId}
     />,

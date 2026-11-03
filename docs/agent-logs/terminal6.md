@@ -278,3 +278,30 @@ Nota de convivencia: el compañero sigue editando el render de V4. Para poder ar
 movió `orderedBodyRows` antes de su primer uso en `conversationTurnRenderUnits.ts` y se añadió la
 rama `assistantReasoning` en `ConversationShareReadonlyTimeline.tsx`; no se revirtió ninguno de sus
 cambios y esos dos archivos quedan sin commitear junto con los suyos.
+
+## 2026-11-03 - cierre: arquitectura, D9 y traspaso del borrador
+
+Qué:
+- `AutonProjectList` se movió de `ui-auton` a `project-sidebar` (sigue usándose en
+  la ruta Auton de `Root`). `isWorkerSessionTaskId` se movió a
+  `ui-auton/project-space/session.ts` y se publica por `@/auton/index.js`. La
+  dirección queda `project-sidebar -> ui-auton`, sin ciclo, y ambos manifiestos
+  declaran la dependencia (`ui-auton` en project-sidebar, `shared` en
+  cli-auton-core). El sidebar dejó de recibir `tasks`; las filas salen de la
+  proyección viva.
+- D9: se quitaron `MAX_MESSAGES = 40` y el corte de los últimos 3 tramos en
+  `projection.ts`. La crónica no tiene tope fijo. Los números del prompt
+  (`1 o 2 sprints` para un archivo) y el `maxAttempts` versionado del plan se
+  mantienen.
+- El texto escrito en la pantalla de entrada viaja al compositor del proyecto
+  al elegir un proyecto existente; si el proyecto ya tenía un borrador con
+  texto, ese se conserva.
+
+Verificado:
+- `pnpm architecture:check --changed`: 0 violaciones.
+- `pnpm typecheck`: 0.
+- `pnpm lint`: 0 errores, 103 avisos.
+- Suite `auton*` + sidebar + persistencia: 93/93.
+- En vivo: se escribió `texto de prueba del home`, el envío siguió bloqueado en
+  el home, al elegir Lunar el compositor del proyecto apareció con ese texto y
+  el envío habilitado.

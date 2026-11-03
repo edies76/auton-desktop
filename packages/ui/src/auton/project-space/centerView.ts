@@ -1,5 +1,5 @@
 import type { ZCodeTaskMeta } from "@zcode/shared";
-import { isWorkerSessionTaskId } from "@/project-sidebar/projectConversation.js";
+import { isWorkerSessionTaskId } from "./session.js";
 import type { AutonWorkerStatus, AutonWorkerView } from "./model.js";
 
 /** De dónde salió el worker seleccionado. El panel manda sobre la sesión. */

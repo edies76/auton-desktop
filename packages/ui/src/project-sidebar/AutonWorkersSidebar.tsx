@@ -1,11 +1,12 @@
-import type { ProjectTask } from "@zcode/services";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { buildAutonWorkerGroups } from "@/auton/project-space/agentProjection.js";
-import { useAutonClock } from "@/auton/project-space/clock.js";
-import { projectAutonWorkers } from "@/auton/project-space/projection.js";
-import { useAutonSubagentCounts } from "@/auton/project-space/useSubagentCounts.js";
-import { AutonWorkerPanel } from "@/auton/project-space/WorkerPanel.js";
-import { useAutonWorkerFocusStore } from "@/auton/project-space/workerFocusStore.js";
+import {
+  AutonWorkerPanel,
+  buildAutonWorkerGroups,
+  projectAutonWorkers,
+  useAutonClock,
+  useAutonSubagentCounts,
+  useAutonWorkerFocusStore,
+} from "@/auton/index.js";
 import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { logger } from "@/logger.js";
 import { useZCodeSessionStore } from "@/store/zcodeSessionStore.js";
@@ -17,7 +18,6 @@ import {
 import { useConversationProjection } from "@/v4/useConversationProjection.js";
 
 export interface AutonWorkersSidebarProps {
-  tasks: readonly ProjectTask[];
   workspacePath: string;
   workspaceIdentity?: string;
   workspaceRemoteSessionId?: string;

@@ -1,12 +1,15 @@
 export { AutonWorkspaceApp } from "./AutonWorkspaceApp.js";
 export type { AutonWorkspaceAppProps } from "./AutonWorkspaceApp.js";
-export { AutonProjectList } from "./AutonProjectList.js";
-export type { AutonProjectListProps } from "./AutonProjectList.js";
 export { AutonProjectSpaceRoute } from "./AutonProjectSpaceRoute.js";
 export type { AutonProjectSpaceRouteProps } from "./AutonProjectSpaceRoute.js";
 export { AutonSpaceLive } from "./AutonSpaceLive.js";
 export type { AutonSpaceLiveProps } from "./AutonSpaceLive.js";
 export { useAutonClock } from "./clock.js";
+export { buildAutonWorkerGroups } from "./agentProjection.js";
+export { useAutonHomeStore } from "./homeStore.js";
+export { useAutonSubagentCounts } from "./useSubagentCounts.js";
+export { useAutonWorkerFocusStore } from "./workerFocusStore.js";
+export { isWorkerSessionTaskId } from "./session.js";
 export { AutonProjectsScreen } from "./ProjectListScreen.js";
 export type { AutonProjectDraft, AutonProjectsScreenProps } from "./ProjectListScreen.js";
 export { AutonProjectSpace } from "./ProjectSpaceScreen.js";

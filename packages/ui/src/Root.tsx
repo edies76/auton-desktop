@@ -36,7 +36,11 @@ import {
   useDynamicWorkflowUserModeSync,
 } from "@/hooks/useDynamicWorkflowAvailability.js";
 import { DirectoryBrowser } from "@/DirectoryBrowser.js";
-import { attachRemoteProjectWorkspace, resolveEntryProject } from "@/project-sidebar/index.js";
+import {
+  attachRemoteProjectWorkspace,
+  AutonProjectList,
+  resolveEntryProject,
+} from "@/project-sidebar/index.js";
 import { useTabPersistence, type WorkspacePersistenceGate } from "@/hooks/useTabPersistence.js";
 import { useTokenRefresh } from "@/hooks/useTokenRefresh.js";
 import { useWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
@@ -66,7 +70,6 @@ import { isSettingsTab, isWorkspaceTab, type WorkspaceTabState } from "@/store/t
 import { logger } from "@/logger.js";
 import { RootShell } from "@/root/RootShell.js";
 import {
-  AutonProjectList,
   AutonProjectSpaceRoute,
 } from "@/auton/project-space/index.js";
 import { isAutonRoute } from "@/auton/project-space/autonRoute.js";

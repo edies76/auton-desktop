@@ -1,7 +1,14 @@
 import { ArrowRight, Folder } from "lucide-react";
-import type { ProjectTask, VirtualProject } from "@zcode/services";
+import type { VirtualProject } from "./contract.js";
 import { Button } from "@/components/ui/button.js";
-import { useProjectTree } from "@/project-sidebar/useProjectTree.js";
+import { useProjectTree } from "./useProjectTree.js";
+
+/** Lo mínimo que la lista necesita de una tarea del proyecto. */
+interface AutonProjectTask {
+  taskId: string;
+  projectId?: string | null;
+  updatedAt: number;
+}
 
 export interface AutonProjectListProps {
   onOpenProject: (project: VirtualProject, rootPath: string, taskId: string) => void;
@@ -17,7 +24,10 @@ function rootOf(project: VirtualProject): string {
   );
 }
 
-function latestTask(tasks: readonly ProjectTask[], projectId: string): ProjectTask | undefined {
+function latestTask(
+  tasks: readonly AutonProjectTask[],
+  projectId: string,
+): AutonProjectTask | undefined {
   return tasks
     .filter((task) => task.projectId === projectId)
     .sort((left, right) => right.updatedAt - left.updatedAt)[0];

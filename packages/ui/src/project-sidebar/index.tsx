@@ -1,4 +1,5 @@
 import { SidebarTooltipProvider } from "@/ControlHintTooltip.js";
+export { AutonProjectList } from "@/project-sidebar/AutonProjectList.js";
 export { readProjectSidebarView } from "@/project-sidebar/view-preference.js";
 export { ArchiveManagement } from "@/project-sidebar/ArchiveManagement.js";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -20,11 +21,18 @@ export {
 export { ProjectComposerMenu } from "@/project-sidebar/ProjectComposerMenu.js";
 import { AutonWorkersSidebar } from "@/project-sidebar/AutonWorkersSidebar.js";
 import { AutonProjectPicker } from "@/project-sidebar/AutonProjectPicker.js";
-import { useAutonHomeStore } from "@/auton/project-space/homeStore.js";
+import { useAutonHomeStore } from "@/auton/index.js";
+import {
+  captureV4ComposerDraftHandoff,
+} from "@/v4/composer/composerDraftWorkspaceTransfer.js";
+import {
+  persistV4ComposerDraft,
+  readV4ComposerDraft,
+  resolveComposerScope,
+} from "@/v4/composer/composerDraftStore.js";
 import {
   claimProjectConversationCreation,
   ensureProjectConversation,
-  hiddenProjectTaskIds,
   isPromotableProjectTask,
   projectConversationKey,
   rememberProjectOrchestrator,
@@ -119,19 +127,6 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
       conversation: ensureProjectConversation(key, projectTasks, activeTaskId),
     };
   }, [activeProject, activeTaskId, tree.tasks, workspaceKey]);
-  // Las vistas de tareas no son un segundo listado de chats: muestran solo la
-  // conversación del orquestador de cada proyecto, nunca legados ni workers.
-  const hiddenTaskIds = useMemo(
-    () => hiddenProjectTaskIds(workspaceKey, tree.tasks, activeTaskId),
-    [activeTaskId, tree.tasks, workspaceKey],
-  );
-  const visibleTree = useMemo(
-    () => ({
-      ...tree,
-      tasks: tree.tasks.filter((task) => !hiddenTaskIds.has(task.taskId)),
-    }),
-    [hiddenTaskIds, tree],
-  );
   // El shell no conoce el árbol de proyectos; publica la identidad resuelta
   // para etiquetar el hilo como orquestador solo cuando de verdad lo es.
   useEffect(() => {
@@ -227,6 +222,32 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
         (task) => task.taskId === conversation.orchestratorTaskId,
       );
       if (orchestrator) {
+        // Lo que el humano escribió en la pantalla de entrada viaja al chat del
+        // proyecto. Si el proyecto ya tenía un borrador con texto, ese manda.
+        if (homeVisible) {
+          const handoff = captureV4ComposerDraftHandoff(
+            props.workspacePath,
+            props.workspaceIdentity,
+          );
+          if (handoff.draft.text.trim()) {
+            const targetScope = resolveComposerScope(project.id, props.workspaceIdentity);
+            const targetDraft = readV4ComposerDraft(
+              props.workspacePath,
+              props.workspaceIdentity,
+              orchestrator.taskId,
+              targetScope,
+            );
+            if (!targetDraft?.text.trim()) {
+              persistV4ComposerDraft(
+                props.workspacePath,
+                props.workspaceIdentity,
+                orchestrator.taskId,
+                { ...handoff.draft, projectId: undefined, taskGroupId: undefined },
+                targetScope,
+              );
+            }
+          }
+        }
         onSelectTask(
           orchestrator.workspacePath,
           orchestrator.taskId,
@@ -241,7 +262,16 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
       }
       setView("workers");
     },
-    [activeTaskId, enterProject, onSelectTask, props, setView, tree.tasks, workspaceKey],
+    [
+      activeTaskId,
+      enterProject,
+      homeVisible,
+      onSelectTask,
+      props,
+      setView,
+      tree.tasks,
+      workspaceKey,
+    ],
   );
   const openSettings = useCallback(() => {
     tabStore.getState().openSettingsTab();
@@ -306,7 +336,6 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
                         />
                       ) : (
                         <AutonWorkersSidebar
-                          tasks={visibleTree.tasks}
                           workspacePath={props.workspacePath}
                           workspaceIdentity={props.workspaceIdentity}
                           workspaceRemoteSessionId={props.workspaceRemoteSessionId}

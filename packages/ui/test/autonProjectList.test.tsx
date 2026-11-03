@@ -4,8 +4,8 @@ import type { ReactElement } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { AutonProjectsScreen } from "../src/auton/project-space/ProjectListScreen.js";
-import { AutonProjectList } from "../src/auton/project-space/AutonProjectList.js";
 import { AutonWorkspaceApp } from "../src/auton/project-space/AutonWorkspaceApp.js";
+import { AutonProjectList } from "../src/project-sidebar/AutonProjectList.js";
 import type { AutonProject } from "../src/auton/project-space/model.js";
 
 const projectTreeMock = vi.hoisted(() => ({

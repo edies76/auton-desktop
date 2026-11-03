@@ -131,6 +131,7 @@ modules:
       - services
       - shared
       - ui
+      - ui-auton
       - conversation-workspace-target
       - web-remote-control-ui
       - remote-connection-flow
@@ -764,6 +765,7 @@ modules:
     managed: true
     requires:
       - zcode-cli
+      - shared
     publicEntrypoints:
       - apps/zcode-cli/packages/core/src/auton/index.ts
       - apps/zcode-cli/packages/core/src/auton/contract.ts
