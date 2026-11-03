@@ -26,20 +26,15 @@ export interface WakeEventRowProps {
   onAction?: () => void;
 }
 
-const KIND_STYLES: Record<WakeEventKind, { icon: ReactNode; tone: string }> = {
-  question: {
-    icon: <MessageCircleQuestion className="size-3.5 shrink-0" />,
-    tone: "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-300",
-  },
-  closed: {
-    icon: <CheckCircle2 className="size-3.5 shrink-0" />,
-    tone: "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-300",
-  },
-  heartbeat: {
-    icon: <Activity className="size-3.5 shrink-0" />,
-    tone: "border-border bg-secondary/40 text-foreground-subtle",
-  },
+const KIND_ICONS: Record<WakeEventKind, ReactNode> = {
+  question: <MessageCircleQuestion className="size-3.5 shrink-0" />,
+  closed: <CheckCircle2 className="size-3.5 shrink-0" />,
+  heartbeat: <Activity className="size-3.5 shrink-0" />,
 };
+
+// Mismo lenguaje visual que el resto del hilo: borde, fondo secundario y texto
+// de la app. El tipo se distingue por el icono, no por un color nuevo.
+const ROW_TONE = "border-border bg-secondary/40 text-foreground-subtle";
 
 export function WakeEventRow({
   kind,
@@ -50,14 +45,14 @@ export function WakeEventRow({
   actionLabel,
   onAction,
 }: WakeEventRowProps) {
-  const style = KIND_STYLES[kind];
+  const icon = KIND_ICONS[kind];
 
   return (
     <div className="my-2 flex w-full justify-center" data-testid="auton-wake-event" data-kind={kind}>
       <div
-        className={`flex max-w-[85%] min-w-0 items-center gap-2 rounded-full border px-3 py-1.5 text-ui-sm ${style.tone}`}
+        className={`flex max-w-[85%] min-w-0 items-center gap-2 rounded-full border px-3 py-1.5 text-ui-sm ${ROW_TONE}`}
       >
-        {style.icon}
+        {icon}
         {workerName ? (
           <span className="shrink-0 font-medium text-foreground">{workerName}</span>
         ) : null}

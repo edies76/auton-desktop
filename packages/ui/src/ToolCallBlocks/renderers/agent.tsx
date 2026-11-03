@@ -127,14 +127,22 @@ function BackgroundAgentProcessRow({ label, children }: { label: string; childre
   );
 }
 
-function AgentNameText({ color, name }: { color: AgentColor; name: string }) {
+function AgentNameText({
+  color,
+  name,
+  neutral = false,
+}: {
+  color: AgentColor;
+  name: string;
+  neutral?: boolean;
+}) {
   return (
     <span
       className={cn(
         // 子智能体名在 tool summary 行内不能依赖字体基线对齐。
         // inline-flex 负责垂直居中，1.5 倍行高保持和周围摘要文字一致的阅读节奏。
         "inline-flex max-w-36 items-center truncate font-mono text-ui-base font-medium leading-[1.5]",
-        SUBAGENT_TEXT_COLOR_CLASS[color],
+        neutral ? "text-foreground-subtle" : SUBAGENT_TEXT_COLOR_CLASS[color],
       )}
       title={name}
     >
@@ -224,7 +232,9 @@ export function AgentToolCallBlock(context: ToolCallBlockRenderContext) {
     ? (configuredAgentColor ?? getAgentColor(toolCall) ?? resolveSubagentColorFromName(agentName))
     : null;
   const agentNameDetail =
-    agentName && agentColor ? <AgentNameText color={agentColor} name={agentName} /> : null;
+    agentName && agentColor ? (
+      <AgentNameText color={agentColor} name={agentName} neutral={isAutonProgrammer} />
+    ) : null;
   // Agent 父块的完成/进行中边界只由父 Agent tool 决定。
   // 子 tool 是展开区明细，不能反向续住父块运行态，否则父 Agent completed 后
   // 仍会显示渐变和子工具摘要，和协议里的父工具生命周期不一致。

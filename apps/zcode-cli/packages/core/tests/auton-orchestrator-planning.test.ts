@@ -74,6 +74,14 @@ describe("el orquestador que sabe planear y conversar", () => {
     expect(staticSection).toContain("marca lo que viene de fuera");
   });
 
+  it("es proactivo: saluda, anuncia el worker y ofrece el siguiente paso", () => {
+    expect(staticSection).toContain("## Proactividad");
+    expect(staticSection).toContain("Al abrir un proyecto nuevo, saluda");
+    expect(staticSection).toContain("mientras tanto, cuéntame qué");
+    expect(staticSection).toContain("Ofrece dos o tres cosas concretas");
+    expect(staticSection).toContain("propón el siguiente paso sin esperar");
+  });
+
   it("el escaneo del proyecto entra en la sección y el análisis pendiente se anuncia", () => {
     const root = fixture();
     const section = buildOrchestratorSection({ workingDirectory: root }).content;

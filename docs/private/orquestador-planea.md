@@ -130,3 +130,24 @@ Límite: la aprobación es conversacional. `AutonPlan` puede escribir el plan an
 del OK; el runtime no bloquea el despacho por falta de aprobación. Si se quiere
 garantía, el siguiente paso es un estado `proposed` en el plan y que el despacho
 lo exija.
+
+## 7. Estilo del hilo y proactividad
+
+- Las filas despertadoras usan el lenguaje visual de ZCode: borde, fondo
+  secundario y texto de la app. El tipo se distingue por el icono (pregunta,
+  cierre, latido), no por ámbar/verde. La etiqueta `auton-worker` deja el color
+  automático de la paleta de subagentes y se pinta en texto secundario; el resto
+  de agentes conserva su color.
+- **Proactividad**: el prompt pide saludar al abrir un proyecto, decir qué worker
+  de lectura se mandó, invitar a contar la necesidad mientras tanto y ofrecer dos
+  o tres caminos con recomendación. También propone el siguiente paso cuando el
+  proyecto ya está analizado. Prueba: el caso de proactividad en
+  `auton-orchestrator-planning.test.ts` (7).
+
+**Deuda de diseño**: el hilo sigue usando la agrupación de ZCode (un bloque de
+trabajo colapsable y la respuesta final debajo). La doctrina pide una crónica
+intercalada —narración, canales y eventos en orden— y `POR-QUE-AUTON-GANA`
+menciona "las tarjetas de cada tool intercaladas con lo que dice el orquestador",
+pero el layout no está especificado ni implementado. Para que el chat se sienta
+único y vivo hay que romper ese agrupamiento global y dejar el bloque de trabajo
+por worker, no por turno. Es el siguiente cambio de UI, no un retoque de estilo.

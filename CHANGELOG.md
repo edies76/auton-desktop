@@ -4,6 +4,30 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases públicas.
 
+## [0.8.0] — 2026-11-03
+
+El hilo vuelve al estilo de ZCode y el orquestador toma la iniciativa.
+
+### Añadido
+
+- **Proactividad**: al abrir un proyecto saluda, dice qué worker de lectura
+  mandó, invita a contar la necesidad mientras tanto y ofrece dos o tres caminos
+  con recomendación; si el proyecto ya está analizado, propone el siguiente paso.
+
+### Cambiado
+
+- Las filas despertadoras (pregunta, cierre y latido) dejan el ámbar y el verde y
+  usan el lenguaje visual de ZCode: borde, fondo secundario y texto de la app. El
+  tipo se distingue por el icono.
+- La etiqueta `auton-worker` deja el color automático de la paleta de subagentes
+  y se pinta en texto secundario; los demás agentes conservan su color.
+
+### Conocido
+
+- El hilo sigue usando la agrupación de ZCode: bloque de trabajo colapsable y
+  respuesta final. La crónica intercalada (narración, canales y eventos en orden)
+  está en la doctrina, no en el layout; es el siguiente cambio de UI.
+
 ## [0.7.0] — 2026-11-03
 
 El orquestador sabe de qué equipo es, con qué autonomía decide y cómo habla.

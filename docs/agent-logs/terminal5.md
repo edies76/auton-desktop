@@ -43,3 +43,14 @@ hablar; el plan podía presentarse como aprobado sin serlo.
 Verificado con: `auton-doctrine-team.test.ts` (4), core 21 archivos y 110 pruebas, `model-doctrine.md`
 (antes dudaba y no nombraba la aprobación; después "arranco a leer, no a despachar… plan como
 propuesta"). Versión 0.7.0 publicada y documentada.
+
+## 2026-11-03 — estilo del hilo y proactividad
+
+Qué: las filas despertadoras pierden ámbar/verde y usan el lenguaje visual de ZCode; la etiqueta
+`auton-worker` deja el azul de la paleta y pasa a texto secundario. El prompt gana proactividad: al
+abrir un proyecto saluda, anuncia el worker de lectura, invita a contar la necesidad y ofrece caminos.
+Por qué: el color propio rompía el estilo de ZCode y el orquestador no debía esperar a que le pidan.
+Verificado con: UI 24 pruebas (wake, hilo y bloque de agente) y `auton-orchestrator-planning.test.ts`
+(7). Deuda anotada: el layout sigue separando bloque de trabajo y respuesta; intercalarlos es el
+siguiente cambio de UI.
+
