@@ -213,3 +213,24 @@ Verificado con: `autonSpaceProjection` (8), `autonWorkersSidebar` (7), `autonWor
 raíz 0; lint raíz 0 errores/104 avisos. En vivo: `sidebar-redesign.png`, `project-picker.png`,
 `sidebar-workers-final.png`, `worker-fullchat-final.png`; abrir worker 4 cargó su chat real sin
 `sessionNotFound`. La auditoría D9 de contadores queda pendiente para la siguiente ronda.
+
+## 2026-11-03 - contador de subagentes por worker
+
+Qué: cada fila de agente consulta el total de subagentes de su propia sesión con
+`listSessionSubagents(sessionId, endedLimit = 1)` y pinta el número junto al icono de rama solo
+cuando es mayor que cero. La consulta corre con concurrencia máxima 3, ignora sesiones archivadas
+y se refresca cada 20 s solo para workers vivos. El contador del worker abierto sigue saliendo de
+su proyección viva. El badge ya no ocupa espacio con `0`, así el nombre conserva más ancho.
+El grupo `Subagentes` no aparece cuando el worker abierto no creó ninguno.
+
+También se prioriza un `childSessionId` ya migrado (`sess_auton_*`) al resolver la sesión del
+worker y se descarta el prefijo antiguo cuando hay `entityId` estable, para no abrir una sesión
+inexistente (`fault.subscribe.sessionNotFound`).
+
+Por qué: el usuario pidió que cada worker muestre cuántos subagentes creó, sin ruido y sin romper
+la lista nativa; un `0` fijo truncaba el nombre. Abrir un worker debe cargar su chat completo.
+
+Verificado con: `autonWorkersSidebar` (9), `autonWorkerPanel` (10), `autonSpaceProjection` (9),
+suite `auton*` 68/68, typecheck raíz 0, lint raíz 0 errores/103 avisos. En vivo:
+`counts-sidebar.png`, `final-worker-open.png`, `final-orchestrator.png`; abrir worker carga el
+chat completo sin `sessionNotFound`, sin resumen y con `Volver` flotante.

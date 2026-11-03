@@ -88,13 +88,14 @@ function WorkerRow({
         className="flex min-w-0 flex-1 items-center gap-2 rounded-sm text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-input-border-focused"
         onClick={() => onOpenWorker(worker.id)}
         aria-label={`Abrir ${worker.name}`}
+        title={worker.name}
         data-testid="auton-worker-open"
       >
         <WorkerStatusIcon status={worker.status} />
         <span className="min-w-0 flex-1 truncate text-ui-base text-foreground">{worker.name}</span>
       </button>
       <span className="ml-2 flex shrink-0 items-center gap-1.5 text-ui-xs text-foreground-subtle">
-        {worker.kind === "agent" && (worker.subagentCount ?? 0) > 0 ? (
+        {(worker.subagentCount ?? 0) > 0 ? (
           <span
             className="flex items-center gap-0.5 tabular-nums text-foreground-subtlest"
             data-testid="auton-worker-subagent-count"

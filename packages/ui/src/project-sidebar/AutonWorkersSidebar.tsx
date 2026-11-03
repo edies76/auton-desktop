@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { buildAutonWorkerGroups } from "@/auton/project-space/agentProjection.js";
 import { useAutonClock } from "@/auton/project-space/clock.js";
 import { projectAutonWorkers } from "@/auton/project-space/projection.js";
+import { useAutonSubagentCounts } from "@/auton/project-space/useSubagentCounts.js";
 import { AutonWorkerPanel } from "@/auton/project-space/WorkerPanel.js";
 import { useAutonWorkerFocusStore } from "@/auton/project-space/workerFocusStore.js";
 import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
@@ -24,9 +25,9 @@ export interface AutonWorkersSidebarProps {
 }
 
 function AutonWorkersSidebarContents({
-  tasks,
   workspacePath,
   workspaceIdentity,
+  workspaceRemoteSessionId,
   orchestratorTaskId,
 }: AutonWorkersSidebarProps) {
   const activeTaskId = useZCodeSessionStore((state) => {
@@ -55,6 +56,18 @@ function AutonWorkersSidebarContents({
     [activeTaskId, orchestratorTaskId],
   );
 
+  const agentWorkers = useMemo(
+    () => projectAutonWorkers(rows, now).filter((worker) => worker.kind === "agent"),
+    [now, rows],
+  );
+  const subagentCounts = useAutonSubagentCounts({
+    agents: agentWorkers,
+    workspacePath,
+    ...(workspaceIdentity ? { workspaceIdentity } : {}),
+    ...(workspaceRemoteSessionId ? { remoteSessionId: workspaceRemoteSessionId } : {}),
+    enabled: Boolean(leaseTaskId),
+  });
+
   useEffect(() => {
     if (!leaseTaskId) {
       setLease(null);
@@ -76,26 +89,23 @@ function AutonWorkersSidebarContents({
   }, [layer, listWorkerId]);
 
   const groups = useMemo(() => {
-    const conversationWorkers = projectAutonWorkers(rows, now);
     const subagents = listWorkerId
       ? projectAutonWorkers(workerRows, now).filter((worker) => worker.kind !== "agent")
       : [];
-    const agents = conversationWorkers
-      .filter((worker) => worker.kind === "agent")
-      .map((worker) =>
-        worker.id === listWorkerId
-          ? { ...worker, subagentCount: subagents.length }
-          : worker,
-      );
+    const agents = agentWorkers.map((worker) => {
+      const liveCount = worker.id === listWorkerId ? subagents.length : undefined;
+      const count = liveCount ?? subagentCounts[worker.id];
+      return count === undefined ? worker : { ...worker, subagentCount: count };
+    });
     const built = buildAutonWorkerGroups({
       agentWorkers: agents,
       subagentWorkers: subagents,
       canStop: Boolean(stopTaskId),
     });
     return listWorkerId
-      ? built
+      ? built.filter((group) => group.kind !== "subagent" || group.workers.length > 0)
       : built.filter((group) => group.kind !== "subagent");
-  }, [listWorkerId, now, rows, stopTaskId, workerRows]);
+  }, [agentWorkers, listWorkerId, now, stopTaskId, subagentCounts, workerRows]);
 
   useEffect(() => {
     useAutonWorkerFocusStore

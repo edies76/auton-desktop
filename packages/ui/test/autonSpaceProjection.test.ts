@@ -160,4 +160,23 @@ describe("proyección del espacio desde filas reales", () => {
     expect(worker?.name).toBe("Revisar README");
     expect(worker?.id).toBe("sess_auton_agent-1");
   });
+
+  it("prefiere el childSessionId ya migrado del worker y descarta el prefijo viejo", () => {
+    const migrated = {
+      ...subagent(2, "success", "Listo"),
+      childSessionId: "sess_auton_agent-2",
+      entityId: "agent-2",
+    } as unknown as ConversationRow;
+    const legacy = {
+      ...subagent(3, "success", "Listo"),
+      childSessionId: "sess_subagent_agent_3",
+      entityId: "agent_3",
+    } as unknown as ConversationRow;
+
+    const workers = projectAutonWorkers([migrated, legacy], Date.UTC(2026, 10, 2, 12, 0, 0));
+    expect(workers.map((worker) => worker.id)).toEqual([
+      "sess_auton_agent-2",
+      "sess_auton_agent_3",
+    ]);
+  });
 });

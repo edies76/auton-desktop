@@ -100,6 +100,24 @@ describe("panel de workers", () => {
     expect(within(row).getByTestId("auton-worker-clock").textContent).toBe("01:15");
   });
 
+  it("muestra el contador de subagentes solo cuando el worker creó alguno", () => {
+    renderUi(
+      <AutonWorkerPanel
+        workers={[
+          worker("w1", "trabajando", { subagentCount: 2 }),
+          worker("w2", "trabajando", { subagentCount: 0 }),
+        ]}
+        now={NOW}
+        onOpenWorker={vi.fn()}
+        onStopWorker={vi.fn()}
+      />,
+    );
+
+    const counts = screen.getAllByTestId("auton-worker-subagent-count");
+    expect(counts).toHaveLength(1);
+    expect(counts[0]!.textContent).toContain("2");
+  });
+
   it("el encabezado de Workers oculta y muestra la lista", () => {
     renderUi(
       <AutonWorkerPanel workers={WORKERS} now={NOW} onOpenWorker={vi.fn()} onStopWorker={vi.fn()} />,

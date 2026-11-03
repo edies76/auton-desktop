@@ -105,15 +105,17 @@ function subagentStatus(row: SubagentRow): AutonWorkerStatus {
 }
 
 function subagentSessionId(row: SubagentRow): string {
-  // Un `auton-worker` siempre vive en el namespace propio; una fila antigua
-  // pudo guardar el prefijo `subagent_` antes de la migración.
-  if (row.subagentType === "auton-worker" && row.entityId) {
-    return `sess_auton_${row.entityId}`;
+  // Un `auton-worker` siempre vive en el namespace propio. Preferimos un
+  // childSessionId ya migrado; si viene con el prefijo viejo, se deriva del id
+  // estable del agente. Una fila antigua pudo guardar el prefijo `subagent_`.
+  if (row.subagentType === "auton-worker") {
+    if (row.childSessionId?.startsWith("sess_auton_")) return row.childSessionId;
+    if (row.entityId?.startsWith("agent_")) return `sess_auton_${row.entityId}`;
+    if (row.childSessionId) return row.childSessionId;
+    if (row.entityId) return `sess_auton_${row.entityId}`;
   }
   if (row.childSessionId) return row.childSessionId;
-  if (row.entityId) {
-    return `sess_${row.subagentType === "auton-worker" ? "auton" : "subagent"}_${row.entityId}`;
-  }
+  if (row.entityId) return `sess_subagent_${row.entityId}`;
   return `worker-${row.rowId}`;
 }
 

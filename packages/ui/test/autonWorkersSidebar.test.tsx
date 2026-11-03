@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import type { ProjectTask } from "@zcode/services";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useAutonWorkerFocusStore } from "../src/auton/project-space/workerFocusStore.js";
 import { AutonWorkersSidebar } from "../src/project-sidebar/AutonWorkersSidebar.js";
@@ -9,12 +9,21 @@ const NOW = Date.UTC(2026, 10, 3, 12, 0, 0);
 
 const state = vi.hoisted(() => {
   const acquire = vi.fn((_taskId: string) => ({ release: () => undefined }));
+  const subagentCounts: Record<string, string[]> = {};
+  const listSessionSubagents = vi.fn(async (params: { sessionId: string }) => ({
+    revision: 0,
+    childSessionIds: subagentCounts[params.sessionId] ?? [],
+    running: [],
+    ended: { total: 0, items: [] },
+  }));
   return {
     rows: [] as unknown[],
     activeTaskId: "orch" as string | null,
     stopGeneration: vi.fn(async () => undefined),
     acquire,
     layer: { acquire },
+    subagentCounts,
+    listSessionSubagents,
   };
 });
 
@@ -30,6 +39,7 @@ vi.mock("@/v4/useConversationProjection.js", () => ({
 vi.mock("@/hooks/useWorkspaceServices.js", () => ({
   useBaseWorkspaceServices: () => ({
     zcodeTaskService: { stopGeneration: state.stopGeneration },
+    zcodeAgentService: { listSessionSubagents: state.listSessionSubagents },
   }),
 }));
 
@@ -70,21 +80,28 @@ function subagentRow() {
   };
 }
 
-function fullWorkerRow() {
+function fullWorkerRow(
+  overrides: {
+    rowId?: number;
+    childSessionId?: string;
+    title?: string;
+    seq?: number;
+  } = {},
+) {
   return {
     kind: "subagent",
-    rowId: 12,
+    rowId: overrides.rowId ?? 12,
     turnId: "turn_1",
     parentToolCallId: "tool-2",
-    childSessionId: "auton-1",
+    childSessionId: overrides.childSessionId ?? "auton-1",
     subagentType: "auton-worker",
-    title: "Agente completo",
+    title: overrides.title ?? "Agente completo",
     status: "running",
     summaryText: "Revisando el README",
     startedAt: NOW - 2_000,
     lastActivityAt: NOW - 1_000,
     createdAt: NOW - 2_000,
-    createdAtSeq: 2,
+    createdAtSeq: overrides.seq ?? 2,
   };
 }
 
@@ -106,6 +123,10 @@ afterEach(() => {
   state.activeTaskId = "orch";
   state.stopGeneration.mockClear();
   state.acquire.mockClear();
+  state.listSessionSubagents.mockClear();
+  for (const key of Object.keys(state.subagentCounts)) {
+    delete state.subagentCounts[key];
+  }
   useAutonWorkerFocusStore.getState().close();
 });
 
@@ -122,6 +143,34 @@ describe("sidebar de workers del proyecto", () => {
     expect(screen.queryByTestId("auton-worker-group-subagent")).toBeNull();
     expect(screen.getByTestId("auton-worker-group-muse").textContent).toContain("Próximamente");
     expect(screen.getAllByTestId("auton-worker-row")).toHaveLength(1);
+  });
+
+  it("muestra cuántos subagentes creó cada worker sin abrirlo", async () => {
+    state.rows = [
+      fullWorkerRow(),
+      fullWorkerRow({ rowId: 13, childSessionId: "auton-2", title: "Segundo agente", seq: 3 }),
+    ];
+    state.subagentCounts["auton-1"] = ["sub-1", "sub-2"];
+    state.subagentCounts["auton-2"] = ["sub-3"];
+    renderSidebar();
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("auton-worker-subagent-count")).toHaveLength(2);
+    });
+    const counts = screen
+      .getAllByTestId("auton-worker-subagent-count")
+      .map((node) => node.textContent);
+    expect(counts.sort()).toEqual(["1", "2"]);
+    expect(state.listSessionSubagents).toHaveBeenCalledWith(
+      expect.objectContaining({ sessionId: "auton-1", endedLimit: 1 }),
+    );
+  });
+
+  it("no pinta un contador vacío cuando el worker no creó subagentes", () => {
+    state.rows = [fullWorkerRow()];
+    renderSidebar();
+
+    expect(screen.queryByTestId("auton-worker-subagent-count")).toBeNull();
   });
 
   it("al abrir un worker aparecen sus subagentes y el contador", () => {

@@ -45,10 +45,12 @@ Es **el espacio de un proyecto, y solo uno a la vez**. Se compone de tres zonas:
   - **el nombre real del encargo/chat** (la descripción con la que se creó), no `worker N`,
   - **su estado en vivo** en el icono (`trabajando`, `preguntando`, `esperando`, `bloqueado`,
     `terminado`) y **su reloj** a la derecha; el silencio se marca con un punto pulsante,
-  - **cuántos subagentes creó** (icono de rama + número, solo cuando hay),
+  - **cuántos subagentes creó** (icono de rama + número, solo cuando hay). La cuenta sale de la
+    sesión de cada worker, no solo del worker abierto; si el worker no creó ninguno, no se pinta nada,
   - y **su control de parada**, visible al pasar el ratón.
 - En la **vista del orquestador no se listan subagentes**: solo agentes completos. Al abrir un worker,
-  sus subagentes aparecen en el panel izquierdo y se abren a la derecha como un chat normal.
+  sus subagentes aparecen en el panel izquierdo y se abren a la derecha como un chat normal. Si el
+  worker abierto no creó ninguno, el grupo `Subagentes` no aparece.
 - Los workers se agrupan por rol/motor (`Agentes ZCode`, `Subagentes`, `Muse Code`) con cabeceras
   plegables. La cabecera **Workers** también se pliega para ocultar la lista completa.
 - **No hay vistas nativas de ZCode** (`Timeline`, agrupado, lista de tareas) ni sección `Tasks` en este
@@ -57,6 +59,15 @@ Es **el espacio de un proyecto, y solo uno a la vez**. Se compone de tres zonas:
   cabecera separadora; la vuelta es un botón flotante sobre el chat. El chat es de solo lectura.
 - Referencia visual que pidió Edi: la lista de chats normal de ZCode (icono, nombre y acción), no una
   tarjeta con badge y segunda línea.
+
+El contador no se deduce del hilo del orquestador: cada sesión de worker es su propia autoridad.
+
+```text
+sidebar (agentes completos)
+  └─ useAutonSubagentCounts
+       └─ zcodeAgentService.listSessionSubagents(sessionId del worker, endedLimit = 1)
+            └─ childSessionIds.length → fila del worker (solo si > 0)
+```
 
 ### 2.3 Los bloques anidados en el hilo
 
