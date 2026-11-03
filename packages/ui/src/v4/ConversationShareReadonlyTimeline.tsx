@@ -60,6 +60,7 @@ import {
   type ConversationAssistantWorkRenderItem,
 } from "@/v4/conversationAssistantWorkItems.js";
 import type { ConversationCuaGroupRenderItem } from "@/v4/conversationCuaGroups.js";
+import { WakeEventItem } from "@/auton/WakeEventItem.js";
 import {
   buildConversationTurnRenderUnits,
   type ConversationTurnRenderUnit,
@@ -713,6 +714,11 @@ function ReadonlyAssistantWorkItems({
               onOpenExternalUrl={onOpenExternalUrl}
             />
           );
+        }
+        if (item.kind === "wakeEvent") {
+          // El snapshot compartido también crónica la pregunta, el latido y el
+          // cierre; sin acciones porque es solo lectura.
+          return <WakeEventItem key={item.key} event={item.event} />;
         }
         return (
           <GroupedToolPresentation

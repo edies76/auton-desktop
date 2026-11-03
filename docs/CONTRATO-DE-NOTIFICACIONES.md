@@ -102,39 +102,55 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
   vivo" (narración por sprints, prohibido cerrar en silencio).
   Prueba: `core/tests/auton-orchestrator-section.test.ts`.
 - **Hecho — superficie del canal**: `packages/ui/src/auton/subagentChannel.ts`
-  traduce la fila real del subagente a estado, reloj y evento de cierre; el hilo
-  lo pinta en `v4/ConversationAgentToolCallRow.tsx` (canal con reloj mientras
-  corre, fila centrada al cerrar). Prueba: `ui/test/autonSubagentChannel.test.ts`.
-- **Hecho — fila de evento despertador (los tres tipos salen del código que corre)**:
-  - **pregunta**: una fila real de `SendMessage` con `waitingForAnswer` se resuelve
-    como `QuestionWakeBlock` (`auton/question-wake.tsx`, en `resolveRenderer`);
-  - **cierre**: `wakeEventForSubagent` con el estado final del canal;
+  traduce la fila real del subagente a estado, reloj y evento de cierre; el canal
+  se pinta en `v4/ConversationAgentToolCallRow.tsx` con su reloj mientras corre.
+  Prueba: `ui/test/autonSubagentChannel.test.ts`.
+- **Hecho — fila de evento despertador (los tres tipos salen del mapeo real del hilo)**:
+  `buildAssistantWorkRenderItems` llama a `deriveWakeEvents` con cada fila real de
+  subagente y emite un ítem `wakeEvent`; `v4/ConversationTurnGroup.tsx` lo pinta
+  con `auton/WakeEventItem.tsx`. No hay un segundo camino:
+  - **pregunta**: la proyección marca `waitingForAnswer: true` en la fila del
+    subagente cuando el `SendMessage` del orquestador salió con
+    `requires_answer: true`; `onSubagentMessage` (respuesta del worker),
+    `onSubagentStopped` y un nuevo spawn la bajan a `false`.
+    Prueba de proyección: `bootstrap/tests/auton-thread-question-projection.test.ts`.
+  - **cierre**: `wakeEventForSubagent` con el estado final del canal.
   - **latido**: `heartbeatEventForSubagent` cuando el canal sigue en marcha y lleva
-    más de 90 s sin señal.
-  Pruebas: `ui/test/autonThreadChannels.test.tsx` (las tres por el mapeo real:
-  `resolveToolCallRenderer` + `buildAssistantWorkRenderItems` +
-  `ConversationAgentToolCallRow`) y `ui/test/autonWakeEventRow.test.tsx`.
-- **Hecho — la fila de pregunta responde desde el hilo**: el contexto real de la
-  conversación (`v4/SessionPane.tsx` → `ConversationRowRenderContext`) provee
-  `onRespondToQuestion` con `createQuestionRespondHandler`, que lleva el foco al
-  compositor del hilo. Probado con el handler real en
+    más de 90 s sin señal; `ConversationTurnGroup` mantiene un reloj de 1 s
+    mientras hay un subagente en marcha para que la fila aparezca durante el
+    silencio, no solo cuando llega otro evento.
+  Pruebas: `ui/test/autonThreadChannels.test.tsx` (las tres por
+  `buildAssistantWorkRenderItems` + `WakeEventItem`, sin instanciar
+  `WakeEventRow`) y `ui/test/autonWakeEventRow.test.tsx` (pieza visual).
+- **Hecho — la fila de pregunta responde desde el hilo**: el ítem `wakeEvent` de
+  tipo pregunta recibe `createQuestionRespondHandler` en
+  `v4/ConversationTurnGroup.tsx`, que lleva el foco al compositor del hilo.
+  Probado con el evento derivado y el handler real en
   `ui/test/autonQuestionRespond.test.tsx` (clic en Responder → foco en el
-  compositor) y en `autonThreadChannels.test.tsx`.
-- **Hecho — el latido mide silencio real**: la proyección marca `lastActivityAt`
-  al nacer el worker, en cada mensaje suyo (`onSubagentMessage` hace upsert) y la
-  fila usa ese instante; 90 s sin señal ⇒ fila de latido.
+  compositor; sin callback no hay botón).
+- **Hecho — el latido mide silencio real y es visible**: la proyección marca
+  `lastActivityAt` al nacer el worker y en cada mensaje suyo (`onSubagentMessage`
+  hace upsert); el mapeo del hilo lee ese instante de la fila visible y 90 s sin
+  señal producen la fila de latido. La persistencia de la notificación del
+  runtime sigue siendo `model-only`: despierta al orquestador, no pinta la fila;
+  la fila sale de la fila del subagente.
 - **Bloqueado — prueba 17 con modelo real**: pedir "deshaz el sprint 2" y comprobar
   que el orquestador **llama** a `AutonRevert` requiere un proveedor real, que no
   existe en este entorno. La comprobación estructural
   (`core/tests/auton-four-pieces.test.ts`) demuestra registro y ensamblado, no la
   elección del modelo.
+- **Bloqueado — preguntas con opciones y "el humano escribe mientras pregunto"**:
+  quedan fuera de esta etapa por los Non-goals del plan. La fila de pregunta
+  actual responde enfocando el compositor (texto libre), sin opciones
+  estructuradas ni reenganche del turno cuando el humano escribe. No se declara
+  hecho.
 - **Hecho — latido enganchado al runtime**: `core/src/auton/live-loop.ts` mantiene
   un reloj por sesión del orquestador, y el port de subagentes lo alimenta al
   despachar un worker en background y al cerrarlo (completado o fallido). A los
   90 s de silencio con trabajo vivo publica una línea de estado por la misma cola
   que el aviso de cierre, así que despierta al orquestador sin abrir un mensaje
-  del humano. Pruebas: `core/tests/auton-live-loop.test.ts` (6) y
-  `core/tests/auton-live-loop-wiring.test.ts` (3).
+  del humano. Pruebas: `core/tests/auton-live-loop.test.ts` (9) y
+  `core/tests/auton-live-loop-wiring.test.ts` (4).
 - **Hecho — canal rápido bidireccional**: el worker publica a mitad de encargo por
   el port de coordinación y el orquestador lo recibe como `<subagent-message>`
   (nunca como mensaje del humano); el orquestador instruye al worker en curso con
@@ -153,7 +169,7 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
 | Turno que no cierra | `runtime/methods/turn-loop.ts` | `auton-live-turn-runtime.test.ts`, `auton-real-dispatch-runtime.test.ts` | `4714c3a3`, `5e03d9ca` |
 | Noticias del worker | `runtime/methods/background-notifications.ts` | `auton-real-dispatch-runtime.test.ts` | `07219f97` |
 | Canal con reloj | `ui/src/auton/subagentChannel.ts` | `autonSubagentChannel.test.ts` | `3491a3ca` |
-| Fila despertadora (3 tipos) | `ui/src/auton/WakeEventRow.tsx`, `question-wake.tsx` | `autonThreadChannels.test.tsx`, `autonWakeEventRow.test.tsx` | `b75b7042`, `3491a3ca`, esta entrega |
+| Fila despertadora (3 tipos) | `ui/src/auton/subagentChannel.ts` (`deriveWakeEvents`), `ui/src/auton/WakeEventItem.tsx`, `v4/conversationAssistantWorkItems.ts` | `autonThreadChannels.test.tsx`, `autonWakeEventRow.test.tsx`, `auton-thread-question-projection.test.ts` | `b75b7042`, `3491a3ca`, esta entrega |
 | Canal rápido bidireccional | `subagent/coordinator-response.ts`, `message-steering.ts` | `auton-fast-channel-runtime.test.ts` | `b38bcbfa` |
 | Cuatro piezas y ensamblado | `auton/contextAuton.ts`, `context/builder.ts` | `auton-four-pieces.test.ts` | `a373592a` |
 

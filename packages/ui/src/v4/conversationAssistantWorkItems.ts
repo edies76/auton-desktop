@@ -1,4 +1,7 @@
 import type { SubagentRow, ToolCallRow } from "@zcode/shared/zcode-protocol-v4";
+import { deriveWakeEvents } from "@/auton/subagentChannel.js";
+import type { WakeEventRowProps } from "@/auton/WakeEventRow.js";
+import { getAgentPrimaryText } from "@/ToolCallBlocks/renderers/agentHelpers.js";
 import {
   isExecuteToolCall,
   isExploreToolCall,
@@ -51,6 +54,16 @@ export type ConversationAssistantWorkRenderItem =
       key: string;
       row: ToolCallRow;
       subagentRow: SubagentRow;
+    }
+  | {
+      /** Fila centrada de evento: pregunta, latido o cierre. */
+      kind: "wakeEvent";
+      key: string;
+      event: WakeEventRowProps;
+      /** Fila real del canal, para abrir su sesión desde el cierre. */
+      subagentRow: SubagentRow;
+      /** Título que el humano ve en el canal; etiqueta la sesión hija. */
+      channelTitle: string;
     };
 
 export const ENABLE_EXPLORE_TOOL_CALL_GROUPING = true;
@@ -64,6 +77,10 @@ export interface ConversationAssistantWorkRenderOptions {
   enableExploreGrouping?: boolean;
   enableTerminalGrouping?: boolean;
   enableChangesGrouping?: boolean;
+  /** Instante de referencia para decidir el latido; por defecto ahora. */
+  nowMs?: number;
+  /** Umbral de silencio antes de pintar el latido. */
+  heartbeatMs?: number;
 }
 
 const SUBAGENT_TOOL_NAMES = new Set(["Agent", "Task", "subagent"]);
@@ -327,6 +344,29 @@ export function buildAssistantWorkRenderItems(
           row,
           subagentRow: pairedSubagent,
         });
+        // Las filas despertadoras son del trabajo Auton: se derivan del mismo
+        // mapeo que el canal, con el título que el humano ya ve en la fila.
+        if (pairedSubagent.subagentType === "auton-worker") {
+          const nowMs = options?.nowMs ?? Date.now();
+          const title =
+            getAgentPrimaryText(toolCallRowToLegacyNode(row).toolCall, "") ||
+            pairedSubagent.summaryText?.trim() ||
+            "Programador";
+          for (const event of deriveWakeEvents(
+            pairedSubagent,
+            nowMs,
+            title,
+            options?.heartbeatMs,
+          )) {
+            items.push({
+              kind: "wakeEvent",
+              key: `wake:${event.kind}:${row.rowId}`,
+              event,
+              subagentRow: pairedSubagent,
+              channelTitle: title,
+            });
+          }
+        }
         index += 1;
         continue;
       }

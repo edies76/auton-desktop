@@ -3275,7 +3275,29 @@ export class ProductProjection {
           }),
         )
       : [];
-    return [{ op: "row.upserted", row: next }, ...planDeltas];
+    // El orquestador marcó `requires_answer` y el envío salió: el worker queda
+    // esperando esa respuesta. El hilo pinta la pregunta leyendo la fila del
+    // subagente, así que el estado se escribe en la misma transacción.
+    const answerTarget = success ? answerRequestTarget(next) : undefined;
+    const questionDelta =
+      answerTarget === undefined
+        ? undefined
+        : this.setSubagentWaitingForAnswer(answerTarget, true);
+    return [
+      { op: "row.upserted", row: next },
+      ...(questionDelta ? [questionDelta] : []),
+      ...planDeltas,
+    ];
+  }
+
+  private setSubagentWaitingForAnswer(
+    agentId: string,
+    waiting: boolean,
+  ): ConversationDelta | undefined {
+    const row = this.findSubagentRow(agentId);
+    if (!row || row.status !== "running") return undefined;
+    if ((row.waitingForAnswer === true) === waiting) return undefined;
+    return { op: "row.upserted", row: { ...row, waitingForAnswer: waiting } };
   }
 
   /**
@@ -4455,6 +4477,7 @@ export class ProductProjection {
         ...(payload.background === true ? { workId: agentId } : {}),
         startedAt: this.ms(event),
         lastActivityAt: this.ms(event),
+        waitingForAnswer: false,
       };
       delete row.endedAt;
       return [
@@ -4541,11 +4564,13 @@ export class ProductProjection {
       this.stringPayload(payload, "message");
     if (!row || !append) return [];
     // Cada mensaje del worker es una señal de vida: reinicia el silencio que el
-    // hilo usa para pintar el latido.
+    // hilo usa para pintar el latido. Además el worker contestó, así que la
+    // pregunta que el orquestador dejó marcada ya no está pendiente.
     const updated: SubagentRow = {
       ...row,
       summaryText: `${row.summaryText}${append}`,
       lastActivityAt: this.ms(event),
+      ...(row.waitingForAnswer === true ? { waitingForAnswer: false } : {}),
     };
     return [{ op: "row.upserted", row: updated }];
   }
@@ -4569,6 +4594,7 @@ export class ProductProjection {
           status,
           summaryText,
           endedAt: this.ms(event),
+          waitingForAnswer: false,
           // resumed child 的终态同样属于原 Agent row，只在旧 row 缺失锚点时补齐。
           ...(!existing.parentToolCallId && parentToolCallId ? { parentToolCallId } : {}),
           ...(this.stringPayload(payload, "childSessionId")
@@ -5833,6 +5859,19 @@ function toProtocolToolCallDisplay(
     default:
       return undefined;
   }
+}
+
+/**
+ * Destinatario de una decisión: `SendMessage` con `requires_answer` es la
+ * marca real que pone el orquestador cuando el frente no puede avanzar.
+ */
+function answerRequestTarget(row: ToolCallRow): string | undefined {
+  if (row.toolName !== "SendMessage") return undefined;
+  const input: unknown = row.input;
+  if (typeof input !== "object" || input === null) return undefined;
+  const record = input as { to?: unknown; requires_answer?: unknown };
+  if (record.requires_answer !== true) return undefined;
+  return typeof record.to === "string" && record.to.length > 0 ? record.to : undefined;
 }
 
 function stringifyToolInput(input: unknown): string {

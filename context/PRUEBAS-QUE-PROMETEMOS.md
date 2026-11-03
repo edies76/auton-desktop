@@ -149,7 +149,7 @@ Esto es lo que hace que el multiagente **se sienta** y no se administre.
 | Prueba | Archivo |
 | --- | --- |
 | 2. No termina respuestas | `core/tests/auton-real-dispatch-runtime.test.ts`, `auton-live-turn-runtime.test.ts`, `auton-live-loop.test.ts` |
-| 3. Canales anidados | `ui/test/autonThreadChannels.test.tsx`, `ui/test/autonSubagentChannel.test.ts` |
+| 3. Canales anidados y eventos despertadores | `ui/test/autonThreadChannels.test.tsx` (los tres tipos desde el mapeo real), `ui/test/autonSubagentChannel.test.ts`, `bootstrap/tests/auton-thread-question-projection.test.ts` |
 | 4. Canal rápido bidireccional | `core/tests/auton-fast-channel-runtime.test.ts` |
 | 8. Límites versionados y no relajables | `core/tests/auton-limits-guard.test.ts`, `auton-plan-tool.test.ts` |
 | 9. Si no sabe decidir, pregunta | `core/tests/auton-limits-governance.test.ts`, `auton-four-pieces.test.ts` |

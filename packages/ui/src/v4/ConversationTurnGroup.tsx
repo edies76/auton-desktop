@@ -79,7 +79,9 @@ import {
   type ConversationAssistantWorkRenderItem,
 } from "@/v4/conversationAssistantWorkItems.js";
 import type { ConversationCuaGroupEvent } from "@/v4/conversationCuaGroups.js";
-import { ConversationAgentToolCallRow } from "@/v4/ConversationAgentToolCallRow.js";
+import { ConversationAgentToolCallRow, openSubagentSessionFromSummary } from "@/v4/ConversationAgentToolCallRow.js";
+import { WakeEventItem } from "@/auton/WakeEventItem.js";
+import { createQuestionRespondHandler } from "@/auton/respond.js";
 import { ConversationFileSummaryPanel } from "@/v4/ConversationFileSummaryPanel.js";
 import {
   WorkflowNotificationToolRow,
@@ -386,6 +388,37 @@ function ConversationCuaGroupRow({
   );
 }
 
+export function wakeEventAction(
+  item: Extract<ConversationAssistantWorkRenderItem, { kind: "wakeEvent" }>,
+  context: ConversationRowRenderContext,
+): (() => void) | undefined {
+  if (item.event.kind === "question") {
+    return createQuestionRespondHandler();
+  }
+  if (item.event.kind !== "closed") return undefined;
+  const childSessionId = item.subagentRow.childSessionId;
+  if (!childSessionId) return undefined;
+  return () => {
+    openSubagentSessionFromSummary({
+      childSessionId,
+      context,
+      subagentType: item.subagentRow.subagentType,
+      title: item.channelTitle,
+    });
+  };
+}
+
+function WakeEventItemRow({
+  item,
+  context,
+}: {
+  item: Extract<ConversationAssistantWorkRenderItem, { kind: "wakeEvent" }>;
+  context: ConversationRowRenderContext;
+}) {
+  const action = wakeEventAction(item, context);
+  return <WakeEventItem event={item.event} {...(action ? { onAction: action } : {})} />;
+}
+
 function ConversationAssistantWorkItems({
   rows,
   context,
@@ -405,6 +438,18 @@ function ConversationAssistantWorkItems({
 }) {
   const showReasoning = context.messageStreamShowReasoning === true;
   const firstReasoningRowId = context.messageStreamFirstReasoningRowId;
+  // El latido se decide por silencio: sin este reloj la fila solo aparecería
+  // cuando llegara otro evento, que es justo lo que no ocurre durante el silencio.
+  const hasRunningSubagent = rows.some(
+    (row) => row.kind === "subagent" && row.status === "running",
+  );
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    if (!hasRunningSubagent) return;
+    setNowMs(Date.now());
+    const timer = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [hasRunningSubagent]);
   const items = useMemo(
     () =>
       buildAssistantWorkRenderItems(
@@ -417,6 +462,7 @@ function ConversationAssistantWorkItems({
         },
         {
           stageTailIsRunning,
+          nowMs,
           enableCuaGrouping: ENABLE_CUA_TOOL_CALL_GROUPING,
           enableExploreGrouping:
             context.toolGroupingExploreEnabled ?? ENABLE_EXPLORE_TOOL_CALL_GROUPING,
@@ -432,6 +478,7 @@ function ConversationAssistantWorkItems({
       context.toolGroupingTerminalEnabled,
       stageTailIsRunning,
       firstReasoningRowId,
+      nowMs,
       rows,
       showReasoning,
     ],
@@ -459,6 +506,8 @@ function ConversationAssistantWorkItems({
           />
         ) : item.kind === "agentToolCall" ? (
           <ConversationAgentToolCallRow key={item.key} item={item} context={context} />
+        ) : item.kind === "wakeEvent" ? (
+          <WakeEventItemRow key={item.key} item={item} context={context} />
         ) : item.kind === "exploreGroup" ? (
           <ConversationExploreGroupRow key={item.key} item={item} context={context} />
         ) : (

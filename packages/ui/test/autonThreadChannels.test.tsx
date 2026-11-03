@@ -3,14 +3,18 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import type { SubagentRow, ToolCallRow } from "@zcode/shared/zcode-protocol-v4";
 import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import type { ConversationAssistantWorkRenderItem } from "@/v4/conversationAssistantWorkItems.js";
 import { buildAssistantWorkRenderItems } from "@/v4/conversationAssistantWorkItems.js";
 import { ConversationAgentToolCallRow } from "@/v4/ConversationAgentToolCallRow.js";
-import { WakeEventRow } from "@/auton/WakeEventRow.js";
-import { resolveToolCallRenderer } from "@/ToolCallBlocks/resolveRenderer.js";
-import { toolCallRowToLegacyNode } from "@/v4/toolCallRowAdapter.js";
+import { wakeEventAction } from "@/v4/ConversationTurnGroup.js";
+import { WakeEventItem } from "@/auton/WakeEventItem.js";
 import type { ConversationRowRenderContext } from "@/v4/conversationRowContext.js";
 
 const START = "2026-11-02T20:00:00.000Z";
+const NOW = Date.parse("2026-11-02T20:05:00.000Z");
+const HEARTBEAT_MS = 90_000;
+
+type WakeItem = Extract<ConversationAssistantWorkRenderItem, { kind: "wakeEvent" }>;
 
 function agentRow(rowId: number, toolCallId: string, status: ToolCallRow["status"]): ToolCallRow {
   return {
@@ -21,7 +25,7 @@ function agentRow(rowId: number, toolCallId: string, status: ToolCallRow["status
     toolName: "Agent",
     status,
     inputText: "",
-    input: { description: "Landing de Auton", subagent_type: "auton-worker" },
+    input: { description: `Landing ${rowId}`, subagent_type: "auton-worker" },
   } as unknown as ToolCallRow;
 }
 
@@ -30,6 +34,8 @@ function subagentRow(input: {
   parentToolCallId: string;
   status: SubagentRow["status"];
   endedAt?: string;
+  lastActivityAt?: string;
+  waitingForAnswer?: boolean;
   summaryText: string;
 }): SubagentRow {
   return {
@@ -43,6 +49,10 @@ function subagentRow(input: {
     summaryText: input.summaryText,
     startedAt: START,
     ...(input.endedAt ? { endedAt: input.endedAt } : {}),
+    ...(input.lastActivityAt ? { lastActivityAt: input.lastActivityAt } : {}),
+    ...(input.waitingForAnswer !== undefined
+      ? { waitingForAnswer: input.waitingForAnswer }
+      : {}),
   } as unknown as SubagentRow;
 }
 
@@ -56,7 +66,11 @@ const context = {
   onOpenSubagentSession: () => {},
 } as unknown as ConversationRowRenderContext;
 
-function renderRow(item: unknown): string {
+function build(rows: readonly never[], nowMs = NOW) {
+  return buildAssistantWorkRenderItems(rows, "hidden", { nowMs, heartbeatMs: HEARTBEAT_MS });
+}
+
+function renderAgent(item: WakeItem | Extract<ConversationAssistantWorkRenderItem, { kind: "agentToolCall" }>): string {
   return renderToStaticMarkup(
     createElement(
       ZCodeIntlProvider,
@@ -69,19 +83,44 @@ function renderRow(item: unknown): string {
   );
 }
 
+function renderWake(item: WakeItem, onAction?: () => void): string {
+  return renderToStaticMarkup(
+    createElement(
+      ZCodeIntlProvider,
+      { initialLocale: "en-US" },
+      createElement(WakeEventItem, {
+        event: item.event,
+        ...(onAction ? { onAction } : {}),
+      }),
+    ),
+  );
+}
+
+const channelsOf = (items: ConversationAssistantWorkRenderItem[]) =>
+  items.filter(
+    (item): item is Extract<ConversationAssistantWorkRenderItem, { kind: "agentToolCall" }> =>
+      item.kind === "agentToolCall",
+  );
+
+const wakesOf = (items: ConversationAssistantWorkRenderItem[]): WakeItem[] =>
+  items.filter((item): item is WakeItem => item.kind === "wakeEvent");
+
+function kindsOf(html: string): string[] {
+  return [...html.matchAll(/data-kind="([a-z]+)"/g)].map((match) => match[1] ?? "");
+}
+
 describe("hilo real con dos canales y eventos despertadores", () => {
   it("cada canal se anida con nombre, estado y reloj, y al cerrar deja su estado final", () => {
-    const running = agentRow(1, "tool-run", "running");
-    const finished = agentRow(2, "tool-done", "success");
     const rows = [
-      running,
+      agentRow(1, "tool-run", "running"),
       subagentRow({
         rowId: 11,
         parentToolCallId: "tool-run",
         status: "running",
+        lastActivityAt: "2026-11-02T20:04:30.000Z",
         summaryText: "Construir la landing",
       }),
-      finished,
+      agentRow(2, "tool-done", "success"),
       subagentRow({
         rowId: 12,
         parentToolCallId: "tool-done",
@@ -91,73 +130,84 @@ describe("hilo real con dos canales y eventos despertadores", () => {
       }),
     ] as never;
 
-    const items = buildAssistantWorkRenderItems(rows, "hidden").filter(
-      (item) => item.kind === "agentToolCall",
-    );
-    expect(items).toHaveLength(2);
+    const items = build(rows);
+    const channels = channelsOf(items);
+    expect(channels).toHaveLength(2);
 
-    const html = items.map(renderRow).join("\n");
-
-    // Canal en marcha: nombre, estado y reloj.
+    const html = channels.map(renderAgent).join("\n");
     expect(html).toContain("en marcha");
     expect(html).toMatch(/en marcha[\s\S]{0,60}?\d{2}:\d{2}/);
 
-    // Canal cerrado: estado final y fila centrada del evento despertador.
-    expect(html).toContain('data-testid="auton-wake-event"');
-    expect(html).toContain('data-kind="closed"');
-    expect(html).toContain("terminó");
-    expect(html).toContain("02:14");
-    expect(html).toContain("Abrir");
+    // El cierre lo produce el mapeo y lo pinta la fila centrada del hilo.
+    const [closed] = wakesOf(items);
+    expect(closed?.event.kind).toBe("closed");
+    const closedHtml = closed ? renderWake(closed) : "";
+    expect(closedHtml).toContain('data-testid="auton-wake-event"');
+    expect(closedHtml).toContain('data-kind="closed"');
+    expect(closedHtml).toContain("terminó");
+    expect(closedHtml).toContain("02:14");
+    // La acción se pinta cuando el hilo puede abrir la sesión del canal.
+    expect(renderWake(closed!, () => {})).toContain("Abrir");
   });
 
   it("dos canales abiertos conviven en el hilo, cada uno con su reloj", () => {
     const rows = [
       agentRow(1, "tool-a", "running"),
-      subagentRow({ rowId: 11, parentToolCallId: "tool-a", status: "running", summaryText: "uno" }),
+      subagentRow({
+        rowId: 11,
+        parentToolCallId: "tool-a",
+        status: "running",
+        lastActivityAt: "2026-11-02T20:04:30.000Z",
+        summaryText: "uno",
+      }),
       agentRow(2, "tool-b", "running"),
-      subagentRow({ rowId: 12, parentToolCallId: "tool-b", status: "running", summaryText: "dos" }),
+      subagentRow({
+        rowId: 12,
+        parentToolCallId: "tool-b",
+        status: "running",
+        lastActivityAt: "2026-11-02T20:04:30.000Z",
+        summaryText: "dos",
+      }),
     ] as never;
 
-    const items = buildAssistantWorkRenderItems(rows, "hidden").filter(
-      (item) => item.kind === "agentToolCall",
-    );
-    expect(items).toHaveLength(2);
+    const items = build(rows);
+    expect(channelsOf(items)).toHaveLength(2);
 
-    const html = items.map(renderRow).join("\n");
+    const html = channelsOf(items).map(renderAgent).join("\n");
     const clocks = html.match(/en marcha[\s\S]{0,60}?\d{2}:\d{2}/g) ?? [];
     expect(clocks).toHaveLength(2);
-    // Sin filas de cierre mientras ambos siguen vivos.
+    // Con actividad reciente no hay filas despertadoras.
+    expect(wakesOf(items)).toHaveLength(0);
     expect(html).not.toContain('data-kind="closed"');
   });
 
-  it("el hilo produce las tres filas despertadoras desde las filas reales", () => {
-    // Pregunta: fila real de SendMessage con waitingForAnswer dentro del mapeo
-    // del hilo (buildAssistantWorkRenderItems -> toolCallRowToLegacyNode ->
-    // resolveToolCallRenderer), el mismo camino que usa el render de la fila.
-    const questionRow = {
-      kind: "toolCall",
-      rowId: 3,
-      turnId: "turn_1",
-      toolCallId: "tool-ask",
-      toolName: "SendMessage",
-      status: "success",
-      inputText: "",
-      input: { message: "¿uso la paleta nueva?", summary: "decisión", waitingForAnswer: true },
-    } as unknown as ToolCallRow;
-
-    // Latido y cierre: filas reales de subagente.
+  it("el mapeo del hilo deriva pregunta, latido y cierre de las filas reales", () => {
     const rows = [
-      questionRow,
-      agentRow(1, "tool-old", "running"),
+      // Pregunta pendiente: el orquestador marcó requires_answer y el worker
+      // sigue esperando. Es el estado que escribe la proyección en la fila.
+      agentRow(1, "tool-ask", "running"),
       subagentRow({
         rowId: 11,
-        parentToolCallId: "tool-old",
+        parentToolCallId: "tool-ask",
         status: "running",
-        summaryText: "sigue con la landing",
+        lastActivityAt: "2026-11-02T20:04:30.000Z",
+        waitingForAnswer: true,
+        summaryText: "¿uso la paleta nueva?",
       }),
-      agentRow(2, "tool-done", "success"),
+      // Latido: worker en marcha sin señales desde hace más del umbral.
+      agentRow(2, "tool-silent", "running"),
       subagentRow({
         rowId: 12,
+        parentToolCallId: "tool-silent",
+        status: "running",
+        lastActivityAt: "2026-11-02T20:00:00.000Z",
+        waitingForAnswer: false,
+        summaryText: "sigue con la landing",
+      }),
+      // Cierre: el worker terminó.
+      agentRow(3, "tool-done", "success"),
+      subagentRow({
+        rowId: 13,
         parentToolCallId: "tool-done",
         status: "success",
         endedAt: "2026-11-02T20:02:14.000Z",
@@ -165,38 +215,111 @@ describe("hilo real con dos canales y eventos despertadores", () => {
       }),
     ] as never;
 
-    const items = buildAssistantWorkRenderItems(rows, "hidden");
+    const items = build(rows);
+    const wakes = wakesOf(items);
+    expect(wakes.map((item) => item.event.kind)).toEqual(["question", "heartbeat", "closed"]);
 
-    const questionItem = items.find(
-      (item) => item.kind === "row" && item.row.toolCallId === "tool-ask",
-    );
-    expect(questionItem).toBeDefined();
-    const questionNode = toolCallRowToLegacyNode(
-      (questionItem as Extract<typeof questionItem, { kind: "row" }>).row,
-    );
-    const QuestionBlock = resolveToolCallRenderer({
-      toolCallNode: questionNode,
-    } as never) as (props: never) => unknown;
-    const question = renderToStaticMarkup(
-      createElement(QuestionBlock as never, { toolCallNode: questionNode } as never),
-    );
+    const question = wakes[0]!;
+    const questionHtml = renderWake(question, () => {});
+    expect(questionHtml).toContain('data-kind="question"');
+    expect(questionHtml).toContain("Programador");
+    expect(questionHtml).toContain("necesita una decisión");
+    expect(questionHtml).toContain("Responder");
+    // Sin acción (solo lectura) la pregunta sigue visible, sin botón.
+    expect(renderWake(question)).not.toContain("Responder");
 
-    // La acción de responder solo aparece cuando el hilo provee el callback.
-    const questionWithReply = renderToStaticMarkup(
-      createElement(QuestionBlock as never, {
-        toolCallNode: questionNode,
-        onRespondToQuestion: () => {},
-      } as never),
-    );
-    expect(question).not.toContain("Responder");
-    expect(questionWithReply).toContain("Responder");
+    const heartbeat = wakes[1]!;
+    expect(heartbeat.event.detail).toBe("05:00 sin noticia");
+    const heartbeatHtml = renderWake(heartbeat);
+    expect(heartbeatHtml).toContain('data-kind="heartbeat"');
+    expect(heartbeatHtml).toContain("sigue trabajando");
+    expect(heartbeatHtml).toContain("05:00 sin noticia");
 
-    const channels = items
-      .filter((item) => item.kind === "agentToolCall")
-      .map(renderRow)
-      .join("\n");
+    expect(renderWake(wakes[2]!)).toContain('data-kind="closed"');
 
-    const html = [question, channels].join("\n");
-    const kinds = [...html.matchAll(/data-kind="([a-z]+)"/g)].map((match) => match[1]);
-    expect(kinds.sort()).toEqual(["closed", "heartbeat", "question"]);
-  });});
+    // El canal de la pregunta sigue visible con su reloj; las tres filas son
+    // parte del mismo hilo, no componentes sueltos.
+    expect(channelsOf(items)).toHaveLength(3);
+    const html = [...channelsOf(items).map(renderAgent), ...wakes.map((item) => renderWake(item))].join("\n");
+    expect(kindsOf(html).sort()).toEqual(["closed", "heartbeat", "question"]);
+  });
+
+  it("la acción del cierre abre el canal; el latido no tiene acción", () => {
+    const rows = [
+      agentRow(1, "tool-ask", "running"),
+      subagentRow({
+        rowId: 11,
+        parentToolCallId: "tool-ask",
+        status: "running",
+        lastActivityAt: "2026-11-02T20:04:30.000Z",
+        waitingForAnswer: true,
+        summaryText: "¿uso la paleta nueva?",
+      }),
+      agentRow(2, "tool-silent", "running"),
+      subagentRow({
+        rowId: 12,
+        parentToolCallId: "tool-silent",
+        status: "running",
+        lastActivityAt: "2026-11-02T20:00:00.000Z",
+        summaryText: "sigue con la landing",
+      }),
+      agentRow(3, "tool-done", "success"),
+      subagentRow({
+        rowId: 13,
+        parentToolCallId: "tool-done",
+        status: "success",
+        endedAt: "2026-11-02T20:02:14.000Z",
+        summaryText: "verificado",
+      }),
+    ] as never;
+
+    const wakes = wakesOf(build(rows));
+    const opened: unknown[] = [];
+    const ctx = {
+      ...context,
+      onOpenSubagentSession: (request: unknown) => opened.push(request),
+    } as unknown as ConversationRowRenderContext;
+
+    const closed = wakes.find((item) => item.event.kind === "closed");
+    const openAction = closed ? wakeEventAction(closed, ctx) : undefined;
+    expect(typeof openAction).toBe("function");
+    openAction?.();
+    expect(opened).toEqual([
+      {
+        rootSessionId: "sess_ui",
+        parentSessionId: "sess_ui",
+        childSessionId: "child_13",
+        subagentType: "auton-worker",
+        title: "Landing 3",
+      },
+    ]);
+
+    const heartbeat = wakes.find((item) => item.event.kind === "heartbeat");
+    expect(heartbeat ? wakeEventAction(heartbeat, ctx) : "missing").toBeUndefined();
+
+    const question = wakes.find((item) => item.event.kind === "question");
+    expect(typeof (question ? wakeEventAction(question, ctx) : undefined)).toBe("function");
+  });
+
+  it("sin pregunta pendiente ni silencio suficiente no se inventan filas", () => {
+    const rows = [
+      agentRow(1, "tool-live", "running"),
+      subagentRow({
+        rowId: 11,
+        parentToolCallId: "tool-live",
+        status: "running",
+        lastActivityAt: "2026-11-02T20:04:30.000Z",
+        waitingForAnswer: false,
+        summaryText: "trabajando",
+      }),
+    ] as never;
+
+    // Antes del umbral: nada.
+    expect(wakesOf(build(rows, Date.parse("2026-11-02T20:05:10.000Z")))).toHaveLength(0);
+
+    // Pasado el umbral: el latido aparece desde el mismo mapeo.
+    const [late] = wakesOf(build(rows, Date.parse("2026-11-02T20:06:01.000Z")));
+    expect(late?.event.kind).toBe("heartbeat");
+    expect(late?.event.detail).toBe("01:31 sin noticia");
+  });
+});

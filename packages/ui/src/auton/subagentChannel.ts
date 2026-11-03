@@ -64,9 +64,7 @@ export function heartbeatEventForSubagent(
   thresholdMs: number = CHANNEL_HEARTBEAT_MS,
 ): WakeEventRowProps | null {
   if (row.status !== "running") return null;
-  const last = toMillis(
-    (row as { lastActivityAt?: unknown }).lastActivityAt ?? row.startedAt,
-  );
+  const last = toMillis(row.lastActivityAt ?? row.startedAt);
   if (last === null) return null;
   const silentFor = now - last;
   if (silentFor < thresholdMs) return null;
@@ -77,9 +75,46 @@ export function heartbeatEventForSubagent(
   };
 }
 
+function tail(text: string | undefined, max = 80): string | undefined {
+  const value = text?.trim();
+  if (!value) return undefined;
+  return value.length > max ? `…${value.slice(-(max - 1))}` : value;
+}
+
+/**
+ * Deriva las filas despertadoras de una fila real de subagente. Es la única
+ * fuente: el hilo pinta lo que devuelve esta función, sea pregunta, latido o
+ * cierre. Una pregunta pendiente manda sobre el latido.
+ */
+export function deriveWakeEvents(
+  row: SubagentRow,
+  now: number,
+  title: string,
+  heartbeatMs: number = CHANNEL_HEARTBEAT_MS,
+): WakeEventRowProps[] {
+  if (row.status === "running") {
+    if (row.waitingForAnswer === true) {
+      const detail = tail(row.summaryText);
+      return [
+        {
+          kind: "question",
+          workerName: "Programador",
+          title: "necesita una decisión",
+          ...(detail ? { detail } : {}),
+          actionLabel: "Responder",
+        },
+      ];
+    }
+    const heartbeat = heartbeatEventForSubagent(row, now, heartbeatMs);
+    return heartbeat ? [heartbeat] : [];
+  }
+  const closed = wakeEventForSubagent(row, now, title);
+  return closed ? [closed] : [];
+}
+
 /**
  * Cuando el canal cierra, el hilo pinta una fila centrada de evento despertador.
- * Mientras corre no hay fila: el canal ya se ve en marcha con su reloj.
+ * Mientras corre no hay fila de cierre: el canal ya se ve en marcha con su reloj.
  */
 export function wakeEventForSubagent(
   row: SubagentRow,
@@ -88,11 +123,12 @@ export function wakeEventForSubagent(
 ): WakeEventRowProps | null {
   if (row.status === "running") return null;
   const clock = channelClock(row, now);
-  const detail = row.summaryText?.trim();
+  const summary = row.summaryText?.trim();
+  const detail = summary && summary !== title.trim() ? tail(summary) : undefined;
   return {
     kind: "closed",
     title: `${title} ${channelStatusLabel(row.status)}`.trim(),
-    ...(detail ? { detail: detail.length > 80 ? `${detail.slice(0, 77)}…` : detail } : {}),
+    ...(detail ? { detail } : {}),
     ...(clock ? { at: clock } : {}),
     actionLabel: "Abrir",
   };

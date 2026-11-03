@@ -76,6 +76,7 @@ describe("canal del programador en el hilo", () => {
 
     expect(closed?.title).toBe("Landing falló");
     expect(closed?.detail?.length).toBeLessThanOrEqual(80);
-    expect(closed?.detail?.endsWith("…")).toBe(true);
+    // El recorte conserva la cola: ahí está lo último que dijo el worker.
+    expect(closed?.detail?.startsWith("…")).toBe(true);
   });
 });

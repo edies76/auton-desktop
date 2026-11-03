@@ -33,7 +33,6 @@ import {
   ZCODE_AGENT_PROVIDER,
 } from "@zcode/shared";
 import { TID_CHAT_EMPTY, TID_V4_SESSION_PANE, testId } from "@zcode/shared/test-ids";
-import { createQuestionRespondHandler } from "@/auton/respond.js";
 import type {
   ConversationShareAccessMode,
   GitChangeSourceId,
@@ -3004,8 +3003,6 @@ export function SessionPane({
       onOpenFileLink,
       onOpenSubagentSession:
         runtimeReady && onOpenSubagentSession ? handleOpenSubagentSession : undefined,
-      // Responder a la pregunta del hilo lleva el foco al compositor real.
-      onRespondToQuestion: runtimeReady && !readOnly ? createQuestionRespondHandler() : undefined,
       onOpenPlanDetail: runtimeReady && onOpenPlanDetail ? handleOpenPlanDetail : undefined,
       onOpenWorkflowRun: runtimeReady && onOpenWorkflowRun ? handleOpenWorkflowRun : undefined,
       onOpenWorkflowActor:

@@ -101,7 +101,6 @@ function ToolCallBlockComponent({
   animateDiffCountOnMount = false,
   agentSummaryAction,
   authoritativeAgentType,
-  onRespondToQuestion,
   streamingEntranceActive = false,
   streamingEntranceKeyPrefix = "tool",
   cuaGroupEvents,
@@ -147,7 +146,6 @@ function ToolCallBlockComponent({
   animateDiffCountOnMount?: boolean;
   agentSummaryAction?: ToolCallBlockRenderContext["agentSummaryAction"];
   authoritativeAgentType?: ToolCallBlockRenderContext["authoritativeAgentType"];
-  onRespondToQuestion?: (request: { message: string }) => void;
   streamingEntranceActive?: boolean;
   streamingEntranceKeyPrefix?: string;
   cuaGroupEvents?: readonly ConversationCuaGroupEvent[];
@@ -318,8 +316,7 @@ function ToolCallBlockComponent({
       animateDiffCountOnMount,
       agentSummaryAction,
       authoritativeAgentType,
-      onRespondToQuestion,
-      onOpenCodeViewer: toolPreviewCodeViewer,
+          onOpenCodeViewer: toolPreviewCodeViewer,
       onOpenFileLink,
       onOpenBrowserUrl,
       onOpenAutomationsMain,
