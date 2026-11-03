@@ -125,3 +125,37 @@ humano siempre sabe dónde está.
 
 **Lo que la cambiaría**: que un proyecto necesite varias conversaciones a la vez (por ejemplo una por
 frente grande). Si eso pasa, se añade una segunda conversación **dentro** del proyecto, no un chat global.
+
+## D7. Cómo se entera el orquestador de lo que hay en el proyecto
+
+**Se decide** (Edi, con el criterio afinado en la conversación): la regla es
+
+> **El orquestador lee para decidir; un worker lee para reportar.**
+
+Ni exploración manual del proyecto entero (caro y llena su contexto), ni todo delegado a ciegas. Así:
+
+1. **Al crear el proyecto: escaneo automático y gratis.** Sin modelo: se cuentan archivos, se detecta el
+   stack por los manifiestos, se listan los archivos clave. Eso queda en el registro del proyecto. Cuesta
+   cero y evita la primera pregunta tonta.
+2. **En la primera petición real: avisa y manda un worker a analizar.** El orquestador **dice que va a
+   revisar** ("voy a revisar qué guarda Lunar y preparar un plan") y manda a un worker a investigar. El
+   resultado es un **resumen con evidencia** (qué encontró y en qué ruta), que se guarda en el registro y
+   **no vuelve a pedirse**: la segunda vez ya se sabe, y se refresca cuando el proyecto cambia.
+3. **El orquestador lee él mismo cuando son una o dos cosas** y con eso decide rápido. Verificar es parte de
+   dirigir, pero **nunca explora el proyecto entero**.
+4. **No se manda el worker al crear el proyecto.** Podría no pedirse nunca nada y sería trabajo tirado. Lo
+   que se automatiza es el escaneo barato; el análisis profundo ocurre cuando sirve.
+5. **Investigación web: sí, con dos reglas.** Termina en una **recomendación con razones**, nunca en una
+   lista de enlaces; y se **marca como venido de fuera** (que el humano sepa qué es del proyecto y qué del
+   mundo).
+
+**Cómo se comporta, además**: proactivo y recomendador. Pregunta **una vez** y **con recomendación**, dice
+**lo que no va a hacer**, y admite lo que no sabe. Un compañero, no un formulario.
+
+**Experiencia objetivo (ejemplo acordado con ChatGPT)**: *"quiero mejorar el modo de estudio de Lunar"* →
+pregunta si quiere retomar donde quedó o que la app recomiende qué estudiar, y **recomienda retomar con su
+razón** → con la respuesta, **avisa** de que va a revisar qué guarda Lunar y preparar el plan, **manda un
+worker** → y cierra con la propuesta y con **lo que deja fuera de esta entrega**.
+
+**Qué la cambiaría**: que el escaneo inicial resulte caro en proyectos enormes. Entonces el escaneo pasa a
+ser dirigido (solo manifiestos y carpetas de primer nivel).
