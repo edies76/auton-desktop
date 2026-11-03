@@ -72,3 +72,60 @@ los hallazgos y los bloqueos, y **todo queda escrito** en vez de en llamadas. Pa
   solo vive en el chat, no existe.
 - Y la conversación de la sesión de Grok **se sube al buzón automáticamente** cada cinco minutos, así que
   quien quiera puede leer de dónde salió cada decisión.
+
+---
+
+# Features no incluidas inicialmente (trabajo de Edi, aparte)
+
+> **Esto no entra en ninguna fase.** Es para empezar cuando Edi quiera, en su propia sesión.
+> No bloquea nada de lo de arriba.
+
+## A. El espacio de la izquierda, rehecho: los workers
+
+**No se elimina: se rehace.** Antes habíamos decidido apagarlo; ahora se decide **reconstruirlo** para que
+ahí vivan los workers.
+
+**Cómo se ve y cómo se usa:**
+
+- **Una fila por worker**, clicable. Al abrirla, se ve **su conversación completa** y **lo que está haciendo
+  en tiempo real** — igual que el chat de un proyecto normal, pero **de un proyecto a la vez**.
+- **Sin campo de texto para ellos**: al worker no se le escribe directo. **El único que habla es el
+  orquestador.**
+- **Sí se pueden detener a mano.** Cada worker lleva su control de parar/pausar y su **tiempo y estado en
+  vivo** — el mismo patrón que el bloque de tareas de Grok Build (la fila con el reloj, el estado y los
+  botones de parar y cerrar).
+- **Todo el control vive en la interfaz del orquestador**, y desde ahí se **salta** al worker que quieras
+  ver.
+- **Tiene que quedar claro en pantalla qué es orquestador y qué es worker**: etiqueta, color o forma
+  distinta. No basta con el nombre.
+- **Mismo estilo de ZCode, UI nueva**: se reutilizan componentes, tokens y tipografía, y se añaden estados
+  y animaciones nuevas encima.
+
+**Terminología**: se dice **worker**. Se deja de decir "programador".
+
+**Qué reutilizar**: la vista que ya muestra la corriente de una sesión, y los controles de proceso que ya
+tiene la app. Lo nuevo es la lista, los estados y las animaciones.
+
+## B. El orquestador que sabe planear (esto es lo que separa al producto)
+
+Edi lo pidió explícito y tiene razón: **lo que él está haciendo a mano es lo que debe hacer Auton.**
+Planear el proyecto a fondo, sostener conversaciones largas, decidir el corte del trabajo. Eso no es un
+ajuste del prompt: es **trabajo pesado de prompt engineering**, y es el corazón del producto.
+
+Lo que el orquestador tiene que saber hacer:
+
+1. **Pensar antes de partir.** Entender la intención, el stack, las restricciones, y **lo que no se va a
+   hacer**. Preguntar lo que decide producto; decidir él lo demás.
+2. **Planear profundo, y proporcional.** Sprints con criterio de hecho, dependencias y frentes paralelos,
+   y saber cuándo **no** hacerlo (un archivo es una fila, no un equipo).
+3. **Conversar para planear.** Con el humano: pocas preguntas, con opciones, sin interrogar. Y **con sus
+   workers**: hablar con ellos para partir el trabajo, no solo repartirlo.
+4. **Explicar el plan como si lo hubiera escrito un ingeniero**: qué se va a hacer, en qué orden, qué
+   depende de qué, y cómo se sabrá que está terminado.
+5. **El criterio de que está bien hecho**: **el humano no tiene que rehacer el plan**. Si tiene que
+   corregirlo, el orquestador no planeó: transcribió.
+
+**Por qué esto es el diferencial**: cualquiera puede pedirle a un modelo que escriba una lista de tareas.
+Lo que casi nadie tiene es un sistema donde el plan **se piensa**, se **escribe en un contrato**, se
+**reparte con criterio** y se **revisa con evidencia**. Eso es prompt engineering + arquitectura, y es lo
+que hay que trabajar con más cuidado de todo el proyecto.
