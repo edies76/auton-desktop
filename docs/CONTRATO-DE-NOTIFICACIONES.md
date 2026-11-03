@@ -114,13 +114,12 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
   Pruebas: `ui/test/autonThreadChannels.test.tsx` (las tres por el mapeo real:
   `resolveToolCallRenderer` + `buildAssistantWorkRenderItems` +
   `ConversationAgentToolCallRow`) y `ui/test/autonWakeEventRow.test.tsx`.
-- **Hecho — la fila de pregunta admite acción de responder**: el callback
-  `ConversationRowRenderContext.onRespondToQuestion` viaja hasta `ToolCallBlock`
-  y la fila pinta **Responder** cuando el hilo lo provee (probado con y sin
-  callback en `autonThreadChannels.test.tsx`).
-- **Pendiente — la shell todavía no provee `onRespondToQuestion`**: el espacio del
-  proyecto (otra pieza) debe pasar un manejador que envíe la respuesta. Sin él, la
-  fila se ve informativa y sin botón.
+- **Hecho — la fila de pregunta responde desde el hilo**: el contexto real de la
+  conversación (`v4/SessionPane.tsx` → `ConversationRowRenderContext`) provee
+  `onRespondToQuestion` con `createQuestionRespondHandler`, que lleva el foco al
+  compositor del hilo. Probado con el handler real en
+  `ui/test/autonQuestionRespond.test.tsx` (clic en Responder → foco en el
+  compositor) y en `autonThreadChannels.test.tsx`.
 - **Hecho — el latido mide silencio real**: la proyección marca `lastActivityAt`
   al nacer el worker, en cada mensaje suyo (`onSubagentMessage` hace upsert) y la
   fila usa ese instante; 90 s sin señal ⇒ fila de latido.
