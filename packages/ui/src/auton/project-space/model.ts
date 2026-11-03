@@ -36,6 +36,8 @@ export interface AutonWorkerView {
   lastSignalAt: number;
   lastLine?: string;
   transcript: AutonWorkerEvent[];
+  /** Identificador con el que se detiene al worker; el panel lo usa para el botón. */
+  agentId?: string;
 }
 
 export interface AutonWorkTramo {

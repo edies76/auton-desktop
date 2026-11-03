@@ -12,6 +12,7 @@ import type {
   AutonWorkerStatus,
   AutonWorkerView,
 } from "../src/auton/project-space/model.js";
+import { projectSessionWorkerView } from "../src/auton/project-space/sessionWorker.js";
 
 const NOW = Date.UTC(2026, 10, 2, 12, 0, 0);
 
@@ -129,6 +130,29 @@ describe("panel de workers", () => {
 
     expect(onStopWorker).toHaveBeenCalledWith("w2");
     expect(onOpenWorker).not.toHaveBeenCalled();
+  });
+
+  it("el control de parada usa el identificador del worker, no el de la sesión", () => {
+    const onStopWorker = vi.fn();
+    const sessionWorker = projectSessionWorkerView({
+      agentId: "agent_1",
+      description: "landing",
+      status: "running",
+      startedAt: NOW - 30_000,
+      childSessionId: "sess_auton_agent_1",
+    });
+
+    renderUi(
+      <AutonWorkerPanel
+        workers={[sessionWorker]}
+        now={NOW}
+        onOpenWorker={vi.fn()}
+        onStopWorker={onStopWorker}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("auton-worker-stop"));
+    expect(onStopWorker).toHaveBeenCalledWith("agent_1");
   });
 
   it("la fila abre el detalle y el detalle no tiene campo de texto", () => {
