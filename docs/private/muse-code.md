@@ -97,8 +97,9 @@ El transporte por defecto es `serve` (conversacional); `AUTON_MUSE_TRANSPORT=exe
 - `auton-muse-engine.test.ts`: resolución, sonda, flags de modo, argumentos y parser del REPORTE.
 - `auton-muse-engine.test.ts`: adaptador `exec` contra un proceso hijo real (fixture) y, con
   `AUTON_MUSE_E2E=1`, contra el Muse real: `echo` dos veces y `meta` una.
-- `auton-muse-msp.test.ts`: handshake MSP y conversación real, con `echo` y `meta`, y el puerto real
-  lanzando Muse una vez.
+- `auton-muse-msp.test.ts`: handshake MSP y conversación real, con `echo` y `meta`, el puerto real
+  lanzando Muse una vez y una segunda entrada tras el primer turno.
+- `auton-worker-transcript.test.ts`: la proyección de Muse cierra cada turno y conserva el motivo.
 - `auton-worker-conversation.test.ts` y `auton-worker-port-conversation.test.ts`: reanudación,
   conversación, índice y transcripción.
 - `auton-engine-dispatch.test.ts`: selección de motor, ausencia de fallback silencioso y paso de

@@ -97,16 +97,23 @@ export function projectSessionWorkerView(
 }
 
 /**
- * Añade los workers de sesión a la proyección existente sin duplicar los que
- * ya llegaron como fila de subagente.
+ * Añade los workers de sesión a la proyección existente. Si el worker ya llegó
+ * como agente del workspace, reemplaza su fila para que la conversación del
+ * motor sustituya el resumen del índice de sesiones.
  */
 export function mergeSessionWorkers<T extends { workers: AutonWorkerView[] }>(
   space: T,
   snapshots: readonly AutonSessionWorkerSnapshot[],
 ): T & { workers: AutonWorkerView[] } {
-  const existing = new Set(space.workers.map((worker) => worker.id));
-  const added = snapshots
-    .map(projectSessionWorkerView)
-    .filter((worker) => !existing.has(worker.id));
-  return { ...space, workers: [...space.workers, ...added] };
+  const projected = snapshots.map(projectSessionWorkerView);
+  const byId = new Map(projected.map((worker) => [worker.id, worker]));
+  const merged = space.workers.map((worker) => {
+    const sessionWorker = byId.get(worker.id);
+    return sessionWorker
+      ? { ...worker, ...sessionWorker, name: worker.name || sessionWorker.name }
+      : worker;
+  });
+  const existing = new Set(merged.map((worker) => worker.id));
+  const added = projected.filter((worker) => !existing.has(worker.id));
+  return { ...space, workers: [...merged, ...added] };
 }

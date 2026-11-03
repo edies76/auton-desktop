@@ -13,6 +13,7 @@ import type {
   AutonWorkerView,
 } from "../src/auton/project-space/model.js";
 import { projectSessionWorkerView } from "../src/auton/project-space/sessionWorker.js";
+import { transcriptFromMuseTurns } from "../../../apps/zcode-cli/packages/core/src/auton/workerTranscript.js";
 
 const NOW = Date.UTC(2026, 10, 2, 12, 0, 0);
 
@@ -226,6 +227,37 @@ describe("espacio del proyecto", () => {
   });
 
   it("el detalle muestra la conversación completa del motor", () => {
+    const transcript = transcriptFromMuseTurns(
+      [
+        {
+          turnId: "turn-1",
+          userText: "primer encargo",
+          assistantText: "listo, revisé todo",
+          items: [
+            {
+              itemId: "u1",
+              kind: "userMessage",
+              status: "completed",
+              text: "primer encargo",
+            },
+            {
+              itemId: "tool-1",
+              kind: "toolCall",
+              status: "completed",
+              summary: "leyendo el proyecto",
+            },
+            {
+              itemId: "a1",
+              kind: "agentMessage",
+              status: "completed",
+              text: "listo, revisé todo",
+            },
+          ],
+          terminal: "completed",
+        },
+      ],
+      NOW - 20_000,
+    );
     const sessionWorker = projectSessionWorkerView({
       agentId: "agent_muse",
       description: "muse",
@@ -233,26 +265,18 @@ describe("espacio del proyecto", () => {
       startedAt: NOW - 20_000,
       completedAt: NOW,
       childSessionId: "sess_auton_agent_muse",
-      transcript: [
-        {
-          id: "c1",
-          at: NOW - 20_000,
-          kind: "message",
-          role: "orchestrator",
-          text: "primer encargo",
-        },
-        { id: "c2", at: NOW - 19_000, kind: "tool", text: "leyendo el proyecto" },
-        { id: "c3", at: NOW - 18_000, kind: "message", role: "worker", text: "listo, revisé todo" },
-        { id: "c4", at: NOW, kind: "close", text: "turno completado" },
-      ],
+      transcript,
     });
 
     renderUi(<AutonWorkerDetail worker={sessionWorker} now={NOW} onBack={vi.fn()} />);
 
-    const transcript = screen.getByTestId("auton-worker-transcript").textContent ?? "";
-    expect(transcript).toContain("Orquestador: primer encargo");
-    expect(transcript).toContain("leyendo el proyecto");
-    expect(transcript).toContain("listo, revisé todo");
-    expect(transcript).toContain("turno completado");
+    const visible = screen.getByTestId("auton-worker-transcript").textContent ?? "";
+    expect(visible).toContain("Orquestador: primer encargo");
+    expect(visible).toContain("leyendo el proyecto");
+    expect(visible).toContain("listo, revisé todo");
+    expect(visible).toContain("Turno completado.");
+    expect(
+      screen.getByTestId("auton-worker-transcript").querySelector('[data-event-kind="close"]'),
+    ).toBeTruthy();
   });
 });

@@ -54,7 +54,7 @@ La condición para registrar la herramienta de respuesta del worker dejó de ser
 
 ## Cómo llega al espacio del proyecto
 
-El panel de workers se alimenta de filas de subagente; un worker de sesión no produce esa fila. Para no romper la superficie nueva, se añade una traducción pura del estado real del worker a la misma forma que ya consume el panel: identificador de sesión, identificador para detenerlo, nombre, estado, inicio, última señal, última línea y transcripción. Los estados se traducen a los del panel (trabajando, preguntando, esperando, bloqueado, terminado), un worker ya presente no se duplica y el botón de parada tiene el identificador que necesita.
+El panel de workers se alimenta de filas de subagente; un worker de sesión no produce esa fila. Para no romper la superficie nueva, se añade una traducción pura del estado real del worker a la misma forma que ya consume el panel: identificador de sesión, identificador para detenerlo, nombre, estado, inicio, última señal, última línea y transcripción. La superficie lee el índice durable y la transcripción del motor desde el workspace y reemplaza la fila del agente cuando coincide el id de sesión, conservando su nombre. Los estados se traducen a los del panel (trabajando, preguntando, esperando, bloqueado, terminado), un worker ya presente no se duplica y el botón de parada tiene el identificador que necesita.
 
 ## Las cuatro piezas
 

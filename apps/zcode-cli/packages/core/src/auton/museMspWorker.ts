@@ -82,8 +82,8 @@ export function createMuseMspWorkerHandle(
   }): Promise<"steered" | "queued"> => {
     if (!started) throw new Error("El worker de Muse todavía no arrancó.");
     if (stopped) throw new Error("El worker de Muse ya está detenido.");
-    await client.steer(steerInput.message);
-    return "steered";
+    const result = await client.steer(steerInput.message);
+    return result.disposition === "queued" ? "queued" : "steered";
   };
 
   const stop = (): void => {
@@ -106,6 +106,6 @@ export function createMuseMspWorkerHandle(
     transcript,
     waitForIdle: () => client.waitForIdle(),
     lastResponse: () =>
-      lastResponse ?? client.conversation().at(-1)?.assistantText,
+      client.conversation().at(-1)?.assistantText ?? lastResponse,
   };
 }

@@ -61,22 +61,32 @@ El contrato es el que ya consume el panel: `message | tool | question | close`, 
 `orchestrator | worker`.
 
 - **Muse**: `item/started` + `item/delta` + `item/completed`; los `userMessage` son del orquestador, los
-  `agentMessage` del worker y los `toolCall` filas de herramienta.
+  `agentMessage` del worker y los `toolCall` filas de herramienta. Cada turno termina con una fila
+  `close` (`Turno completado.` o el motivo de fallo/cancelación).
 - **ZCode**: eventos de su sesión (`model_request` con el último mensaje del orquestador,
   `model_complete` con el texto del worker, `tool_call_*`, `turn_error`), con los mensajes de la sesión
   como respaldo.
 - Se escribe en `<workspace>/.auton/worker-transcript.json` y se proyecta con
   `projectSessionWorkerView`; el detalle del worker lo pinta tal cual.
+- La superficie lee el índice y las transcripciones con el servicio de archivos del host
+  (`useSessionWorkerConversations` en `AutonSpaceLive`), reemplaza la fila del agente cuando el id de
+  sesión coincide y conserva el nombre del agente. No hay datos de demostración en ese camino.
 
 ## Pruebas
 
-- `auton-muse-msp.test.ts`: conversación real con `echo` (dos entradas, ambas respuestas en orden) y
-  steer en caliente con `meta`; además, el puerto real lanzando Muse una vez, con índice y parada.
+- `auton-muse-msp.test.ts`: conversación real con `echo` (dos entradas, ambas respuestas en orden),
+  segunda entrada por el puerto tras el primer turno, cierre de transcripción y steer en caliente con
+  `meta` (la respuesta del asistente contiene las dos respuestas en orden); además, el puerto real
+  lanzando Muse una vez, con índice y parada.
+- `auton-worker-transcript.test.ts`: la proyección de Muse produce mensajes, herramientas y una fila
+  de cierre por turno, con el motivo en fallo/cancelación.
 - `auton-worker-conversation.test.ts`: reanudación de ZCode dos veces (misma sesión, misma carpeta,
   contexto) y transcripción desde eventos reales; índice ordenado y filtrado.
 - `auton-worker-port-conversation.test.ts`: puerto con host conversacional simulado (keepAlive,
   segunda entrada, salida, índice y transcripción), sin depender de Muse.
-- UI: proyección de transcripción y detalle del worker con mensajes, herramienta y cierre.
+- UI: `autonSpaceWorkersLive.test.tsx` lee el índice y la transcripción con el servicio de archivos y
+  abre el detalle con las filas reales; `autonWorkerPanel.test.tsx` proyecta la salida de
+  `transcriptFromMuseTurns`; `autonSessionWorkerConversations.test.ts` cubre el parser y la instantánea.
 
 ## Límites
 

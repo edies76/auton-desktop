@@ -54,7 +54,8 @@ describe("worker de sesión en el espacio del proyecto", () => {
     expect(view.transcript.at(-1)).toMatchObject({ kind: "close", text: "no compila" });
   });
 
-  it("se añade al espacio sin duplicar al que ya vino como subagente", () => {    const space = {
+  it("reemplaza la fila del agente con la conversación real del worker", () => {
+    const space = {
       messages: [],
       workers: [
         {
@@ -63,20 +64,36 @@ describe("worker de sesión en el espacio del proyecto", () => {
           status: "trabajando" as const,
           startedAt: 900,
           lastSignalAt: 900,
-          transcript: [],
+          transcript: [{ id: "agent-1-start", at: 900, kind: "message" as const, text: "landing" }],
         },
       ],
       tramos: [],
     };
 
     const merged = mergeSessionWorkers(space, [
-      snapshot(),
+      snapshot({
+        transcript: [
+          {
+            id: "t1",
+            at: 1_000,
+            kind: "message",
+            role: "orchestrator",
+            text: "primer encargo",
+          },
+          { id: "t2", at: 1_100, kind: "message", role: "worker", text: "listo" },
+        ],
+      }),
       snapshot({ agentId: "agent_2", childSessionId: "sess_auton_agent_2" }),
     ]);
 
     expect(merged.workers.map((worker) => worker.id)).toEqual([
       "sess_auton_agent_1",
       "sess_auton_agent_2",
+    ]);
+    expect(merged.workers[0]?.name).toBe("worker 1");
+    expect(merged.workers[0]?.transcript).toEqual([
+      { id: "t1", at: 1_000, kind: "message", text: "Orquestador: primer encargo" },
+      { id: "t2", at: 1_100, kind: "message", text: "listo" },
     ]);
   });
 

@@ -251,7 +251,7 @@ ayer.
 ### 25. La conversación y las sesiones de los workers se pueden ver **[auto]**
 - **Qué prometemos**: cada worker deja su conversación completa y su sesión indexada por motor, en orden de inicio.
 - **Cómo se prueba**: abre el detalle de un worker ZCode y de uno Muse, y revisa el índice de workers del proyecto.
-- **Qué tiene que verse**: mensajes del orquestador y del worker, filas de herramienta y cierre; y en el índice, motor, id de sesión del motor, carpeta, estado y tiempos, con el filtro por motor.
+- **Qué tiene que verse**: mensajes del orquestador y del worker, filas de herramienta y cierre; y en el índice, motor, id de sesión del motor, carpeta, estado y tiempos, con el filtro por motor. La superficie lee el índice y la transcripción del workspace; no usa datos de demostración.
 
 ---
 

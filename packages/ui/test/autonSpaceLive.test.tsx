@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
+import type { IServiceAccessor } from "@zcode/services";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
+import { ServiceProvider } from "@/hooks/useServices.js";
 import type { ConversationStoreState } from "@/v4/conversationProjectionStore.js";
 import type { SessionLease } from "@/v4/sessionDataLayer.js";
 import { AutonSpaceLive } from "../src/auton/project-space/AutonSpaceLive.js";
@@ -36,14 +39,32 @@ const store = {
 };
 const lease = { store } as unknown as SessionLease;
 
+const services = {
+  fileService: {
+    readTextFile: async () => {
+      throw new Error("ENOENT");
+    },
+  },
+} as unknown as IServiceAccessor;
+
+function space(node: ReactNode) {
+  return (
+    <ZCodeIntlProvider initialLocale="en-US">
+      <ServiceProvider services={services}>{node}</ServiceProvider>
+    </ZCodeIntlProvider>
+  );
+}
+
+function renderSpace(node: ReactNode) {
+  return render(space(node));
+}
+
 afterEach(cleanup);
 
 describe("espacio del proyecto conectado a la sesión real", () => {
   it("proyecta mensajes, workers, plan y evidencia de las filas reales", () => {
-    render(
-      <ZCodeIntlProvider initialLocale="en-US">
-        <AutonSpaceLive lease={lease} project={PROJECT} now={NOW} onBack={vi.fn()} />
-      </ZCodeIntlProvider>,
+    renderSpace(
+      <AutonSpaceLive lease={lease} project={PROJECT} now={NOW} onBack={vi.fn()} />,
     );
 
     expect(screen.getByTestId("auton-project-space")).toBeTruthy();
@@ -56,19 +77,13 @@ describe("espacio del proyecto conectado a la sesión real", () => {
 
   it("el botón atrás vuelve al hilo y una sesión sin filas no inventa workers", () => {
     const onBack = vi.fn();
-    const { rerender } = render(
-      <ZCodeIntlProvider initialLocale="en-US">
-        <AutonSpaceLive lease={lease} project={PROJECT} now={NOW} onBack={onBack} />
-      </ZCodeIntlProvider>,
+    const { rerender } = renderSpace(
+      <AutonSpaceLive lease={lease} project={PROJECT} now={NOW} onBack={onBack} />,
     );
     fireEvent.click(screen.getByTestId("auton-project-back"));
     expect(onBack).toHaveBeenCalledTimes(1);
 
-    rerender(
-      <ZCodeIntlProvider initialLocale="en-US">
-        <AutonSpaceLive lease={null} project={PROJECT} now={NOW} onBack={onBack} />
-      </ZCodeIntlProvider>,
-    );
+    rerender(space(<AutonSpaceLive lease={null} project={PROJECT} now={NOW} onBack={onBack} />));
     expect(screen.queryAllByTestId("auton-worker-row")).toHaveLength(0);
     expect(screen.getByTestId("auton-worker-panel").textContent).toContain("Sin workers todavía");
   });

@@ -38,10 +38,13 @@ export function transcriptFromMuseTurns(
       const mapped = transcriptFromMuseItem(item);
       if (mapped) push(mapped);
     }
-    if (turn.terminal === "failed" || turn.terminal === "cancelled") {
+    if (turn.terminal) {
       push({
         kind: "close",
-        text: turn.reason ?? `turno ${turn.terminal}`,
+        text:
+          turn.terminal === "completed"
+            ? (turn.reason ?? "Turno completado.")
+            : (turn.reason ?? `turno ${turn.terminal}`),
         status: turn.terminal,
       });
     }

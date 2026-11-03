@@ -162,7 +162,7 @@ export class MuseMspClient {
       input: [{ type: "text", text }],
     });
     const turnId = String(result.turnId);
-    this.ensureTurn(turnId);
+    this.setActiveTurn(turnId);
     return { turnId, disposition: String(result.disposition ?? "started") };
   }
 
@@ -176,7 +176,7 @@ export class MuseMspClient {
       input: [{ type: "text", text }],
     });
     const turnId = String(result.turnId ?? this.activeTurnId);
-    this.ensureTurn(turnId);
+    this.setActiveTurn(turnId);
     return { turnId, disposition: String(result.disposition ?? "steered") };
   }
 
@@ -192,7 +192,9 @@ export class MuseMspClient {
   }
 
   async waitForIdle(): Promise<void> {
-    const active = this.activeTurnId;
+    const active =
+      this.activeTurnId ??
+      [...this.turnOrder].reverse().find((id) => !this.turns.get(id)?.terminal);
     if (!active) return;
     await this.waitForTurn(active);
   }
@@ -246,6 +248,20 @@ export class MuseMspClient {
     this.turns.set(turnId, turn);
     this.turnOrder.push(turnId);
     return turn;
+  }
+
+  /**
+   * El turno queda activo en cuanto el host acepta `turn/start` o `turn/steer`,
+   * sin esperar la notificación `turn/started`. Si la notificación de cierre
+   * llegó antes que la respuesta, el turno ya es terminal y no se reactiva.
+   */
+  private setActiveTurn(turnId: string): void {
+    const turn = this.ensureTurn(turnId);
+    if (turn.terminal) {
+      if (this.activeTurnId === turnId) this.activeTurnId = undefined;
+      return;
+    }
+    this.activeTurnId = turnId;
   }
 
   private request(
@@ -315,10 +331,7 @@ export class MuseMspClient {
   private handleNotification(method: string, params: Record<string, unknown>): void {
     if (method === "turn/started") {
       const turnId = String(params.turnId ?? "");
-      if (turnId) {
-        this.activeTurnId = turnId;
-        this.ensureTurn(turnId);
-      }
+      if (turnId) this.setActiveTurn(turnId);
       return;
     }
     if (method === "item/started" || method === "item/updated" || method === "item/completed") {
