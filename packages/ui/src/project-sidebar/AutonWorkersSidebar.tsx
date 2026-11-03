@@ -49,9 +49,9 @@ function AutonWorkersSidebarContents({
       .filter((task) => task.projectId === projectId && !task.archived)
       .sort((left, right) => right.updatedAt - left.updatedAt);
     return {
-      // El orquestador es la sesión del humano o la conversación persistida
-      // del proyecto; nunca se elige por “el task más reciente”.
-      orchestratorId: activeTaskId ?? orchestratorTaskId ?? null,
+      // El panel siempre lee la conversación del orquestador; la sesión activa
+      // solo sirve de respaldo cuando todavía no hay conversación publicada.
+      orchestratorId: orchestratorTaskId ?? activeTaskId ?? null,
       projectTasks: ordered,
     };
   }, [activeTaskId, orchestratorTaskId, tasks]);

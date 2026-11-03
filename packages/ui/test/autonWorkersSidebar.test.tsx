@@ -7,11 +7,16 @@ import { AutonWorkersSidebar } from "../src/project-sidebar/AutonWorkersSidebar.
 
 const NOW = Date.UTC(2026, 10, 3, 12, 0, 0);
 
-const state = vi.hoisted(() => ({
-  rows: [] as unknown[],
-  stopGeneration: vi.fn(async () => undefined),
-  layer: { acquire: () => ({ release: () => undefined }) },
-}));
+const state = vi.hoisted(() => {
+  const acquire = vi.fn((_taskId: string) => ({ release: () => undefined }));
+  return {
+    rows: [] as unknown[],
+    activeTaskId: "orch" as string | null,
+    stopGeneration: vi.fn(async () => undefined),
+    acquire,
+    layer: { acquire },
+  };
+});
 
 vi.mock("@/v4/V4ConversationContext.js", () => ({
   V4PaneConversationProvider: ({ children }: { children: unknown }) => children,
@@ -30,7 +35,7 @@ vi.mock("@/hooks/useWorkspaceServices.js", () => ({
 
 vi.mock("@/store/zcodeSessionStore.js", () => ({
   useZCodeSessionStore: (selector: (value: { workspaces: Record<string, { activeTaskId: string }> }) => unknown) =>
-    selector({ workspaces: { "/workspace/lunar": { activeTaskId: "orch" } } }),
+    selector({ workspaces: { "/workspace/lunar": { activeTaskId: state.activeTaskId ?? "" } } }),
 }));
 
 function task(taskId: string, title: string): ProjectTask {
@@ -98,7 +103,9 @@ function renderSidebar() {
 afterEach(() => {
   cleanup();
   state.rows = [];
+  state.activeTaskId = "orch";
   state.stopGeneration.mockClear();
+  state.acquire.mockClear();
   useAutonWorkerFocusStore.getState().close();
 });
 
@@ -126,6 +133,17 @@ describe("sidebar de workers del proyecto", () => {
     );
     expect(useAutonWorkerFocusStore.getState().selectedWorkerId).toBe("auton-1");
     expect(useAutonWorkerFocusStore.getState().mode).toBe("summary");
+  });
+
+  it("con una sesión de worker activa sigue leyendo el orquestador publicado", () => {
+    state.activeTaskId = "sess_auton_agent_1";
+    state.rows = [fullWorkerRow()];
+    renderSidebar();
+
+    expect(state.acquire).toHaveBeenCalledWith("orch");
+    expect(screen.getByTestId("auton-worker-group-agent").textContent).toContain(
+      "Agente completo",
+    );
   });
 
   it("para un agente completo interrumpiendo el turno del orquestador", () => {
