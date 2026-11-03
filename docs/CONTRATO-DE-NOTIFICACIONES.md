@@ -122,6 +122,10 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
   Pruebas: `ui/test/autonThreadChannels.test.tsx` (las tres por
   `buildAssistantWorkRenderItems` + `WakeEventItem`, sin instanciar
   `WakeEventRow`) y `ui/test/autonWakeEventRow.test.tsx` (pieza visual).
+  El chat vivo es el hilo normal: `v4ConversationTurnGroup.test.ts` monta
+  `ConversationTurnGroup` —el mismo componente que usa la conversación— con dos
+  canales Auton y comprueba que el reloj, el estado final y las filas de pregunta
+  y cierre salen dentro de ese hilo, con sus acciones. No hay pantalla aparte.
 - **Hecho — la fila de pregunta responde desde el hilo**: el ítem `wakeEvent` de
   tipo pregunta recibe `createQuestionRespondHandler` en
   `v4/ConversationTurnGroup.tsx`, que lleva el foco al compositor del hilo.

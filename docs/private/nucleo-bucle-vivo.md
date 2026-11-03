@@ -82,6 +82,7 @@ sale centrada y con `data-kind`. Ningún tipo se instancia a mano en el hilo.
 | `core/tests/auton-real-dispatch-runtime.test.ts` (1) | Despacho real: el modelo pide `Agent`, el runtime lanza el worker, el turno espera y se libera |
 | `core/tests/auton-fast-channel-runtime.test.ts` (2) | Canal rápido en los dos sentidos |
 | `ui/test/autonThreadChannels.test.tsx` (5) | Mapeo real del hilo: dos canales, relojes, los tres tipos despertadores, acción de abrir |
+| `ui/test/v4ConversationTurnGroup.test.ts` (+1) | El chat vivo es el hilo normal: canales y filas despertadoras dentro de `ConversationTurnGroup`, sin pantalla aparte |
 | `ui/test/autonQuestionRespond.test.tsx` (2) | Evento de pregunta derivado + handler real: foco en el compositor, sin callback no hay botón |
 | `bootstrap/tests/auton-thread-question-projection.test.ts` (3) | `requires_answer` marca la fila; la respuesta y el cierre la levantan |
 | `ui/test/autonSubagentChannel.test.ts` (5) | Estado, reloj y props del evento |
