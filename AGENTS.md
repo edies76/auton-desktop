@@ -19,6 +19,34 @@ y no son opcionales:
 3. **[`context/ARQUITECTURA-ORQUESTADOR.md`](context/ARQUITECTURA-ORQUESTADOR.md)** — la spec de trabajo del
    orquestador: bucle vivo, canales anidados, tres relojes, contexto por etapas, motor por sprint.
 
+## REGLA DE LAS CUATRO PIEZAS (toda capacidad nueva)
+
+**Toda capacidad que se construya tiene que llegar al orquestador, o no existe para el producto.**
+Y llegar son **cuatro piezas juntas, en el mismo cambio**:
+
+1. **El handler**: la implementacion.
+2. **El registro**: la herramienta declarada con su **nombre**, su **descripcion** y la forma de sus
+   argumentos, para que el modelo la vea.
+3. **Una linea en el prompt del orquestador** diciendo **cuando** usarla. Que exista **no** es que se use:
+   un handler sin esa linea es codigo que funciona y que nadie llama.
+4. **Una prueba** en `context/PRUEBAS-QUE-PROMETEMOS.md`: una por promesa.
+
+Lo mismo vale para:
+
+- **Las secciones de prompt**: un archivo de seccion que **nadie incluye** en el ensamblado **no llega al
+  modelo**. Se comprueba que esta registrada, no se supone.
+- **Los datos de contexto** (el contrato, el diario, el plan, el registro de cambios): si no se **inyectan**
+  en el prompt, el orquestador no sabe que existen.
+- **Los adaptadores de motor**: si no se declaran, el orquestador no puede elegirlos.
+
+**Forma de hacerlo bien**: mirar como **ZCode declara sus herramientas** (nombre, descripcion clara y
+argumentos) y copiar esa forma. Nada de estilo propio.
+
+**Y se deja constancia**: al cerrar el trabajo, se anota **en la terminal de la sesion** (el archivo de la
+sesion) que capacidad se anadio, con sus cuatro piezas y su prueba; y si falta alguna, **cual**.
+
+**Prueba de que la regla se cumplio**: pedirle al orquestador que use esa capacidad y ver que la usa.
+
 **Regla dura: lo que no esta en el repositorio no existe.** Los acuerdos que se tomen por el buzon de
 agentes se copian aqui el mismo dia, en un commit o en un documento. Lo que solo vive en un chat, se
 perdio.
