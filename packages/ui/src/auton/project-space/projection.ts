@@ -143,14 +143,15 @@ function workerName(
 ): string {
   const description = toolDescription(rows, row.parentToolCallId);
   const summaryLine = row.summaryText.trim().split("\n")[0]?.trim();
+  // El runtime puede adjuntar el título del chat; es el nombre más fiel cuando existe.
+  const title = (row as SubagentRow & { title?: string }).title?.trim();
   if (row.subagentType === "auton-worker") {
-    const title = (row as SubagentRow & { title?: string }).title?.trim();
     return title || description || summaryLine || `worker ${index + 1}`;
   }
   if (row.subagentType.startsWith("auton-")) {
-    return description || summaryLine || `worker ${index + 1}`;
+    return title || description || summaryLine || `worker ${index + 1}`;
   }
-  return description || summaryLine || `${row.subagentType || "worker"} ${index + 1}`;
+  return title || description || summaryLine || `${row.subagentType || "worker"} ${index + 1}`;
 }
 
 /** `auton-worker` es el agente completo de ZCode; el resto son subagentes. */

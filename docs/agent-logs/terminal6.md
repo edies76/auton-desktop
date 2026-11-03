@@ -234,3 +234,20 @@ Verificado con: `autonWorkersSidebar` (9), `autonWorkerPanel` (10), `autonSpaceP
 suite `auton*` 68/68, typecheck raíz 0, lint raíz 0 errores/103 avisos. En vivo:
 `counts-sidebar.png`, `final-worker-open.png`, `final-orchestrator.png`; abrir worker carga el
 chat completo sin `sessionNotFound`, sin resumen y con `Volver` flotante.
+## 2026-11-03 - el worker conserva el chat normal
+
+Qué: al abrir un worker se monta el `V4ChatPane` sin `readOnly`, así que conserva el compositor,
+el selector de modelo y esfuerzo, el modo de permisos, las herramientas y las acciones normales del
+chat de ZCode. Un subagente sigue en solo lectura porque su control pertenece al agente que lo creó.
+El nombre del subagente prefiere el `title` del runtime cuando existe, luego la descripción del
+`Agent` y por último el resumen.
+
+Por qué: el usuario pidió que los workers tengan casi toda la configuración y opciones de un chat
+normal. El worker es un agente ZCode completo; recortarle el compositor lo dejaba como una vista de
+solo lectura y ocultaba la configuración que ya existe para cualquier sesión.
+
+Verificado con: `autonWorkerFocusPane` (4), `workerCenterTransitions` y la suite `auton*` 69/69;
+typecheck raíz 0 y lint raíz 0 errores/103 avisos. En vivo: `worker-full-options.png`; el composer
+muestra `Add context`, `Full access`, `Computer Use`, modelo `deepseek-v4.1-flash`, esfuerzo
+`High` y `Send`. El menú de modelo abre la lista completa y el esfuerzo; se cerró con Escape sin
+cambiar la selección.

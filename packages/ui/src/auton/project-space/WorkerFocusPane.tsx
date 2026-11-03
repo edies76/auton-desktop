@@ -16,6 +16,10 @@ export interface AutonWorkerFocusPaneProps {
 /**
  * Conversación completa del worker o subagente, sin resumen ni cabecera
  * separadora. La vuelta es un botón flotante sobre el chat nativo.
+ *
+ * Un worker es un agente ZCode completo: conserva el compositor, el modelo,
+ * los permisos y las acciones normales del chat. Un subagente se observa, no
+ * se controla desde aquí.
  */
 export function AutonWorkerFocusPane({
   worker,
@@ -26,6 +30,7 @@ export function AutonWorkerFocusPane({
   canGoBack = true,
   backLabel = "Volver",
 }: AutonWorkerFocusPaneProps) {
+  const readOnly = worker.kind === "subagent" || worker.kind === "muse";
   return (
     <div
       className="relative flex h-full min-h-0 flex-col bg-background"
@@ -49,7 +54,7 @@ export function AutonWorkerFocusPane({
           workspacePath={workspacePath}
           {...(workspaceIdentity ? { workspaceIdentity } : {})}
           sessionId={worker.id}
-          readOnly
+          readOnly={readOnly}
           isDesktop={isDesktop}
         />
       </div>

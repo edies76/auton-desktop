@@ -56,7 +56,9 @@ Es **el espacio de un proyecto, y solo uno a la vez**. Se compone de tres zonas:
 - **No hay vistas nativas de ZCode** (`Timeline`, agrupado, lista de tareas) ni sección `Tasks` en este
   panel. El proyecto es el encabezado; el hilo central no lleva la etiqueta `Orquestador`.
 - **Clicable**: al abrir una fila se ve **su conversación completa directamente**, sin resumen ni
-  cabecera separadora; la vuelta es un botón flotante sobre el chat. El chat es de solo lectura.
+  cabecera separadora; la vuelta es un botón flotante sobre el chat. El worker conserva el chat
+  normal de ZCode (compositor, modelo, permisos y acciones de la conversación); un subagente se
+  observa en solo lectura.
 - Referencia visual que pidió Edi: la lista de chats normal de ZCode (icono, nombre y acción), no una
   tarjeta con badge y segunda línea.
 

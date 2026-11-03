@@ -182,7 +182,7 @@ describe("sidebar de workers del proyecto", () => {
     );
 
     const subagents = screen.getByTestId("auton-worker-group-subagent");
-    expect(subagents.textContent).toContain("Revisando el login");
+    expect(subagents.textContent).toContain("Explorar login");
     expect(
       within(screen.getByTestId("auton-worker-group-agent")).getByTestId(
         "auton-worker-subagent-count",

@@ -12,6 +12,14 @@ const WORKER: AutonWorkerView = {
   lastSignalAt: 2_000,
   lastLine: "Revisa la restauración de sesión",
   transcript: [],
+  kind: "agent",
+};
+
+const SUBAGENT: AutonWorkerView = {
+  ...WORKER,
+  id: "sess_subagent_agent_2",
+  name: "Explorar login",
+  kind: "subagent",
 };
 
 vi.mock("@/v4/V4ChatPane.js", () => ({
@@ -27,7 +35,7 @@ vi.mock("@/v4/V4ChatPane.js", () => ({
 afterEach(cleanup);
 
 describe("chat completo del worker", () => {
-  it("abre la conversación directamente, sin resumen ni compositor", () => {
+  it("un agente completo conserva el chat normal, sin resumen ni cabecera", () => {
     render(
       <AutonWorkerFocusPane
         worker={WORKER}
@@ -37,9 +45,22 @@ describe("chat completo del worker", () => {
     );
 
     expect(screen.getByTestId("v4-chat-pane").dataset.sessionId).toBe(WORKER.id);
-    expect(screen.getByTestId("v4-chat-pane").dataset.readonly).toBe("true");
+    expect(screen.getByTestId("v4-chat-pane").dataset.readonly).toBe("false");
     expect(screen.queryByTestId("auton-worker-summary")).toBeNull();
     expect(screen.queryByTestId("auton-worker-focus-stop")).toBeNull();
+  });
+
+  it("un subagente se observa en solo lectura", () => {
+    render(
+      <AutonWorkerFocusPane
+        worker={SUBAGENT}
+        workspacePath="/workspace/lunar"
+        onBack={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("v4-chat-pane").dataset.sessionId).toBe(SUBAGENT.id);
+    expect(screen.getByTestId("v4-chat-pane").dataset.readonly).toBe("true");
   });
 
   it("la vuelta es un botón flotante sobre el chat", () => {

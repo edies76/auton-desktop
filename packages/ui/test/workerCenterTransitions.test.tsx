@@ -31,6 +31,7 @@ const A: AutonWorkerView = {
   lastSignalAt: 2_000,
   lastLine: "Trabajando en A",
   transcript: [],
+  kind: "agent",
 };
 
 const B: AutonWorkerView = {
@@ -41,6 +42,7 @@ const B: AutonWorkerView = {
   lastSignalAt: 2_000,
   lastLine: "Trabajando en B",
   transcript: [],
+  kind: "subagent",
 };
 
 function Harness({
@@ -106,6 +108,7 @@ describe("transiciones del centro entre orquestador y workers", () => {
 
     expect(screen.getByTestId("auton-worker-chat")).toBeTruthy();
     expect(screen.getByTestId("v4-chat-pane").dataset.sessionId).toBe(A.id);
+    expect(screen.getByTestId("v4-chat-pane").dataset.readonly).toBe("false");
 
     selectPanelWorker(B.id);
     expect(screen.getByTestId("v4-chat-pane").dataset.sessionId).toBe(B.id);
