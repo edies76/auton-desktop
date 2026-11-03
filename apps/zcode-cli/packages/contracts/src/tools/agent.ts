@@ -7,7 +7,10 @@ import { z } from "zod";
 import type { ToolCallId, TraceId } from "../interfaces/shared.js";
 import type { ModelUsage } from "../model/index.js";
 import { toToolJsonSchema } from "./json-schema.js";
-import { AutonWorkerTaskModeSchema } from "../auton/task-mode.js";
+import {
+  AutonWorkerTaskModeSchema,
+  DEFAULT_AUTON_WORKER_TASK_MODE,
+} from "../auton/task-mode.js";
 
 export const AgentType = {
   GeneralPurpose: "general-purpose",
@@ -33,14 +36,17 @@ export const AgentInputSchema = z.object({
       "This travels apart from effort: effort sets how much adjacent work is allowed, " +
       "thinking_level sets how hard the worker reasons before acting.",
   ),
-  mode: AutonWorkerTaskModeSchema.optional().describe(
-    "Class of work for subagent_type=auton-worker, separate from effort. " +
-      "build (default) writes the code; read explores and reports with file paths, never writing; " +
-      "research compares outside options and closes with a recommendation with reasons, never a link list; " +
-      "debug reproduces the failure and names the root cause, without fixing it; " +
-      "refactor changes the shape while the tests stay green and behavior stays the same. " +
-      "read and research cannot modify the workspace: their write tools are removed.",
-  ),
+  mode: AutonWorkerTaskModeSchema.catch(DEFAULT_AUTON_WORKER_TASK_MODE)
+    .optional()
+    .describe(
+      "Class of work for subagent_type=auton-worker, separate from effort. " +
+        "build (default) writes the code; read explores and reports with file paths, never writing; " +
+        "research compares outside options and closes with a recommendation with reasons, never a link list; " +
+        "debug reproduces the failure and names the root cause, without fixing it; " +
+        "refactor changes the shape while the tests stay green and behavior stays the same. " +
+        "read and research cannot modify the workspace: their write tools are removed. " +
+        "An unknown value falls back to build.",
+    ),
   item_id: z
     .string()
     .optional()

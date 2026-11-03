@@ -2,7 +2,13 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { AgentInputSchema, AutonPlanItemSchema, AutonPlanSchema, formatAutonPlanForModel } from "@zcode/contracts";
+import {
+  AgentInputJsonSchema,
+  AgentInputSchema,
+  AutonPlanItemSchema,
+  AutonPlanSchema,
+  formatAutonPlanForModel,
+} from "@zcode/contracts";
 import { buildAutonWorkerPromptForRequest } from "../src/auton/workerPolicy.js";
 import {
   AUTON_WORKER_TASK_MODE_PROFILES,
@@ -103,7 +109,7 @@ describe("la seguridad del modo vive en la política de herramientas", () => {
 });
 
 describe("el registro y el contrato declaran el modo", () => {
-  it("la herramienta Agent acepta los cinco modos y rechaza lo demás", () => {
+  it("la herramienta Agent acepta los cinco modos y un valor raro cae en build", () => {
     for (const mode of MODES) {
       const parsed = AgentInputSchema.parse({
         description: "x",
@@ -113,17 +119,22 @@ describe("el registro y el contrato declaran el modo", () => {
       });
       expect(parsed.mode).toBe(mode);
     }
-    expect(() =>
-      AgentInputSchema.parse({
-        description: "x",
-        prompt: "y",
-        subagent_type: "auton-worker",
-        mode: "inventado",
-      }),
-    ).toThrow();
+    const invalid = AgentInputSchema.parse({
+      description: "x",
+      prompt: "y",
+      subagent_type: "auton-worker",
+      mode: "inventado",
+    });
+    expect(invalid.mode).toBe("build");
+
+    // El registro conserva los cinco valores para el modelo.
+    const schema = JSON.stringify(AgentInputJsonSchema);
+    for (const mode of MODES) {
+      expect(schema).toContain(mode);
+    }
   });
 
-  it("el item del plan guarda el modo y el plan lo imprime para el modelo", () => {
+  it("el item del plan guarda el modo, cae en build si no vale y el plan lo imprime", () => {
     const item = AutonPlanItemSchema.parse({
       id: "s1",
       title: "Leer el proyecto",
@@ -131,6 +142,14 @@ describe("el registro y el contrato declaran el modo", () => {
       mode: "read",
     });
     expect(item.mode).toBe("read");
+
+    const invalid = AutonPlanItemSchema.parse({
+      id: "s2",
+      title: "Raro",
+      status: "ready",
+      mode: "inventado",
+    });
+    expect(invalid.mode).toBe("build");
 
     const plan = AutonPlanSchema.parse({
       items: [{ id: "s1", title: "Leer", status: "ready", mode: "read" }],

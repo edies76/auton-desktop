@@ -133,6 +133,17 @@ describe("el despacho elige el puerto según el interruptor", () => {
       }),
     );
     expect((withoutMode.launched[0] as { mode?: string }).mode).toBeUndefined();
+
+    const invalidMode = fakePort("session-invalid");
+    await agentToolEntry.handler(
+      { ...INPUT, worker_mode: "session", mode: "inventado" },
+      context({
+        autonWorkerMode: "session",
+        autonSessionWorkerPort: invalidMode.port,
+        subagentPort: fakePort("sub3").port,
+      }),
+    );
+    expect((invalidMode.launched[0] as { mode?: string }).mode).toBe("build");
   });
 });
 

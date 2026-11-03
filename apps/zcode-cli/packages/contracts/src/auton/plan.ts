@@ -69,10 +69,10 @@ export const AutonPlanItemSchema = z
     detail: z.string().optional().describe("Scope, definition of done and constraints"),
     status: AutonPlanItemStatusSchema.describe("Current state of this work item"),
     effort: AutonEffortSchema.optional().describe("How hard the programmer should work"),
-    mode: AutonWorkerTaskModeSchema.optional().describe(
+    mode: AutonWorkerTaskModeSchema.catch("build").optional().describe(
       "Class of work for this item: build (default) writes code, read explores and reports, " +
         "research compares outside options, debug reproduces a failure, refactor changes shape " +
-        "without changing behavior. Separate from effort.",
+        "without changing behavior. Separate from effort. An unknown value falls back to build.",
     ),
     owner: AutonOwnerSchema
       .optional()

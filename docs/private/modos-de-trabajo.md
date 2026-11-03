@@ -26,7 +26,8 @@ los dos significara lo que dice.
    esfuerzo**. La sección del modo declara propósito, criterio de hecho y prohibiciones.
 4. El item del plan guarda el mismo `mode`, y el plan que lee el modelo lo imprime junto al esfuerzo.
 
-Sin `mode`, el worker recibe `build`. Un valor inventado no pasa el esquema de la herramienta.
+Sin `mode`, el worker recibe `build`. Un valor inventado también cae en `build`: el eje nunca deja al
+worker sin modo, y el esquema sigue declarando los cinco válidos para el modelo.
 
 ## La seguridad no vive solo en el texto
 
