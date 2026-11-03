@@ -7,8 +7,15 @@ interface AutonWorkerFocusState {
   worker: AutonWorkerView | null;
   workspacePath: string;
   workspaceIdentity?: string;
+  /** Un subagente se para interrumpiendo el turno del orquestador. */
+  stopTaskId?: string;
   mode: AutonWorkerFocusMode;
-  open(worker: AutonWorkerView, workspacePath: string, workspaceIdentity?: string): void;
+  open(
+    worker: AutonWorkerView,
+    workspacePath: string,
+    workspaceIdentity?: string,
+    stopTaskId?: string,
+  ): void;
   setMode(mode: AutonWorkerFocusMode): void;
   close(): void;
 }
@@ -22,8 +29,8 @@ export const useAutonWorkerFocusStore = create<AutonWorkerFocusState>((set) => (
   worker: null,
   workspacePath: "",
   mode: "summary",
-  open: (worker, workspacePath, workspaceIdentity) =>
-    set({ worker, workspacePath, workspaceIdentity, mode: "summary" }),
+  open: (worker, workspacePath, workspaceIdentity, stopTaskId) =>
+    set({ worker, workspacePath, workspaceIdentity, stopTaskId, mode: "summary" }),
   setMode: (mode) => set({ mode }),
-  close: () => set({ worker: null, mode: "summary" }),
+  close: () => set({ worker: null, stopTaskId: undefined, mode: "summary" }),
 }));

@@ -24,6 +24,7 @@ export function AutonWorkerFocusPane({ isDesktop = false }: AutonWorkerFocusPane
   const worker = useAutonWorkerFocusStore((state) => state.worker);
   const workspacePath = useAutonWorkerFocusStore((state) => state.workspacePath);
   const workspaceIdentity = useAutonWorkerFocusStore((state) => state.workspaceIdentity);
+  const stopTaskId = useAutonWorkerFocusStore((state) => state.stopTaskId);
   const mode = useAutonWorkerFocusStore((state) => state.mode);
   const setMode = useAutonWorkerFocusStore((state) => state.setMode);
   const close = useAutonWorkerFocusStore((state) => state.close);
@@ -39,7 +40,7 @@ export function AutonWorkerFocusPane({ isDesktop = false }: AutonWorkerFocusPane
     if (!service) return;
     void service
       .stopGeneration({
-        taskId: worker.id,
+        taskId: stopTaskId ?? worker.id,
         workspacePath,
         ...(workspaceIdentity ? { workspaceIdentity } : {}),
       })

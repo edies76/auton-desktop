@@ -136,7 +136,7 @@ describe("sidebar de workers del proyecto", () => {
       within(screen.getByTestId("auton-worker-group-subagent")).getByTestId("auton-worker-stop"),
     );
     expect(state.stopGeneration).toHaveBeenCalledWith({
-      taskId: "sub-1",
+      taskId: "orch",
       workspacePath: "/workspace/lunar",
     });
   });

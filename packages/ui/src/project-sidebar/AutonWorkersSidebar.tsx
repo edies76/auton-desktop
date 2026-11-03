@@ -91,22 +91,35 @@ function AutonWorkersSidebarContents({
       for (const group of groups) {
         const worker = group.workers.find((item) => item.id === workerId);
         if (worker) {
-          useAutonWorkerFocusStore.getState().open(worker, workspacePath, workspaceIdentity);
+          useAutonWorkerFocusStore
+            .getState()
+            .open(
+              worker,
+              workspacePath,
+              workspaceIdentity,
+              worker.kind === "subagent" ? (orchestratorId ?? undefined) : worker.id,
+            );
           return;
         }
       }
     },
-    [groups, workspaceIdentity, workspacePath],
+    [groups, orchestratorId, workspaceIdentity, workspacePath],
   );
 
   const stopWorker = useCallback(
     (workerId: string) => {
       const task = projectTasks.find((entry) => entry.taskId === workerId);
+      // Un subagente no tiene task propia: se detiene interrumpiendo el turno
+      // del orquestador que lo abrió.
+      const isSubagent = groups.some(
+        (group) =>
+          group.kind === "subagent" && group.workers.some((worker) => worker.id === workerId),
+      );
       const service = services.zcodeTaskService;
       if (!service) return;
       void service
         .stopGeneration({
-          taskId: workerId,
+          taskId: isSubagent ? (orchestratorId ?? workerId) : workerId,
           workspacePath: task?.workspacePath ?? workspacePath,
           ...(task?.workspaceIdentity ?? workspaceIdentity
             ? { workspaceIdentity: task?.workspaceIdentity ?? workspaceIdentity }
@@ -114,7 +127,7 @@ function AutonWorkersSidebarContents({
         })
         .catch((error: unknown) => logger.warn("auton.worker.stop.failed", error));
     },
-    [projectTasks, services, workspaceIdentity, workspacePath],
+    [groups, orchestratorId, projectTasks, services, workspaceIdentity, workspacePath],
   );
 
   return (
