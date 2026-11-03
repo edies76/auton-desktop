@@ -9,8 +9,12 @@ const NOW = Date.UTC(2026, 10, 3, 12, 0, 0);
 const stopGeneration = vi.hoisted(() => vi.fn(async () => undefined));
 
 vi.mock("@/v4/V4ChatPane.js", () => ({
-  V4ChatPane: ({ sessionId }: { sessionId: string }) => (
-    <div data-testid="v4-chat-pane" data-session-id={sessionId} />
+  V4ChatPane: ({ sessionId, readOnly }: { sessionId: string; readOnly?: boolean }) => (
+    <div
+      data-testid="v4-chat-pane"
+      data-session-id={sessionId}
+      data-readonly={readOnly ? "true" : "false"}
+    />
   ),
 }));
 
@@ -46,6 +50,7 @@ describe("resumen del worker en el área del orquestador", () => {
 
     fireEvent.click(screen.getByText("Ver chat completo"));
     expect(screen.getByTestId("v4-chat-pane").dataset.sessionId).toBe("worker-1");
+    expect(screen.getByTestId("v4-chat-pane").dataset.readonly).toBe("true");
 
     fireEvent.click(screen.getByText("Resumen"));
     expect(screen.getByTestId("auton-worker-summary")).toBeTruthy();
