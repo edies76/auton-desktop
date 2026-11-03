@@ -41,3 +41,5 @@ orquestador; el detalle del worker no era la conversación real.
 Verificado con: `projectConversation.test.ts` (4), `projectSidebarHomeOnlyWorkspaces.test.ts` (11),
 `autonWorkersSidebar.test.tsx` (4), `autonWorkerFocusPane.test.tsx` (2), `autonWorkerPanel.test.tsx`
 (8); tsc y lint de `@zcode/ui`.
+
+- Proyecto sin conversación: al crearlo se envía un prompt inicial para que el orquestador se presente y pregunte qué hacer; el chat principal queda abierto en el mismo hilo.

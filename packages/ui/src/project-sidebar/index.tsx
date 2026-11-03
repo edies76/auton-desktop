@@ -166,11 +166,16 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
       );
       return;
     }
-    // Proyecto sin conversación: se crea su chat principal. El orquestador
-    // queda disponible en ese único hilo, sin una bienvenida aparte.
+    // Proyecto sin conversación: se crea su chat principal y el orquestador
+    // arranca el hilo con una presentación proactiva, sin bienvenida aparte.
     if (!activeProject || createdConversationRef.current) return;
     createdConversationRef.current = true;
-    props.onCreateTask({ projectId: activeProject.id, taskGroupId: null });
+    props.onCreateTask({
+      projectId: activeProject.id,
+      taskGroupId: null,
+      initialPrompt:
+        "Arranca la conversación de este proyecto: preséntate en una frase como el orquestador, di que estás listo y pregunta qué quiere hacer el humano. No abras workers ni toques archivos hasta que responda.",
+    });
   }, [
     activeConversation,
     activeProject,
