@@ -130,7 +130,7 @@ legado; la etiqueta se pintaba sobre cualquier tarea.
 Verificado con: `projectConversation.test.ts` (12), `projectConversationStore.test.ts` (1),
 `projectSidebarTaskVisibility.test.tsx` (2, montando el `ProjectSidebar` real y capturando las tareas
 de Timeline y agrupado), `workspaceHeaderTitleSection.test.ts` (10),
-`autonWorkerSessionPane.test.tsx` (3) y la suite de UI 69/69. En vivo: la vista `Recently updated`
+`autonWorkerSessionPane.test.tsx` (3) y la suite de UI 70/70. En vivo: la vista `Recently updated`
 mostró solo `Pregunta sobre identidad y funcionamiento` (`timeline-filtered.png`); elegir el chat
 legado `bro...` desde el buscador volvió al orquestador con su etiqueta; `worker 9` Bloqueado se
 muestra sin `Parar` (`focus-live-blocked.png`). Typecheck raíz 0 con 8 GB de heap y lint 0 errores.

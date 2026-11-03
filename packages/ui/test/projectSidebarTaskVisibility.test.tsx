@@ -209,8 +209,8 @@ beforeEach(() => {
   fixture.captured.pinned = [];
   fixture.captured.grouped = [];
   fixture.tree.tasks = [
-    task("orch1", "p1", 1, "Orquestador Lunar"),
-    task("legacy1", "p1", 2, "Chat legado Lunar"),
+    { ...task("orch1", "p1", 1, "Orquestador Lunar"), pinned: true },
+    { ...task("legacy1", "p1", 2, "Chat legado Lunar"), pinned: true },
     task("sess_auton_agent_1", "p1", 3, "Worker Lunar"),
     task("sess_subagent_agent_1", "p1", 4, "Subagente Lunar"),
     task("orch2", "p2", 1, "Orquestador Otro"),
@@ -246,5 +246,16 @@ describe("vistas de tareas del proyecto", () => {
 
     expect(screen.getByTestId("grouped-view")).toBeTruthy();
     expect([...fixture.captured.grouped].sort()).toEqual(["orch1", "orch2"]);
+  });
+
+  it("la sección fijada no muestra el chat legado fijado ni workers", () => {
+    const element = () => <ProjectSidebar {...props()} />;
+    const { rerender } = render(element());
+    act(() => {
+      fixture.view = "grouped";
+    });
+    rerender(element());
+
+    expect(fixture.captured.pinned).toEqual(["orch1"]);
   });
 });
