@@ -112,6 +112,10 @@ describe("transiciones del centro entre orquestador y workers", () => {
     fireEvent.click(screen.getByText("Ver chat completo"));
     expect(screen.getByTestId("v4-chat-pane").dataset.sessionId).toBe(B.id);
     expect(screen.getByTestId("v4-chat-pane").dataset.readonly).toBe("true");
+
+    selectPanelWorker(A.id);
+    expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Worker A");
+    expect(screen.queryByTestId("auton-worker-chat")).toBeNull();
   });
 
   it("volver desde la sesión de worker llega al orquestador en una sola acción", () => {
