@@ -85,3 +85,14 @@ Verificado con: `v4ConversationTurnGroup` 103 (incluye orden narración → cana
 `v4ConversationTurnRenderUnits` 42, `autonThreadChannels` 6. Pendiente: bloque por worker, entradas
 propias de systemEvent/evidence/plan y estilo Grok.
 
+## 2026-11-03 — el loop se abre, colapsa y deja hablar fuera
+
+Qué: el loop de trabajo se abre con su contador mientras corre y se colapsa al terminar; narración y
+follow-up quedan fuera. El reasoning de planificación/traducción va fuera y el de ejecución dentro.
+Turno reanudado: evento fuera, trabajo en el loop y traducción fuera. Computer Use sale del
+compositor. El prompt anuncia el dispatch, pregunta mientras corre y traduce al volver.
+Por qué: el orquestador no debe trabajar en silencio y responder al final como un agente normal.
+Verificado con: 106 del hilo, 42 de unidades, 6 del compositor y 8 del prompt; tsc y lint en 0.
+Evidencia en el scratch del goal (`loop-lifecycle.log`, `reasoning-placement.log`, `resume-event.log`,
+`composer.log`, `prompt-assembly.log`, `checks.log`).
+

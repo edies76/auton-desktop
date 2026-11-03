@@ -4,6 +4,33 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases públicas.
 
+## [0.12.0] — 2026-11-03
+
+El loop del orquestador: se abre con su contador mientras trabaja y se colapsa al
+terminar; lo que habla contigo queda fuera.
+
+### Añadido
+
+- **Loop colapsable**: el bloque de trabajo se abre mientras corre y se colapsa
+  al terminar. El header y el contador se anclan al trabajo, no al primer texto.
+- **Reasoning por contexto**: el de planificación, decisión y traducción se pinta
+  fuera del loop; el atado a la ejecución se queda dentro.
+- **Turno reanudado por evento**: apertura que nombra el evento fuera, trabajo en
+  el loop con su contador y traducción fuera.
+- **Prompt**: anuncia el dispatch antes de mandar, pregunta al humano mientras
+  corre y traduce al volver.
+
+### Cambiado
+
+- El compositor de Auton ya no muestra **Computer Use**; el input y el envío
+  siguen igual.
+
+### Conocido
+
+- `systemEvent`, `evidence` y `plan` siguen usando sus bloques actuales, sin
+  mapeo propio en la secuencia.
+- El estilo tipo Grok (mensajes separados, menos botones) queda para después.
+
 ## [0.11.0] — 2026-11-03
 
 La narración del orquestador se intercala con el trabajo.

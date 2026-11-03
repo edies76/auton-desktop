@@ -12,6 +12,9 @@ intercalan con su narración y con el trabajo de los workers.
 
 - **El canal del worker, en marcha**: su nombre, su estado y un reloj que
   avanza mientras trabaja. Si trabajan dos, ves dos filas, cada una con su reloj.
+- **El loop**: el bloque de trabajo se abre con su contador mientras el worker
+  corre y se colapsa al terminar. La narración del orquestador y lo que te dice
+  después quedan fuera del bloque.
 - **El aviso del worker**: cuando un worker necesita algo del orquestador, su
   mensaje aparece como una fila más del trabajo. El orquestador decide si lo
   responde él o te lo pregunta; si la decisión es tuya, usa el bloque nativo de

@@ -159,8 +159,9 @@ por worker, no por turno. Es el siguiente cambio de UI, no un retoque de estilo.
 
 **Implementado**: los turnos con canales `auton-worker` abren la crónica por
 defecto y cada `assistantText` se pinta en su posición, entre las tools y los
-canales; el texto final ya no se dibuja como sección aparte. Los turnos de ZCode
-no cambian. El orden es temporal por `rowId`, no por prioridad; la prioridad solo
-encola despertares. La spec de los siete tipos, el scroll condicionado y la prueba
-de orden están en `context/UI-CHAT-INTERCALADO.md`. Pendiente: bloque por worker,
-mapeo propio de systemEvent/evidence/plan y el estilo Grok.
+canales; el texto final ya no se dibuja como sección aparte. El loop se abre con
+su contador mientras corre y se colapsa al terminar; la narración y el follow-up
+quedan fuera. El reasoning de planificación/traducción va fuera y el de ejecución
+dentro. Un turno reanudado abre con el evento fuera, trabaja en el loop y traduce
+fuera. El compositor ya no muestra Computer Use. Los turnos de ZCode no cambian.
+Pendiente: mapeo propio de systemEvent/evidence/plan y el estilo Grok.

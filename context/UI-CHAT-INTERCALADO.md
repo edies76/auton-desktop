@@ -3,9 +3,12 @@
 **Estado: núcleo implementado.** Los turnos con canales `auton-worker` abren la
 crónica por defecto y **cada mensaje del orquestador se pinta en su posición**,
 entre las tools y los canales; el texto final ya no se dibuja como una sección
-aparte. Los turnos de ZCode conservan su layout. Pendiente: el bloque colapsable
-por worker (hoy el bloque es por tramo), el mapeo explícito de `systemEvent`,
-`evidence` y `plan` como entradas propias, y el estilo tipo Grok.
+aparte. El bloque de trabajo (loop) se abre con su contador mientras corre y se
+colapsa al terminar; la narración y el follow-up quedan fuera. El reasoning de
+planificación/traducción va fuera y el de ejecución dentro. Los turnos de ZCode
+conservan su layout. El compositor de Auton ya no muestra Computer Use. Pendiente:
+el mapeo explícito de `systemEvent`, `evidence` y `plan` como entradas propias, y
+el estilo tipo Grok.
 
 ## El problema
 
@@ -71,6 +74,20 @@ primero en la lista.
 Auto-scroll **solo si el humano ya está abajo**. Si subió a leer, no se le mueve la
 pantalla; aparece el botón de volver abajo. `ConversationTimeline` ya tiene esta
 regla (`following` / `isAtBottom`): no se reimplementa, se respeta y se prueba.
+
+### El loop y el reasoning (implementado)
+
+- El **loop** es el bloque de trabajo con su contador. Se abre mientras hay
+  trabajo y se colapsa cuando termina. El header se ancla al primer bloque de
+  trabajo, no al primer texto.
+- **Fuera del loop**: la narración del orquestador, el reasoning con el que
+  planea/decide/traduce y el follow-up ("ya lo mandé, ¿qué quieres que haga
+  cuando llegue?"). Un turno reanudado abre con el evento ("me llegó…, déjame
+  verlo") y traduce al final, también fuera.
+- **Dentro del loop**: tool calls, workers y el reasoning atado a la ejecución
+  (entre la primera y la última tool). Se colapsa con el bloque.
+- El compositor de Auton ya no muestra **Computer Use**; input y envío siguen.
+  El runtime y los ajustes de Computer Use quedan fuera de este cambio.
 
 ## Cómo se implementa
 
