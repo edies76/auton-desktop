@@ -20,6 +20,17 @@ interface PlanItemView {
   files: string[];
   evidenceCount: number;
   questions: string[];
+  attempts: number;
+  needsApproval: string[];
+}
+
+interface LimitReportView {
+  at: string;
+  field: string;
+  observed: string;
+  expected?: string;
+  by: string;
+  note?: string;
 }
 
 interface LimitChangeView {
@@ -44,12 +55,14 @@ interface PlanView {
   goalStatement?: string;
   constraints: string[];
   limits?: LimitsView;
+  limitReports: LimitReportView[];
   items: PlanItemView[];
   total: number;
   done: number;
   running: number;
   waiting: number;
   blocked: number;
+  notEvaluable: number;
 }
 
 const STATUS_BADGE_CLASS: Record<string, string> = {
@@ -59,6 +72,7 @@ const STATUS_BADGE_CLASS: Record<string, string> = {
   blocked: "bg-destructive/10 text-destructive",
   done: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
   dropped: "bg-muted text-muted-foreground line-through",
+  not_evaluable: "bg-tag text-foreground",
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -127,6 +141,28 @@ function readLimitsView(plan: Record<string, unknown>): LimitsView | undefined {
   };
 }
 
+function readLimitReports(plan: Record<string, unknown>): LimitReportView[] {
+  if (!Array.isArray(plan.limitReports)) return [];
+  const reports: LimitReportView[] = [];
+  for (const raw of plan.limitReports) {
+    if (!isRecord(raw)) continue;
+    const at = readString(raw.at);
+    const field = readString(raw.field);
+    const observed = readString(raw.observed);
+    const by = readString(raw.by);
+    if (!at || !field || !observed || !by) continue;
+    reports.push({
+      at,
+      field,
+      observed,
+      expected: readString(raw.expected),
+      by,
+      note: readString(raw.note),
+    });
+  }
+  return reports;
+}
+
 function readPlanView(value: unknown): PlanView | null {
   const record = parseJsonCandidate(value);
   if (!isRecord(record) || !isRecord(record.plan)) return null;
@@ -150,6 +186,8 @@ function readPlanView(value: unknown): PlanView | null {
       files: readStringArray(raw.files),
       evidenceCount: Array.isArray(raw.evidence) ? raw.evidence.length : 0,
       questions: readStringArray(raw.questions),
+      attempts: typeof raw.attempts === "number" ? raw.attempts : 0,
+      needsApproval: readStringArray(raw.needsApproval),
     });
   }
 
@@ -162,12 +200,14 @@ function readPlanView(value: unknown): PlanView | null {
     goalStatement: readString(goal.statement),
     constraints: readStringArray(goal.constraints),
     limits: readLimitsView(record.plan),
+    limitReports: readLimitReports(record.plan),
     items,
     total: count("total") || items.length,
     done: count("done"),
     running: count("running"),
     waiting: count("waiting"),
     blocked: count("blocked"),
+    notEvaluable: count("not_evaluable"),
   };
 }
 
@@ -184,9 +224,15 @@ export function isAutonPlanToolCall(toolCall: PlanToolCall): boolean {
   return (toolCall.toolName ?? toolCall.kind) === "AutonPlan";
 }
 
-function itemMeta(item: PlanItemView): string[] {
+function itemMeta(item: PlanItemView, maxAttempts?: number): string[] {
   const meta: string[] = [];
   if (item.owner === "orchestrator") meta.push("you");
+  if (item.attempts > 0) {
+    meta.push(maxAttempts !== undefined ? `${item.attempts}/${maxAttempts} attempts` : `${item.attempts} attempts`);
+  }
+  if (item.needsApproval.length > 0) {
+    meta.push(`needs approval: ${item.needsApproval.map((key) => APPROVAL_LABELS[key] ?? key).join(", ")}`);
+  }
   if (item.files.length > 0) meta.push(item.files.length === 1 ? "1 file" : `${item.files.length} files`);
   if (item.evidenceCount > 0) {
     meta.push(item.evidenceCount === 1 ? "1 proof" : `${item.evidenceCount} proofs`);
@@ -248,12 +294,27 @@ export function AutonPlanToolCallBlock(context: ToolCallBlockRenderContext) {
             ) : null}
           </div>
         ) : null}
+        {view.limitReports.length > 0 ? (
+          <div className="space-y-0.5">
+            <p className="text-ui-xs text-foreground-subtlest">Limit reports</p>
+            {view.limitReports.map((report, index) => (
+              <p
+                key={`${report.at}-${report.field}-${index}`}
+                className="text-ui-xs text-foreground-subtlest"
+              >
+                {report.at} · {report.by} on {report.field}: saw {report.observed}
+                {report.expected ? `, expected ${report.expected}` : ""}
+                {report.note ? ` · ${report.note}` : ""}
+              </p>
+            ))}
+          </div>
+        ) : null}
         {view.items.length === 0 ? (
           <p className="text-ui-sm text-foreground-subtle">This project has no plan yet.</p>
         ) : (
           <div className="space-y-2">
             {view.items.map((item) => {
-              const meta = itemMeta(item);
+              const meta = itemMeta(item, view.limits?.maxAttempts);
               return (
                 <div key={item.id} className="min-w-0 space-y-0.5">
                   <div className="flex min-w-0 items-baseline gap-2">
@@ -293,6 +354,7 @@ export function AutonPlanToolCallBlock(context: ToolCallBlockRenderContext) {
         view.running > 0 ? `${view.running} running` : null,
         view.waiting > 0 ? `${view.waiting} waiting` : null,
         view.blocked > 0 ? `${view.blocked} blocked` : null,
+        view.notEvaluable > 0 ? `${view.notEvaluable} need a decision` : null,
       ]
         .filter(Boolean)
         .join(" · ")

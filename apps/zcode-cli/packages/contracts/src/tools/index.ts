@@ -18,6 +18,7 @@ export * from "./agent.js";
 export * from "./skill.js";
 export * from "./todo.js";
 export * from "../auton/plan.js";
+export * from "../auton/limits.js";
 export * from "../auton/revert.js";
 export * from "./automation.js";
 export * from "./off-peak.js";

@@ -14,16 +14,32 @@ import {
   AutonPlanOutputJsonSchema,
   AutonPlanOutputSchema,
   AutonPlanSchema,
+  describeEvaluation,
+  evaluateDispatch,
   normalizeLegacyPlan,
   summarizeAutonPlan,
+  validateLimitChange,
+  validateNotEvaluableItems,
+  type AutonLimits,
   type AutonPlan,
   type AutonPlanInput,
+  type AutonPlanItem,
   type AutonPlanOutput,
 } from "@zcode/contracts";
 import type { ToolEntry, ToolHandler } from "../tool/types.js";
 import { isAutonWorkerSession } from "./journal.js";
 
 const MAX_AUTON_PLAN_MODEL_BYTES = 60_000;
+
+/** Fallos de gobierno: son resultado de negocio, no excepciones. */
+const AUTON_PLAN_ERROR = {
+  NotEvaluable: 42201,
+  Exceeds: 42202,
+  RequiresApproval: 42203,
+  UnrecordedChange: 42204,
+  AttemptsRegression: 42205,
+  MuteNotEvaluable: 42206,
+} as const;
 
 export function resolveAutonPlanPath(workingDirectory: string): string {
   return join(workingDirectory, ".auton", "plan.json");
@@ -37,7 +53,7 @@ function projectRoot(context: {
 }
 
 function emptyPlan(): AutonPlan {
-  return { version: AUTON_PLAN_FILE_VERSION, limitHistory: [], items: [] };
+  return { version: AUTON_PLAN_FILE_VERSION, limitHistory: [], limitReports: [], items: [] };
 }
 
 async function readPlanFile(path: string): Promise<AutonPlan> {
@@ -62,6 +78,81 @@ async function readPlanFile(path: string): Promise<AutonPlan> {
   return result.success ? normalizeLegacyPlan(result.data) : emptyPlan();
 }
 
+function failure(errorCode: number, message: string) {
+  return { result: false as const, errorCode, message };
+}
+
+/**
+ * Un despacho consume un intento. Los cuenta el plan para que el tope no
+ * dependa de que el modelo lleve la cuenta: al agotar maxAttempts, el item
+ * deja de arrancar y la decisión pasa al humano.
+ */
+function consumirIntentos(
+  items: readonly AutonPlanItem[],
+  previousItems: readonly AutonPlanItem[],
+  limits: AutonLimits | undefined,
+): { value: AutonPlanItem[] } | { failure: { result: false; errorCode: number; message: string } } {
+  const previousById = new Map(previousItems.map((item) => [item.id, item]));
+  const value: AutonPlanItem[] = [];
+
+  for (const item of items) {
+    const before = previousById.get(item.id);
+    const previousAttempts = before?.attempts ?? 0;
+
+    // El modelo puede omitir `attempts` (el esquema lo rellena con 0): en ese
+    // caso manda la cuenta del plan. Solo un valor explícito puede pedir bajarla.
+    const claimedAttempts = item.attempts > 0 ? item.attempts : previousAttempts;
+    if (claimedAttempts < previousAttempts) {
+      return {
+        failure: failure(
+          AUTON_PLAN_ERROR.AttemptsRegression,
+          `el item ${item.id} no puede bajar sus intentos (${previousAttempts} → ${claimedAttempts})`,
+        ),
+      };
+    }
+
+    const startingWork = item.status === "running" && before?.status !== "running";
+    if (!startingWork) {
+      value.push({ ...item, attempts: claimedAttempts });
+      continue;
+    }
+
+    const evaluation = evaluateDispatch({
+      limits,
+      item: { attempts: previousAttempts, needsApproval: item.needsApproval },
+    });
+
+    if (evaluation.kind === "not_evaluable") {
+      return {
+        failure: failure(
+          AUTON_PLAN_ERROR.NotEvaluable,
+          `el item ${item.id} ${describeEvaluation(evaluation)}. Escribe los límites versionados antes de despachar.`,
+        ),
+      };
+    }
+    if (evaluation.kind === "requires_approval") {
+      return {
+        failure: failure(
+          AUTON_PLAN_ERROR.RequiresApproval,
+          `el item ${item.id} ${describeEvaluation(evaluation)}`,
+        ),
+      };
+    }
+    if (evaluation.kind === "exceeds") {
+      return {
+        failure: failure(
+          AUTON_PLAN_ERROR.Exceeds,
+          `el item ${item.id}: ${describeEvaluation(evaluation)}`,
+        ),
+      };
+    }
+
+    value.push({ ...item, attempts: previousAttempts + 1 });
+  }
+
+  return { value };
+}
+
 export const autonPlanHandler: ToolHandler = async (input, context) => {
   const parsed = AutonPlanInputSchema.parse(input) as AutonPlanInput;
   const path = resolveAutonPlanPath(projectRoot(context));
@@ -76,32 +167,55 @@ export const autonPlanHandler: ToolHandler = async (input, context) => {
   }
 
   // write: the orchestrator sends the complete plan; it replaces the file.
-  // El historial de límites se conserva si el write lo omite: un cambio de
-  // límites sin escribir no existe, y borrarlo por omisión sería peor.
+  // El historial y los reportes de límites se conservan si el write los omite:
+  // un cambio de límites sin escribir no existe, y borrarlo por omisión sería peor.
   const previous = await readPlanFile(path);
-  const plan: AutonPlan = {
-    version: AUTON_PLAN_FILE_VERSION,
-    goal: parsed.goal,
-    limits: parsed.limits,
-    limitHistory: parsed.limitHistory ?? previous.limitHistory,
-    items: parsed.items,
-    updatedAt: new Date().toISOString(),
-  };
-
-  await mkdir(dirname(path), { recursive: true });
+  const limits = parsed.limits ?? previous.limits;
+  const limitHistory = parsed.limitHistory ?? previous.limitHistory;
+  const limitReports = parsed.limitReports ?? previous.limitReports;
 
   // Un programador puede reportar que un límite está mal calibrado, nunca
   // cambiarlo: los límites son el contrato que el orquestador acuerda con el humano.
   if (isAutonWorkerSession(context.sessionId)) {
-    const limitsChanged =
-      JSON.stringify(plan.limits ?? null) !== JSON.stringify(previous.limits ?? null);
-    const historyChanged = plan.limitHistory.length !== previous.limitHistory.length;
-    if (limitsChanged || historyChanged) {
+    const limitsChanged = JSON.stringify(limits ?? null) !== JSON.stringify(previous.limits ?? null);
+    const historyChanged = limitHistory.length !== previous.limitHistory.length;
+    const reportsChanged = limitReports.length !== previous.limitReports.length;
+    if (limitsChanged || historyChanged || reportsChanged) {
       throw new Error(
         "Un programador no puede cambiar los límites del plan. Puede reportarlo en el REPORTE y el orquestador decide.",
       );
     }
   }
+
+  const unrecorded = validateLimitChange({
+    previous: previous.limits,
+    next: limits,
+    previousHistory: previous.limitHistory,
+    nextHistory: limitHistory,
+  });
+  if (unrecorded) {
+    return failure(AUTON_PLAN_ERROR.UnrecordedChange, unrecorded);
+  }
+
+  const items = consumirIntentos(parsed.items, previous.items, limits);
+  if ("failure" in items) return items.failure;
+
+  const mute = validateNotEvaluableItems(items.value, limits?.unknownHandling);
+  if (mute) {
+    return failure(AUTON_PLAN_ERROR.MuteNotEvaluable, mute);
+  }
+
+  const plan: AutonPlan = {
+    version: AUTON_PLAN_FILE_VERSION,
+    goal: parsed.goal,
+    limits,
+    limitHistory,
+    limitReports,
+    items: items.value,
+    updatedAt: new Date().toISOString(),
+  };
+
+  await mkdir(dirname(path), { recursive: true });
 
   await writeFile(path, `${JSON.stringify(plan, null, 2)}\n`, "utf8");
 
@@ -125,9 +239,13 @@ export const autonPlanToolEntry: ToolEntry = {
 Use \`action: "read"\` to load the current plan before you plan or dispatch anything.
 Use \`action: "write"\` with the COMPLETE list of work items to replace the plan; it is the source of truth, so send every item each time.
 
-Limits: \`limits\` carries the versioned rules for what you may do without asking (version, maxAttempts, approval flags, unknownHandling). Every limit change appends a \`limitHistory\` entry with timestamp, field, from/to, reason and who approved it. If a write omits \`limitHistory\`, the stored history is preserved. Plans without \`limits\` stay unversioned: never invent limits for work already dispatched.
+Limits: \`limits\` carries the versioned rules for what you may do without asking (version, maxAttempts, approval flags, unknownHandling). Every limit change must bump \`version\` and append one \`limitHistory\` entry per changed field (at, field, from/to, reason, approvedBy). Rewriting or shortening that history is rejected; the first version has no prior history. If a write omits \`limitHistory\` or \`limitReports\`, the stored ones are preserved.
 
-Work item statuses: ready, running, waiting, blocked, done, dropped. Use \`waiting\` when an item needs a human decision, and put that question in \`questions\`.
+Dispatch is governed, not advisory: an item can move to \`running\` only if the plan has versioned limits, it still has attempts left (\`attempts\` is counted by the plan, one per dispatch, and can never go down), and every rule listed in its \`needsApproval\` has been resolved by the human. When you cannot judge, set the item to \`not_evaluable\` and put the exact question in \`questions\` (or explain the safest choice in \`detail\` when unknownHandling is safe_default): that item escalates to the human instead of continuing.
+
+A worker can report a miscalibrated limit in \`limitReports\` (at, field, observed, expected, by). Only the orchestrator writes it; the report never changes the limit.
+
+Work item statuses: ready, running, waiting, blocked, done, dropped, not_evaluable. Use \`waiting\` when an item needs a human decision, and put that question in \`questions\`.
 Set \`effort\` (minimal, standard, thorough), \`owner\` (programmer by default;
 orchestrator only for one small single-file item) and \`files\` on every item you
 dispatch, and pass the same effort in the Agent tool's \`effort\` field.

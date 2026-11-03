@@ -20,6 +20,8 @@ export const AutonPlanItemStatus = {
   Blocked: "blocked",
   Done: "done",
   Dropped: "dropped",
+  /** El sistema no puede juzgar: escala al humano en vez de seguir. */
+  NotEvaluable: "not_evaluable",
 } as const;
 
 export const AutonPlanItemStatusSchema = z.enum([
@@ -29,6 +31,7 @@ export const AutonPlanItemStatusSchema = z.enum([
   "blocked",
   "done",
   "dropped",
+  "not_evaluable",
 ]);
 
 export const AutonEffortSchema = z.enum(["minimal", "standard", "thorough"]);
@@ -36,6 +39,19 @@ export const AutonEffortSchema = z.enum(["minimal", "standard", "thorough"]);
 export const AutonStrengthSchema = z.enum(["explicit", "inferred"]);
 
 export const AutonOwnerSchema = z.enum(["orchestrator", "programmer"]);
+
+/** Las acciones que los límites pueden exigir que apruebe el humano. */
+export const AUTON_APPROVAL_RULES = [
+  "deleteMove",
+  "outsideProject",
+  "pushMergeRebase",
+  "installDependencies",
+  "outsideScope",
+] as const;
+
+export const AutonApprovalRuleSchema = z.enum(AUTON_APPROVAL_RULES);
+
+export type AutonApprovalRule = z.infer<typeof AutonApprovalRuleSchema>;
 
 export const AutonPlanEvidenceSchema = z
   .object({
@@ -59,6 +75,16 @@ export const AutonPlanItemSchema = z
     files: z.array(z.string()).optional().describe("Files this item is allowed to touch"),
     evidence: z.array(AutonPlanEvidenceSchema).optional(),
     questions: z.array(z.string()).optional().describe("Open questions for the human"),
+    attempts: z
+      .number()
+      .int()
+      .nonnegative()
+      .default(0)
+      .describe("Dispatches already consumed; the plan counts them, not the model"),
+    needsApproval: z
+      .array(AutonApprovalRuleSchema)
+      .optional()
+      .describe("Human approvals this item requires before running"),
   })
   .strict();
 
@@ -122,6 +148,21 @@ export const AutonLimitChangeSchema = z
   .strict();
 
 /**
+ * Lo que un worker reporta sobre un límite mal calibrado. El worker nunca lo
+ * modifica: el orquestador registra el reporte y decide con el humano.
+ */
+export const AutonLimitReportSchema = z
+  .object({
+    at: z.string().min(1).describe("ISO timestamp"),
+    field: z.string().min(1).describe("Which limit looks miscalibrated"),
+    observed: z.string().min(1).describe("What the worker saw"),
+    expected: z.string().optional().describe("What it should have been"),
+    by: z.string().min(1).describe("Worker that reported it"),
+    note: z.string().optional(),
+  })
+  .strict();
+
+/**
  * Un cambio de límites inválido no debe tirar un plan bueno.
  * Sin limits el plan queda "sin versión": las decisiones de escalación ya
  * tomadas no se inventan a posteriori.
@@ -132,6 +173,7 @@ export function normalizeLegacyPlan(plan: AutonPlan): AutonPlan {
     goal: plan.goal,
     limits: plan.limits,
     limitHistory: plan.limitHistory ?? [],
+    limitReports: plan.limitReports ?? [],
     items: plan.items ?? [],
     updatedAt: plan.updatedAt,
   };
@@ -143,6 +185,7 @@ export const AutonPlanSchema = z
     goal: AutonGoalSchema.optional(),
     limits: AutonLimitsSchema.optional(),
     limitHistory: z.array(AutonLimitChangeSchema).default([]),
+    limitReports: z.array(AutonLimitReportSchema).default([]),
     items: z.array(AutonPlanItemSchema).default([]),
     updatedAt: z.string().optional(),
   })
@@ -153,6 +196,7 @@ export type AutonPlanItem = z.infer<typeof AutonPlanItemSchema>;
 export type AutonPlanItemStatus = z.infer<typeof AutonPlanItemStatusSchema>;
 export type AutonLimits = z.infer<typeof AutonLimitsSchema>;
 export type AutonLimitChange = z.infer<typeof AutonLimitChangeSchema>;
+export type AutonLimitReport = z.infer<typeof AutonLimitReportSchema>;
 
 export const AutonPlanInputSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("read") }).strict(),
@@ -162,6 +206,7 @@ export const AutonPlanInputSchema = z.discriminatedUnion("action", [
       goal: AutonGoalSchema.optional(),
       limits: AutonLimitsSchema.optional(),
       limitHistory: z.array(AutonLimitChangeSchema).optional(),
+      limitReports: z.array(AutonLimitReportSchema).optional(),
       items: z.array(AutonPlanItemSchema),
     })
     .strict(),
@@ -180,6 +225,7 @@ export const AutonPlanSummarySchema = z
     blocked: z.number().int().nonnegative(),
     done: z.number().int().nonnegative(),
     dropped: z.number().int().nonnegative(),
+    notEvaluable: z.number().int().nonnegative().default(0),
   })
   .strict();
 
@@ -211,6 +257,7 @@ export function summarizeAutonPlan(items: readonly AutonPlanItem[]): AutonPlanSu
     blocked: count("blocked"),
     done: count("done"),
     dropped: count("dropped"),
+    notEvaluable: count("not_evaluable"),
   };
 }
 
@@ -253,9 +300,21 @@ export function formatAutonPlanForModel(plan: AutonPlan): string {
   lines.push("Work items (authoritative):");
   for (const item of plan.items) {
     const effort = item.effort ? ` [${item.effort}]` : "";
-    lines.push(`- ${item.id} (${item.status})${effort} ${item.title}`);
+    const budget = plan.limits ? ` attempts ${item.attempts}/${plan.limits.maxAttempts}` : ` attempts ${item.attempts}`;
+    lines.push(`- ${item.id} (${item.status})${effort}${budget} ${item.title}`);
     if (item.files?.length) lines.push(`    files: ${item.files.join(", ")}`);
+    if (item.needsApproval?.length) {
+      lines.push(`    needs approval: ${item.needsApproval.join(", ")}`);
+    }
     if (item.questions?.length) lines.push(`    open questions: ${item.questions.join(" | ")}`);
+  }
+  if (plan.limitReports.length > 0) {
+    lines.push("Limit reports (workers, not edits):");
+    for (const report of plan.limitReports) {
+      lines.push(
+        `  - ${report.at} · ${report.by} on ${report.field}: saw ${report.observed}${report.expected ? `, expected ${report.expected}` : ""}${report.note ? ` · ${report.note}` : ""}`,
+      );
+    }
   }
   return lines.join("\n");
 }

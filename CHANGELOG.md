@@ -4,6 +4,30 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases públicas.
 
+## [0.3.0] — 2026-11-02
+
+Los límites dejan de ser texto en el prompt y pasan a gobernar el despacho. La
+documentación se separa en un árbol público y otro privado.
+
+### Añadido
+
+- **Gobierno del despacho**: un item no arranca sin límites versionados, cada
+  despacho consume un intento contado por el plan, y una aprobación pendiente
+  detiene el trabajo sin gastar intento.
+- **`not_evaluable` como estado de primera clase**: el sistema puede declarar que
+  no sabe juzgar; exige la pregunta o la decisión escrita y escala al humano.
+- **Reportes de calibración**: un worker puede reportar que un límite está mal
+  puesto; el orquestador lo registra y el worker sigue sin poder cambiarlo.
+- **Documentación en dos árboles**: `docs/public/` (producto) y `docs/private/`
+  (implementación), con builds separados en `site/dist` y `site/private-dist`.
+
+### Cambiado
+
+- El handler del plan valida los cambios de límites: versión nueva, historial
+  append-only y una entrada por campo cambiado.
+- La tarjeta del plan muestra intentos, aprobaciones, reportes y decisiones
+  pendientes.
+
 ## [0.2.0] — 2026-11-01
 
 Segunda vuelta sobre la misma base: el panel de programadores se abre solo, el
