@@ -2,7 +2,7 @@
 
 # Auton Desktop - reglas de este repositorio
 
-**El documento central es [AUTON-VISION.md](./AUTON-VISION.md).** Antes de proponer arquitectura,
+**El documento central es [AUTON-VISION.md](./context/AUTON-VISION.md).** Antes de proponer arquitectura,
 producto, UI o prioridades, leelo. Si lo que vas a hacer contradice la vision, pregunta antes de
 escribir codigo.
 
@@ -11,12 +11,12 @@ escribir codigo.
 Esto es lo que falta en el resto de la guia: **el contexto de lo que ya se decidio**. Son tres lecturas
 y no son opcionales:
 
-1. **[`docs/EMPIEZA-AQUI.md`](docs/EMPIEZA-AQUI.md)** — el punto de entrada unico: que es Auton en tres
+1. **[`context/EMPIEZA-AQUI.md`](context/EMPIEZA-AQUI.md)** — el punto de entrada unico: que es Auton en tres
    lineas, que documentos importan y **cuales estan podados** (no los leas), el estado real de hoy y lo
    que sigue en orden.
-2. **[`docs/REPARTO-DE-TRABAJO.md`](docs/REPARTO-DE-TRABAJO.md)** — quien hace que en las tres etapas,
+2. **[`context/REPARTO-DE-TRABAJO.md`](context/REPARTO-DE-TRABAJO.md)** — quien hace que en las tres etapas,
    con la definicion de "hecho" de cada pieza y las reglas no negociables.
-3. **[`docs/ARQUITECTURA-ORQUESTADOR.md`](docs/ARQUITECTURA-ORQUESTADOR.md)** — la spec de trabajo del
+3. **[`context/ARQUITECTURA-ORQUESTADOR.md`](context/ARQUITECTURA-ORQUESTADOR.md)** — la spec de trabajo del
    orquestador: bucle vivo, canales anidados, tres relojes, contexto por etapas, motor por sprint.
 
 **Regla dura: lo que no esta en el repositorio no existe.** Los acuerdos que se tomen por el buzon de

@@ -1,6 +1,6 @@
 # Reparto del trabajo (3 etapas, 3 personas)
 
-> **Quién hace qué y en qué orden.** Léelo junto con `docs/EMPIEZA-AQUI.md`.
+> **Quién hace qué y en qué orden.** Léelo junto con `context/EMPIEZA-AQUI.md`.
 > Regla de oro: **nadie toca la interfaz de ZCode ni el motor de edición** (ver `EMPIEZA-AQUI.md`).
 
 ## Cómo se reparte, y por qué así
@@ -59,7 +59,7 @@ recuperar), así que va en la etapa 2. Y el tablero y el motor **dependen** de l
    mano y se dice.
 5. **No tocar la interfaz de ZCode ni el motor de edición.** Si hace falta una pantalla nueva, se hace con
    sus componentes y sus tokens.
-6. **Antes de preguntar**, leer `docs/EMPIEZA-AQUI.md` y la spec. Después, preguntar sin miedo.
+6. **Antes de preguntar**, leer `context/EMPIEZA-AQUI.md` y la spec. Después, preguntar sin miedo.
 
 ## Cómo se coordina el trabajo (el buzón como centro de contexto)
 

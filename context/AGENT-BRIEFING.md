@@ -18,7 +18,7 @@ El centro, que es también el argumento del producto:
 Consecuencia práctica: si al terminar un trabajo el humano tuviera que pegar el siguiente paso,
 escribir "sigue" o re-pegar un error, **Auton falló** — aunque el código esté bien.
 
-El documento central es **[`AUTON-VISION.md`](../AUTON-VISION.md) (Visión 2.0)**. Léelo antes de
+El documento central es **[`AUTON-VISION.md`](./AUTON-VISION.md) (Visión 2.0)**. Léelo antes de
 proponer arquitectura, UI o prioridades.
 
 ## 2. Qué es este repositorio
@@ -43,7 +43,7 @@ app nueva. Regla de oro:
 |---|---|
 | Prompt interno "Modo Auton" | hecho: `apps/zcode-cli/packages/core/src/context/sections/auton.ts` (identidad + procedimiento, se inyecta solo) |
 | Skill `auton-mode` | hecho, con la política de esfuerzo `minimal/standard/thorough` |
-| Plan de las 5 superficies | escrito: [`docs/PLAN-MODO-AUTON.md`](./PLAN-MODO-AUTON.md) |
+| Plan de las 5 superficies | escrito: [`context/PLAN-MODO-AUTON.md`](./PLAN-MODO-AUTON.md) |
 | Aislamiento de datos | hecho: la app y el runtime del agente usan `~/.auton` (vía `AUTON_STORAGE_DIR`), no `~/.zcode` |
 | Plugin `restore-legacy-sessions` | eliminado del bundle (importaba sesiones del ZCode viejo) |
 | Motor de edición de ZCode | **intacto** (CAS con `expectedRevision`, matchers tolerantes, apply-patch con rollback, escritura atómica, checkpoints). No tocarlo |

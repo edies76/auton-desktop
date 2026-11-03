@@ -4,7 +4,7 @@
 > design system**. Auton se **encaja** en lo que ZCode ya tiene — su shell, sus componentes, sus
 > tokens, su i18n. Si algo se ve distinto, es porque ZCode ya lo tenía así.
 
-Documento central del producto: [`../AUTON-VISION.md`](../AUTON-VISION.md) (Visión 2.0).
+Documento central del producto: [`./AUTON-VISION.md`](./AUTON-VISION.md) (Visión 2.0).
 
 ## Qué falló antes (para no repetirlo)
 

@@ -14,20 +14,20 @@ límite es el usuario; en Auton esa disciplina es el producto*.
 
 | Documento | Para qué |
 |---|---|
-| **`docs/ARQUITECTURA-ORQUESTADOR.md`** | **La spec de trabajo.** Cómo funciona el orquestador: bucle vivo, canales anidados, tres relojes, contexto por etapas, motor por sprint, sprints vs encargos, orden de construcción |
-| **`docs/DECISIONES.md`** | Las decisiones de fondo ya tomadas, con el porqué y qué las cambiaría. **No se vuelven a discutir sin leer esto** |
+| **`context/ARQUITECTURA-ORQUESTADOR.md`** | **La spec de trabajo.** Cómo funciona el orquestador: bucle vivo, canales anidados, tres relojes, contexto por etapas, motor por sprint, sprints vs encargos, orden de construcción |
+| **`context/DECISIONES.md`** | Las decisiones de fondo ya tomadas, con el porqué y qué las cambiaría. **No se vuelven a discutir sin leer esto** |
 | **`ARTICULO-AUTON.md`** | El esqueleto del artículo técnico: la tesis de lo nuevo, sección por sección |
-| **`docs/POR-QUE-AUTON-GANA.md`** | El análisis del artículo de DeepSeek, el argumento para la hackathon y el pitch por rúbrica |
+| **`context/POR-QUE-AUTON-GANA.md`** | El análisis del artículo de DeepSeek, el argumento para la hackathon y el pitch por rúbrica |
 | **`AGENTS.md`** | Las reglas duras del repositorio (sin credenciales, un commit por cambio, verificar antes de prometer) |
 | **`AUTON-VISION.md`** | La Visión 2.0. Documento central de producto. Es largo: se consulta, no se lee de corrido |
 
 ## Qué NO hay que leer (podado)
 
-- **`docs/PLAN-MODO-AUTON.md`** → superado por `ARQUITECTURA-ORQUESTADOR.md`. Solo sirve como historia de
+- **`context/PLAN-MODO-AUTON.md`** → superado por `ARQUITECTURA-ORQUESTADOR.md`. Solo sirve como historia de
   cómo se llegó al plan de las cinco superficies.
-- **`docs/AGENT-BRIEFING.md`** → su contenido está absorbido en este documento y en la spec. No usar.
+- **`context/AGENT-BRIEFING.md`** → su contenido está absorbido en este documento y en la spec. No usar.
 - **`docs/VISION-1.0.md`** → archivado. La visión vigente es la 2.0.
-- **`docs/ARTICULO-AUTON.md`** está **vigente** pese a parecer un plan: es el esqueleto del artículo y
+- **`context/ARTICULO-AUTON.md`** está **vigente** pese a parecer un plan: es el esqueleto del artículo y
   lleva el contenido, no solo el índice.
 - Todo lo de `docs/` de ZCode que no esté listado arriba: **es del upstream**, se ignora salvo que se
   toque el motor.
@@ -78,7 +78,7 @@ eliminado, y el modo Auton dentro del agente (identidad + procedimiento).
 
 ## Lo que hay que traer del prototipo (`auton cat jam zcode`)
 
-Tabla completa en `docs/ARQUITECTURA-ORQUESTADOR.md`, sección 13. Lo esencial: el prompt del orquestador
+Tabla completa en `context/ARQUITECTURA-ORQUESTADOR.md`, sección 13. Lo esencial: el prompt del orquestador
 probado, el reporte con estado que manda sobre el resultado del proceso, la revisión sobre el mismo
 directorio, el despertar automático y el latido de flota, el guardia que impide que el orquestador
 escriba producto, los topes de tamaño de plan, la robustez (un error no mata al worker; no hay "fallidos",
