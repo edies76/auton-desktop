@@ -20,6 +20,7 @@ export function QuestionWakeBlock(context: ToolCallBlockRenderContext) {
   const input = (toolCall.input ?? {}) as { message?: unknown; summary?: unknown };
   const summary = typeof input.summary === "string" ? input.summary : "necesita una decisión";
   const message = typeof input.message === "string" ? input.message : undefined;
+  const respond = context.onRespondToQuestion;
 
   return (
     <WakeEventRow
@@ -27,6 +28,9 @@ export function QuestionWakeBlock(context: ToolCallBlockRenderContext) {
       workerName="Orquestador"
       title={summary}
       {...(message ? { detail: message } : {})}
+      {...(respond && message
+        ? { actionLabel: "Responder", onAction: () => respond({ message }) }
+        : {})}
     />
   );
 }

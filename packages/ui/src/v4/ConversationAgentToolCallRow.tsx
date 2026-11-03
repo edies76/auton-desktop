@@ -109,6 +109,7 @@ export function ConversationAgentToolCallRow({
         onOpenAutomationsMain={context.onOpenAutomationsMain}
         agentSummaryAction={agentSummaryAction}
         authoritativeAgentType={subagentType}
+        {...(context.onRespondToQuestion ? { onRespondToQuestion: context.onRespondToQuestion } : {})}
       />
       {isAutonProgrammer && running && clock ? (
         <div className="px-1 pt-0.5 text-ui-xs text-foreground-subtlest">

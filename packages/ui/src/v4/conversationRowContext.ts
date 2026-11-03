@@ -89,6 +89,8 @@ export interface ConversationRowRenderContext {
   /** Assistant markdown 本地文件链接入口：由 shell 统一 stat 后分流到预览或文件树。 */
   onOpenFileLink?: (target: MessageFileLinkTarget) => void;
   onOpenSubagentSession?: (request: OpenSubagentSideTabRequest) => void;
+  /** Responde a una pregunta del orquestador desde la fila centrada del hilo. */
+  onRespondToQuestion?: (request: { message: string }) => void;
   onOpenPlanDetail?: (request: OpenPlanDetailSideTabRequest) => void;
   /** 插件 UI：内联卡片请求在侧栏打开；RowView 补 parentSessionId 与 workspace 字段。 */
   onOpenWorkflowRun?: (request: OpenWorkflowRunSideTabRequest) => void;

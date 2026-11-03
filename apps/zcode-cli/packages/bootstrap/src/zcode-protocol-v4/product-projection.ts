@@ -4454,6 +4454,7 @@ export class ProductProjection {
         ...(payload.background === true ? { backgrounded: true as const } : {}),
         ...(payload.background === true ? { workId: agentId } : {}),
         startedAt: this.ms(event),
+        lastActivityAt: this.ms(event),
       };
       delete row.endedAt;
       return [
@@ -4480,6 +4481,7 @@ export class ProductProjection {
       ...(payload.background === true ? { backgrounded: true as const } : {}),
       ...(payload.background === true ? { workId: agentId } : {}),
       startedAt: this.ms(event),
+      lastActivityAt: this.ms(event),
     };
     this.subagentRowIdByAgentId.set(agentId, row.rowId);
     return [{ op: "row.appended", row }, ...(resumedBackgroundWork ? [resumedBackgroundWork] : [])];
@@ -4538,7 +4540,14 @@ export class ProductProjection {
       this.stringPayload(payload, "text") ??
       this.stringPayload(payload, "message");
     if (!row || !append) return [];
-    return [{ op: "row.delta", rowId: row.rowId, path: "summaryText", append }];
+    // Cada mensaje del worker es una señal de vida: reinicia el silencio que el
+    // hilo usa para pintar el latido.
+    const updated: SubagentRow = {
+      ...row,
+      summaryText: `${row.summaryText}${append}`,
+      lastActivityAt: this.ms(event),
+    };
+    return [{ op: "row.upserted", row: updated }];
   }
 
   private onSubagentStopped(event: SessionEvent): ConversationDelta[] {

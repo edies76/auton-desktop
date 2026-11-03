@@ -114,10 +114,16 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
   Pruebas: `ui/test/autonThreadChannels.test.tsx` (las tres por el mapeo real:
   `resolveToolCallRenderer` + `buildAssistantWorkRenderItems` +
   `ConversationAgentToolCallRow`) y `ui/test/autonWakeEventRow.test.tsx`.
-- **Bloqueado — la fila de pregunta no tiene acción de responder**: en el contexto
-  de la fila no hay manejador para responder; la respuesta se escribe en el
-  compositor. Motivo: falta exponer un callback de respuesta en
-  `ConversationRowRenderContext`. La fila de cierre sí lleva **Abrir**.
+- **Hecho — la fila de pregunta admite acción de responder**: el callback
+  `ConversationRowRenderContext.onRespondToQuestion` viaja hasta `ToolCallBlock`
+  y la fila pinta **Responder** cuando el hilo lo provee (probado con y sin
+  callback en `autonThreadChannels.test.tsx`).
+- **Pendiente — la shell todavía no provee `onRespondToQuestion`**: el espacio del
+  proyecto (otra pieza) debe pasar un manejador que envíe la respuesta. Sin él, la
+  fila se ve informativa y sin botón.
+- **Hecho — el latido mide silencio real**: la proyección marca `lastActivityAt`
+  al nacer el worker, en cada mensaje suyo (`onSubagentMessage` hace upsert) y la
+  fila usa ese instante; 90 s sin señal ⇒ fila de latido.
 - **Bloqueado — prueba 17 con modelo real**: pedir "deshaz el sprint 2" y comprobar
   que el orquestador **llama** a `AutonRevert` requiere un proveedor real, que no
   existe en este entorno. La comprobación estructural

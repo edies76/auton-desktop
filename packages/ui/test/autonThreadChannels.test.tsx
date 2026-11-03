@@ -181,6 +181,16 @@ describe("hilo real con dos canales y eventos despertadores", () => {
       createElement(QuestionBlock as never, { toolCallNode: questionNode } as never),
     );
 
+    // La acción de responder solo aparece cuando el hilo provee el callback.
+    const questionWithReply = renderToStaticMarkup(
+      createElement(QuestionBlock as never, {
+        toolCallNode: questionNode,
+        onRespondToQuestion: () => {},
+      } as never),
+    );
+    expect(question).not.toContain("Responder");
+    expect(questionWithReply).toContain("Responder");
+
     const channels = items
       .filter((item) => item.kind === "agentToolCall")
       .map(renderRow)
