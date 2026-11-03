@@ -19,6 +19,7 @@ límite es el usuario; en Auton esa disciplina es el producto*.
 | **`ARTICULO-AUTON.md`** | El esqueleto del artículo técnico: la tesis de lo nuevo, sección por sección |
 | **`context/POR-QUE-AUTON-GANA.md`** | El análisis del artículo de DeepSeek, el argumento para la hackathon y el pitch por rúbrica |
 | **`AGENTS.md`** | Las reglas duras del repositorio (sin credenciales, un commit por cambio, verificar antes de prometer) |
+| **`context/PRUEBAS-QUE-PROMETEMOS.md`** | Las 16 pruebas: una por promesa, para no engañarnos y para el día de la demo |
 | Trabajo futuro de Edi (UI de workers y el orquestador que planea) | `context/REPARTO-DE-TRABAJO.md`, sección "Features no incluidas inicialmente" |
 | **`AUTON-VISION.md`** | La Visión 2.0. Documento central de producto. Es largo: se consulta, no se lee de corrido |
 
