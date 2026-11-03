@@ -123,11 +123,9 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
 - **Hecho — turno que no se cierra**: `runtime/methods/turn-loop.ts` espera con
   `waitForAutonIdle` antes de cerrar (30 min, abortable), y cualquier notificación
   de worker reinicia el reloj (`background-notifications.ts` → `activity()`).
-  Prueba sobre sesión real: `core/tests/auton-live-turn-runtime.test.ts`.
-- **Bloqueado — prueba de integración del canal rápido**: exige el arnés completo
-  de runtime de subagentes, que hoy no existe; el mecanismo (ZCode
-  `RespondToCoordinator` / `SendMessage`) sí está operativo y los mensajes quedan
-  en el hilo.
+  Prueba sobre sesión real: `core/tests/auton-live-turn-runtime.test.ts` y
+  `core/tests/auton-real-dispatch-runtime.test.ts` (despacho real: el turno espera
+  al worker lanzado por la herramienta Agent y se libera al cerrar).
 
 ## 9. Relación con los otros documentos
 
