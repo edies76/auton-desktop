@@ -208,6 +208,20 @@ Las pruebas que no tienen columna automática se corren a mano con modelo real.
 
 ---
 
+## Corridas con fecha
+
+Modelo `deepseek-v4.1-flash` (OpenCode Go), prompt de antes (`0.5.0`) contra
+prompt de después (rama `feat/orquestador-planea`). Transcripción completa en
+`model-runs.md` (scratch de la sesión).
+
+| Fecha | Prueba | Antes | Después |
+| --- | --- | --- | --- |
+| 2026-11-03 | 18. Proporción (pequeño) | Describe el cambio y abre tres pasos internos de plan. | Usa el escaneo ("node + react, 4 archivos") y justifica: "es un cambio de una cadena, así que va en un solo encargo". |
+| 2026-11-03 | 19. Los cinco pasos (Lunar) | Se lanza a explorar con `Bash`; no hace pregunta de producto ni dice qué no entra. | Avisa ("voy a revisar qué guarda Lunar y preparar un plan"), nota que falta el análisis, manda el worker de solo lectura y hace una pregunta con recomendación primero. |
+| 2026-11-03 | 20. El humano no rehace el plan | No hay plan que revisar. | **Parcial**: el revisor acepta el corte y pide mover un test a la entrega donde nace y precisar dos criterios; no rehace el plan. |
+
+---
+
 ## Lo que estas pruebas protegen
 
 No son para la demo: son para **no engañarnos**. El día que se cambie el prompt del orquestador, estas
