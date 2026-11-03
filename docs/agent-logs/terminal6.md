@@ -90,3 +90,9 @@ Trabajando y el hilo del orquestador abierto/fuera de la lista (`final-running-s
 - Foco del worker: el store guarda id/scope y el sidebar publica `setLiveWorkers`; el resumen deriva el worker vivo y `useAutonClock`. Parar un worker interrumpe el turno del orquestador; la prueba en vivo pasó de Trabajando a Bloqueado en el resumen (`focus-blocked-summary2.png`).
 - Creación por proyecto: `claimProjectConversationCreation` reclama una vez por clave, no un booleano global; test de p1/p2/p1.
 - Foco al cambiar de workspace: `closeWorkerFocusForWorkspace` se ejecuta en `WorkspaceShellLayout`; test de cierre en workspace distinto.
+
+Verificación final: `projectConversation` 6/6, `projectSidebarHomeOnlyWorkspaces` 11/11,
+`autonWorkersSidebar` 4/4, `autonWorkerFocusPane` 3/3, `workerFocusStore` 2/2,
+`autonWorkerPanel` 8/8, `autonAgentProjection` 3/3, `autonSpaceProjection` 7/7; tsc y lint limpios.
+El foco vivo pasó de Trabajando a Bloqueado tras parar (resumen derivado de `liveWorkers`), y la app
+quedó en el chat único del proyecto con `Agentes ZCode` de sesiones `auton-worker` reales.
