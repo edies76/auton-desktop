@@ -69,6 +69,7 @@ import {
   AutonProjectList,
   AutonProjectSpaceRoute,
 } from "@/auton/project-space/index.js";
+import { isAutonRoute } from "@/auton/project-space/autonRoute.js";
 import { RootWorkspaceContent } from "@/root/RootWorkspaceContent.js";
 import { resolveConversationWorkspaceTarget } from "@/conversation-workspace-target/index.js";
 import { resolveRootWorkspaceShellTarget } from "@/root/rootWorkspaceShellTarget.js";
@@ -1529,7 +1530,7 @@ function RootInner({
   if (
     !autonBypass &&
     typeof window !== "undefined" &&
-    new URLSearchParams(window.location.search).get("auton") !== "zcode"
+    isAutonRoute(window.location.search)
   ) {
     return (
       <RootShell>

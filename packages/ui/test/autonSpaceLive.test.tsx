@@ -42,6 +42,18 @@ const lease = { store } as unknown as SessionLease;
 // devuelve vacío y no rompe. El provider es el mismo de la app.
 const services = {} as IServiceAccessor;
 
+const agentsMock = vi.hoisted(() => ({
+  items: [] as Array<Record<string, unknown>>,
+}));
+
+vi.mock("@/v4/useWorkspaceSessionsIndexItems.js", () => ({
+  useWorkspaceSessionsIndexItems: () => ({
+    items: agentsMock.items,
+    sourceRevisionByScopeKey: {},
+    hydratingEndpointKeys: [],
+  }),
+}));
+
 function renderSpace(ui: ReactElement) {
   return render(
     <ServiceProvider services={services}>
@@ -54,19 +66,40 @@ afterEach(cleanup);
 
 describe("espacio del proyecto conectado a la sesión real", () => {
   it("proyecta mensajes, workers, plan y evidencia de las filas reales", () => {
+    agentsMock.items = [
+      {
+        taskId: "p1",
+        title: "Orquestador",
+        status: "running",
+        createdAt: NOW - 1000,
+        updatedAt: NOW,
+        workspacePath: PROJECT.path,
+      },
+      {
+        taskId: "agent-2",
+        title: "Agente worker",
+        status: "running",
+        createdAt: NOW - 2000,
+        updatedAt: NOW,
+        workspacePath: PROJECT.path,
+      },
+    ];
     renderSpace(
       <AutonSpaceLive lease={lease} project={PROJECT} now={NOW} onBack={vi.fn()} />,
     );
 
     expect(screen.getByTestId("auton-project-space")).toBeTruthy();
-    expect(screen.getAllByTestId("auton-worker-row")).toHaveLength(3);
+    expect(screen.getAllByTestId("auton-worker-row")).toHaveLength(4);
     expect(screen.getAllByText("worker 1").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Agente worker").length).toBeGreaterThan(0);
+    expect(screen.getByTestId("auton-worker-panel").textContent).not.toContain("Orquestador");
     expect(screen.getByTestId("auton-thread").textContent).toContain("Mejora el diseño del chat");
     expect(screen.getByTestId("auton-plan-block").textContent).toContain("Revisar el diseño del chat");
     expect(screen.getByTestId("auton-evidence-block").textContent).toContain("pnpm --filter @zcode/ui test");
   });
 
   it("el botón atrás vuelve al hilo y una sesión sin filas no inventa workers", () => {
+    agentsMock.items = [];
     const onBack = vi.fn();
     const { rerender } = renderSpace(
       <AutonSpaceLive lease={lease} project={PROJECT} now={NOW} onBack={onBack} />,
