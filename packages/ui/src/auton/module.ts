@@ -4,7 +4,7 @@
  */
 export const uiAutonModule = {
   id: "ui-auton",
-  requires: ["ui"],
+  requires: ["ui", "shared"],
   provides: ["ui-auton"],
   publicEntrypoints: ["index.ts", "contract.ts"],
 } as const;

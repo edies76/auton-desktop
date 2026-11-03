@@ -739,6 +739,7 @@ modules:
     managed: true
     requires:
       - ui
+      - shared
     publicEntrypoints:
       - packages/ui/src/auton/index.ts
       - packages/ui/src/auton/contract.ts
