@@ -29,5 +29,4 @@ export {
 } from "./projection.js";
 export type { AutonConversationSource } from "./projection.js";
 export { sampleConversationRows, sampleProjects } from "./sample.js";
-export { mountAutonSpace } from "./standalone.js";
 export * from "./model.js";
