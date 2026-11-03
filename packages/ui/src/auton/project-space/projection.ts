@@ -106,7 +106,9 @@ function subagentStatus(row: SubagentRow): AutonWorkerStatus {
 
 function workerName(row: SubagentRow, index: number): string {
   if (row.subagentType === "auton-worker") {
-    return row.title?.trim() || `worker ${index + 1}`;
+    const title = (row as SubagentRow & { title?: string }).title?.trim();
+    const summary = row.summaryText.trim();
+    return title || (summary ? summary.slice(0, 60) : `worker ${index + 1}`);
   }
   if (row.subagentType.startsWith("auton-")) {
     return `worker ${index + 1}`;
