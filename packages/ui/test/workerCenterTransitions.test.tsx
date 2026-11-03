@@ -61,13 +61,21 @@ function Harness({
   const [activeTaskId, setActiveTaskId] = useState(initialActiveTaskId);
   const selectedWorkerId = useAutonWorkerFocusStore((state) => state.selectedWorkerId);
   const selectionOrigin = useAutonWorkerFocusStore((state) => state.selectionOrigin);
+  const liveWorkers = useAutonWorkerFocusStore((state) => state.liveWorkers);
+  const selectedWorkerExists = Boolean(
+    selectedWorkerId && liveWorkers.some((worker) => worker.id === selectedWorkerId),
+  );
   const input: CenterViewInput = {
     activeTaskId,
     selectedWorkerId,
     selectionOrigin,
     orchestratorTaskId,
+    selectedWorkerExists,
   };
   const view = resolveCenterView(input);
+  if (view.kind === "orchestrator") {
+    return <div data-testid="orchestrator-chat" />;
+  }
   return (
     <AutonWorkerSurface
       view={view}
@@ -132,6 +140,35 @@ describe("transiciones del centro entre orquestador y workers", () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(useAutonWorkerFocusStore.getState().selectedWorkerId).toBeNull();
     expect(screen.queryByTestId("auton-worker-summary")).toBeNull();
+    expect(screen.getByTestId("orchestrator-chat")).toBeTruthy();
+  });
+
+  it("volver desde una selección sobre worker activo llega al orquestador en una acción", () => {
+    const onSelect = vi.fn();
+    render(
+      <Harness
+        initialActiveTaskId={A.id}
+        orchestratorTaskId="orch"
+        onSelect={onSelect}
+      />,
+    );
+
+    selectPanelWorker(B.id);
+    expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Worker B");
+
+    fireEvent.click(screen.getByTestId("auton-worker-focus-back"));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId("auton-worker-summary")).toBeNull();
+    expect(screen.getByTestId("orchestrator-chat")).toBeTruthy();
+  });
+
+  it("una selección que ya no existe cae en el orquestador", () => {
+    render(<Harness initialActiveTaskId="orch" orchestratorTaskId="orch" />);
+
+    selectPanelWorker("worker-borrado");
+
+    expect(screen.queryByTestId("auton-worker-summary")).toBeNull();
+    expect(screen.getByTestId("orchestrator-chat")).toBeTruthy();
   });
 
   it("parar usa el turno del orquestador y no el id del worker", () => {
@@ -154,6 +191,10 @@ describe("transiciones del centro entre orquestador y workers", () => {
     selectPanelWorker(B.id);
     expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Worker B");
     expect(screen.queryByTestId("auton-worker-focus-stop")).toBeNull();
+    expect(screen.getByTestId("auton-worker-focus-back").textContent).toContain("Volver");
+
+    fireEvent.click(screen.getByTestId("auton-worker-focus-back"));
+    expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Worker A");
     expect(stopGeneration).not.toHaveBeenCalled();
   });
 

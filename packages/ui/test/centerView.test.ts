@@ -57,6 +57,8 @@ describe("resolveCenterView", () => {
         workerId: "worker-panel",
         stopTaskId: "orch",
         canStop: true,
+        backToOrchestrator: false,
+        backLabel: "Orquestador",
       },
     },
     {
@@ -72,6 +74,8 @@ describe("resolveCenterView", () => {
         workerId: OTHER_WORKER,
         stopTaskId: "orch",
         canStop: true,
+        backToOrchestrator: true,
+        backLabel: "Orquestador",
       },
     },
     {
@@ -87,6 +91,8 @@ describe("resolveCenterView", () => {
         workerId: WORKER_SESSION,
         stopTaskId: "orch",
         canStop: true,
+        backToOrchestrator: true,
+        backLabel: "Orquestador",
       },
     },
     {
@@ -128,6 +134,8 @@ describe("resolveCenterView", () => {
         workerId: "worker-panel",
         stopTaskId: null,
         canStop: false,
+        backToOrchestrator: false,
+        backLabel: "Orquestador",
       },
     },
     {
@@ -144,11 +152,41 @@ describe("resolveCenterView", () => {
         workerId: OTHER_WORKER,
         stopTaskId: null,
         canStop: false,
+        backToOrchestrator: false,
+        backLabel: "Volver",
       },
     },
     {
       name: "selección vacía con origen panel no inventa un worker",
       input: { ...BASE, activeTaskId: WORKER_SESSION, selectionOrigin: "panel" },
+      expected: {
+        kind: "worker-session",
+        taskId: WORKER_SESSION,
+        stopTaskId: "orch",
+        canStop: true,
+        canGoBack: true,
+      },
+    },
+    {
+      name: "una selección que ya no existe vuelve al orquestador",
+      input: {
+        ...BASE,
+        activeTaskId: "orch",
+        selectedWorkerId: "worker-borrado",
+        selectionOrigin: "panel",
+        selectedWorkerExists: false,
+      },
+      expected: { kind: "orchestrator" },
+    },
+    {
+      name: "una selección inexistente con worker activo cae en la sesión de worker",
+      input: {
+        ...BASE,
+        activeTaskId: WORKER_SESSION,
+        selectedWorkerId: "worker-borrado",
+        selectionOrigin: "panel",
+        selectedWorkerExists: false,
+      },
       expected: {
         kind: "worker-session",
         taskId: WORKER_SESSION,

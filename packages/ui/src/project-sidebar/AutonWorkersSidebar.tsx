@@ -41,39 +41,34 @@ function AutonWorkersSidebarContents({
   const now = useAutonClock();
   const services = useBaseWorkspaceServices();
 
-  const { orchestratorId, projectTasks } = useMemo(() => {
-    const activeTask = tasks.find((task) => task.taskId === activeTaskId);
-    const projectId =
-      activeTask?.projectId ?? tasks.find((task) => !task.archived)?.projectId ?? null;
-    const ordered = tasks
-      .filter((task) => task.projectId === projectId && !task.archived)
-      .sort((left, right) => right.updatedAt - left.updatedAt);
-    return {
-      // El panel siempre lee la conversación del orquestador; la sesión activa
-      // solo sirve de respaldo cuando todavía no hay conversación publicada.
-      orchestratorId: orchestratorTaskId ?? activeTaskId ?? null,
-      projectTasks: ordered,
-    };
-  }, [activeTaskId, orchestratorTaskId, tasks]);
+  const { leaseTaskId, stopTaskId } = useMemo(
+    () => ({
+      // Leer la proyección puede caer en la sesión activa como respaldo, pero
+      // parar pertenece solo al orquestador publicado.
+      leaseTaskId: orchestratorTaskId ?? activeTaskId ?? null,
+      stopTaskId: orchestratorTaskId ?? null,
+    }),
+    [activeTaskId, orchestratorTaskId],
+  );
 
   useEffect(() => {
-    if (!orchestratorId) {
+    if (!leaseTaskId) {
       setLease(null);
       return;
     }
-    const next = layer.acquire(orchestratorId);
+    const next = layer.acquire(leaseTaskId);
     setLease(next);
     return () => next.release();
-  }, [layer, orchestratorId]);
+  }, [layer, leaseTaskId]);
 
   const groups = useMemo(() => {
     const conversationWorkers = projectAutonWorkers(rows, now);
     return buildAutonWorkerGroups({
       agentWorkers: conversationWorkers.filter((worker) => worker.kind === "agent"),
       subagentWorkers: conversationWorkers.filter((worker) => worker.kind !== "agent"),
-      canStop: Boolean(orchestratorId),
+      canStop: Boolean(stopTaskId),
     });
-  }, [now, orchestratorId, rows]);
+  }, [now, rows, stopTaskId]);
 
   useEffect(() => {
     useAutonWorkerFocusStore
@@ -99,18 +94,18 @@ function AutonWorkersSidebarContents({
   const stopWorker = useCallback(
     () => {
       // Los workers son canales hijos del turno del orquestador; parar uno
-      // interrumpe ese turno. Sin orquestador no hay parada posible.
+      // interrumpe ese turno. Sin orquestador publicado no hay parada posible.
       const service = services.zcodeTaskService;
-      if (!service || !orchestratorId) return;
+      if (!service || !stopTaskId) return;
       void service
         .stopGeneration({
-          taskId: orchestratorId,
+          taskId: stopTaskId,
           workspacePath,
           ...(workspaceIdentity ? { workspaceIdentity } : {}),
         })
         .catch((error: unknown) => logger.warn("auton.worker.stop.failed", error));
     },
-    [orchestratorId, services, workspaceIdentity, workspacePath],
+    [services, stopTaskId, workspaceIdentity, workspacePath],
   );
 
   return (

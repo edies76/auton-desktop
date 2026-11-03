@@ -539,6 +539,10 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
   const workspaceShellRef = useRef<HTMLDivElement | null>(null);
   const selectedWorkerId = useAutonWorkerFocusStore((state) => state.selectedWorkerId);
   const selectionOrigin = useAutonWorkerFocusStore((state) => state.selectionOrigin);
+  const liveWorkers = useAutonWorkerFocusStore((state) => state.liveWorkers);
+  const selectedWorkerExists = Boolean(
+    selectedWorkerId && liveWorkers.some((worker) => worker.id === selectedWorkerId),
+  );
   const isProjectOrchestrator = useAutonProjectConversationStore((state) =>
     isPublishedOrchestrator(state, workspaceKey, activeTaskId),
   );
@@ -552,8 +556,15 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
         selectedWorkerId,
         selectionOrigin,
         orchestratorTaskId: publishedOrchestratorId,
+        selectedWorkerExists,
       }),
-    [activeTaskId, publishedOrchestratorId, selectedWorkerId, selectionOrigin],
+    [
+      activeTaskId,
+      publishedOrchestratorId,
+      selectedWorkerExists,
+      selectedWorkerId,
+      selectionOrigin,
+    ],
   );
   const isLegacyTaskActive = useAutonProjectConversationStore((state) =>
     isPublishedLegacyTask(state, workspaceKey, activeTaskId),

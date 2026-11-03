@@ -57,13 +57,15 @@ export function AutonWorkerSurface({
   if (!worker || view.kind === "orchestrator") return null;
 
   const close = useAutonWorkerFocusStore.getState().close;
-  const onBack =
-    view.kind === "worker-session"
-      ? () => {
-          close();
-          onSelectOrchestrator();
-        }
-      : close;
+  const backToOrchestrator =
+    view.kind === "worker-session" ||
+    (view.kind === "worker-focus" && view.backToOrchestrator);
+  const onBack = backToOrchestrator
+    ? () => {
+        close();
+        onSelectOrchestrator();
+      }
+    : close;
 
   return (
     <AutonWorkerFocusPane
@@ -75,6 +77,7 @@ export function AutonWorkerSurface({
       isDesktop={isDesktop}
       onBack={onBack}
       canGoBack={view.kind === "worker-session" ? view.canGoBack : true}
+      backLabel={view.kind === "worker-focus" ? view.backLabel : "Orquestador"}
     />
   );
 }

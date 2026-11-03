@@ -24,6 +24,7 @@ export interface AutonWorkerFocusPaneProps {
   isDesktop?: boolean;
   onBack: () => void;
   canGoBack?: boolean;
+  backLabel?: string;
 }
 
 /**
@@ -39,6 +40,7 @@ export function AutonWorkerFocusPane({
   isDesktop = false,
   onBack,
   canGoBack = true,
+  backLabel = "Orquestador",
 }: AutonWorkerFocusPaneProps) {
   const mode = useAutonWorkerFocusStore((state) => state.mode);
   const setMode = useAutonWorkerFocusStore((state) => state.setMode);
@@ -97,7 +99,7 @@ export function AutonWorkerFocusPane({
             data-testid="auton-worker-focus-back"
           >
             <ArrowLeft className="size-3.5" />
-            Orquestador
+            {backLabel}
           </Button>
         ) : null}
         <span className="min-w-0 flex-1 truncate text-ui-sm font-medium text-foreground">

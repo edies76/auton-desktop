@@ -10,6 +10,8 @@ export interface CenterViewInput {
   selectedWorkerId: string | null;
   selectionOrigin: CenterSelectionOrigin;
   orchestratorTaskId: string | null;
+  /** La fila elegida sigue existiendo en la proyección viva. */
+  selectedWorkerExists?: boolean;
 }
 
 export type CenterView =
@@ -19,6 +21,9 @@ export type CenterView =
       workerId: string;
       stopTaskId: string | null;
       canStop: boolean;
+      /** La vuelta navega al orquestador, no a la sesión de worker activa. */
+      backToOrchestrator: boolean;
+      backLabel: "Orquestador" | "Volver";
     }
   | {
       kind: "worker-session";
@@ -35,18 +40,33 @@ export type CenterView =
  * sin él no hay `stopTaskId` y la UI no ofrece parada.
  */
 export function resolveCenterView(input: CenterViewInput): CenterView {
-  const { activeTaskId, selectedWorkerId, selectionOrigin, orchestratorTaskId } = input;
+  const {
+    activeTaskId,
+    selectedWorkerId,
+    selectionOrigin,
+    orchestratorTaskId,
+    selectedWorkerExists = true,
+  } = input;
   const panelSelection =
     selectionOrigin !== "session" &&
     selectedWorkerId !== null &&
-    selectedWorkerId !== orchestratorTaskId;
+    selectedWorkerId !== orchestratorTaskId &&
+    selectedWorkerExists;
 
   if (panelSelection) {
+    const activeWorkerSession = Boolean(
+      activeTaskId &&
+        activeTaskId !== orchestratorTaskId &&
+        isWorkerSessionTaskId(activeTaskId),
+    );
     return {
       kind: "worker-focus",
       workerId: selectedWorkerId,
       stopTaskId: orchestratorTaskId,
       canStop: Boolean(orchestratorTaskId),
+      backToOrchestrator: activeWorkerSession && Boolean(orchestratorTaskId),
+      backLabel:
+        activeWorkerSession && !orchestratorTaskId ? "Volver" : "Orquestador",
     };
   }
 

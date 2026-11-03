@@ -90,12 +90,12 @@ function fullWorkerRow() {
 
 const TASKS = [task("orch", "Orquestador"), task("legacy", "Chat legado")];
 
-function renderSidebar() {
+function renderSidebar(orchestratorTaskId: string | null = "orch") {
   return render(
     <AutonWorkersSidebar
       tasks={TASKS}
       workspacePath="/workspace/lunar"
-      orchestratorTaskId="orch"
+      orchestratorTaskId={orchestratorTaskId}
     />,
   );
 }
@@ -144,6 +144,19 @@ describe("sidebar de workers del proyecto", () => {
     expect(screen.getByTestId("auton-worker-group-agent").textContent).toContain(
       "Agente completo",
     );
+  });
+
+  it("sin orquestador publicado no ofrece parar aunque lea la sesión activa", () => {
+    state.activeTaskId = "sess_auton_agent_1";
+    state.rows = [fullWorkerRow()];
+    renderSidebar(null);
+
+    expect(state.acquire).toHaveBeenCalledWith("sess_auton_agent_1");
+    expect(screen.getByTestId("auton-worker-group-agent").textContent).toContain(
+      "Agente completo",
+    );
+    expect(screen.queryByTestId("auton-worker-stop")).toBeNull();
+    expect(state.stopGeneration).not.toHaveBeenCalled();
   });
 
   it("para un agente completo interrumpiendo el turno del orquestador", () => {
