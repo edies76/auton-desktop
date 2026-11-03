@@ -135,3 +135,19 @@ mostró solo `Pregunta sobre identidad y funcionamiento` (`timeline-filtered.png
 legado `bro...` desde el buscador volvió al orquestador con su etiqueta; `worker 9` Bloqueado se
 muestra sin `Parar` (`focus-live-blocked.png`). Typecheck raíz 0 con 8 GB de heap y lint 0 errores.
 - Arranque limpio final con todo ensamblado (`launch-final.png`, `launch-final.log`): `Orquestador` junto al título, `WORKERS 9`, sin foco abierto y compositor del orquestador. La vista `Recently updated` mostró solo `Pregunta sobre identidad y funcionamiento`; cero excepciones de renderer. Lint raíz 0 errores/105 avisos y typecheck raíz 0.
+
+## 2026-11-03 - vuelta única, parada y filas de proyecto
+
+Qué: `AutonWorkerSessionPane` cierra el foco antes de navegar y recibe `stopTaskId` del orquestador
+publicado; el shell usa `AutonWorkerSurface` y `shouldRenderAutonWorkerSurface` como única superficie
+de decisión entre sesión de worker, foco del panel y chat. La prueba de visibilidad captura el árbol
+real de `ProjectSections` y ejecuta `renderProject`, de modo que cada fila de proyecto recibe solo su
+orquestador.
+
+Por qué: al volver desde una sesión de worker, el foco seguía abierto y el shell volvía a pintar el
+resumen (hacían falta dos vueltas); parar desde esa sesión detenía el worker en vez del turno del
+orquestador; y las filas de proyecto no estaban ejercitadas por la prueba.
+
+Verificado con: `autonWorkerSurface.test.tsx` (4), `autonWorkerSessionPane.test.tsx` (3),
+`projectSidebarTaskVisibility.test.tsx` (4) y la suite de UI 75/75. Typecheck raíz 0 con 8 GB y lint
+raíz 0 errores/105 avisos.
