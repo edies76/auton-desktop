@@ -11,6 +11,9 @@ export interface AutonProjectSpaceProps {
   onBack: () => void;
   onStopWorker: (workerId: string) => void;
   onSend?: (text: string) => void;
+  showComposer?: boolean;
+  canStopWorkers?: boolean;
+  backLabel?: string;
 }
 
 /**
@@ -24,6 +27,9 @@ export function AutonProjectSpace({
   onBack,
   onStopWorker,
   onSend,
+  showComposer = true,
+  canStopWorkers = true,
+  backLabel,
 }: AutonProjectSpaceProps) {
   const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
   const selectedWorker = selectedWorkerId
@@ -40,6 +46,7 @@ export function AutonProjectSpace({
             selectedWorkerId={selectedWorkerId ?? undefined}
             onOpenWorker={(workerId) => setSelectedWorkerId(workerId)}
             onStopWorker={onStopWorker}
+            canStop={canStopWorkers}
           />
         </div>
         <main className="min-h-0 min-w-0 overflow-hidden">
@@ -57,6 +64,8 @@ export function AutonProjectSpace({
               onBack={onBack}
               onStopWorker={onStopWorker}
               onSend={onSend}
+              showComposer={showComposer}
+              {...(backLabel ? { backLabel } : {})}
             />
           )}
         </main>

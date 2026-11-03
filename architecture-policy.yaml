@@ -769,6 +769,19 @@ modules:
       - apps/zcode-cli/packages/core/src/auton/contract.ts
     layers:
       adapters: .
+  # desktop-auton-entry：由 architecture:adopt 登记
+  - id: desktop-auton-entry
+    roots:
+      - packages/desktop/src/renderer/auton
+    managed: true
+    requires:
+      - ui-auton
+    publicEntrypoints:
+      - packages/desktop/src/renderer/auton/index.ts
+      - packages/desktop/src/renderer/auton/contract.ts
+    layers:
+      app: .
+    owner: auton
 
 global:
   # 临时时间戳（2026-09-10）：unmanaged-new-file 只约束此日期之后首次入库的文件。

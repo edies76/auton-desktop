@@ -17,6 +17,8 @@ export interface AutonWorkerPanelProps {
   selectedWorkerId?: string;
   onOpenWorker: (workerId: string) => void;
   onStopWorker: (workerId: string) => void;
+  /** En un panel de solo lectura no se ofrece una parada que no puede ejecutarse. */
+  canStop?: boolean;
 }
 
 /**
@@ -29,6 +31,7 @@ export function AutonWorkerPanel({
   selectedWorkerId,
   onOpenWorker,
   onStopWorker,
+  canStop = true,
 }: AutonWorkerPanelProps) {
   return (
     <aside
@@ -118,20 +121,22 @@ export function AutonWorkerPanel({
                     ) : null}
                   </span>
                 </button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="size-6 shrink-0 text-foreground-subtlest hover:text-destructive"
-                  aria-label={`Parar ${worker.name}`}
-                  data-testid="auton-worker-stop"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onStopWorker(worker.id);
-                  }}
-                >
-                  <Square className="size-3" />
-                </Button>
+                {canStop ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="size-6 shrink-0 text-foreground-subtlest hover:text-destructive"
+                    aria-label={`Parar ${worker.name}`}
+                    data-testid="auton-worker-stop"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onStopWorker(worker.id);
+                    }}
+                  >
+                    <Square className="size-3" />
+                  </Button>
+                ) : null}
               </li>
             );
           })}

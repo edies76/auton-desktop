@@ -122,6 +122,7 @@ export { ensurePendingTaskDraft } from "@/v4/composer/composerDraftStore.js";
 
 export {
   AutonWorkspaceApp,
+  AutonSpaceLive,
   AutonProjectsScreen,
   AutonProjectSpace,
   AutonWorkerPanel,
@@ -129,8 +130,9 @@ export {
   AutonWorkBlock,
   AutonPlanBlock,
   AutonEvidenceBlock,
-  demoDataForProject,
-  demoProjects,
+  projectAutonSpace,
+  sampleConversationRows,
+  sampleProjects,
 } from "./auton/project-space/index.js";
 export type {
   AutonProject,

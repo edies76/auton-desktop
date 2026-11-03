@@ -1,6 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import type { ConversationRow } from "@zcode/shared/zcode-protocol-v4";
+import { useAutonClock } from "./clock.js";
 import { AutonProjectsScreen, type AutonProjectDraft } from "./ProjectListScreen.js";
 import { AutonProjectSpace } from "./ProjectSpaceScreen.js";
+import { projectAutonSpace } from "./projection.js";
 import {
   emptySpaceData,
   projectIdFor,
@@ -41,20 +44,12 @@ function writeStoredProjects(projects: readonly AutonProject[]): void {
   }
 }
 
-function useNow(injected?: number): number {
-  const [tick, setTick] = useState(() => Date.now());
-  useEffect(() => {
-    if (injected !== undefined) return;
-    const timer = window.setInterval(() => setTick(Date.now()), 1000);
-    return () => window.clearInterval(timer);
-  }, [injected]);
-  return injected ?? tick;
-}
-
 export interface AutonWorkspaceAppProps {
   /** Proyectos iniciales; si se omite, se leen del almacenamiento local. */
   initialProjects?: readonly AutonProject[];
-  /** Datos del espacio por proyecto (workers, hilo, plan, evidencia). */
+  /** Filas reales de la conversación del orquestador; se proyectan al espacio. */
+  rows?: readonly ConversationRow[];
+  /** Proyección lista por proyecto, para consumidores que ya la calculan. */
   dataForProject?: (project: AutonProject) => AutonProjectSpaceData;
   /** Reloj inyectado para pruebas; si se omite, corre solo. */
   now?: number;
@@ -70,6 +65,7 @@ export interface AutonWorkspaceAppProps {
  */
 export function AutonWorkspaceApp({
   initialProjects,
+  rows,
   dataForProject,
   now: injectedNow,
   onSendMessage,
@@ -80,7 +76,7 @@ export function AutonWorkspaceApp({
   );
   const [activeProjectId, setActiveProjectId] = useState<string | null>(null);
   const [sentMessages, setSentMessages] = useState<Record<string, AutonThreadMessage[]>>({});
-  const now = useNow(injectedNow);
+  const now = useAutonClock(injectedNow);
 
   const persist = useCallback((next: AutonProject[]) => {
     setProjects(next);
@@ -119,10 +115,14 @@ export function AutonWorkspaceApp({
 
   const spaceData = useMemo<AutonProjectSpaceData>(() => {
     if (!activeProject) return emptySpaceData();
-    const base = dataForProject ? dataForProject(activeProject) : emptySpaceData();
+    const base = dataForProject
+      ? dataForProject(activeProject)
+      : rows
+        ? projectAutonSpace({ rows, now })
+        : emptySpaceData();
     const extra = sentMessages[activeProject.id] ?? [];
     return { ...base, messages: [...base.messages, ...extra] };
-  }, [activeProject, dataForProject, sentMessages]);
+  }, [activeProject, dataForProject, now, rows, sentMessages]);
 
   const send = useCallback(
     (text: string) => {

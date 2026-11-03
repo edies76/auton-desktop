@@ -16,6 +16,9 @@ export interface AutonThreadViewProps {
   onBack: () => void;
   onStopWorker: (workerId: string) => void;
   onSend?: (text: string) => void;
+  /** El espacio de solo lectura oculta el compositor; el hilo principal lo muestra. */
+  showComposer?: boolean;
+  backLabel?: string;
 }
 
 /**
@@ -29,6 +32,8 @@ export function AutonThreadView({
   onBack,
   onStopWorker,
   onSend,
+  showComposer = true,
+  backLabel = "Proyectos",
 }: AutonThreadViewProps) {
   const [draft, setDraft] = useState("");
 
@@ -48,10 +53,10 @@ export function AutonThreadView({
           size="sm"
           onClick={onBack}
           data-testid="auton-project-back"
-          aria-label="Volver a la lista de proyectos"
+          aria-label={`Volver a ${backLabel.toLowerCase()}`}
         >
           <ArrowLeft className="size-3.5" />
-          Proyectos
+          {backLabel}
         </Button>
         <div className="min-w-0 flex-1">
           <p className="truncate text-ui-sm font-medium text-foreground">{project.name}</p>
@@ -118,35 +123,37 @@ export function AutonThreadView({
         </ol>
       </div>
 
-      <div className="border-border border-t px-4 py-3">
-        <div className="mx-auto flex max-w-3xl items-end gap-2">
-          <Textarea
-            value={draft}
-            onChange={(event) => setDraft(event.target.value)}
-            onKeyDown={(event) => {
-              if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
-                submit();
-              }
-            }}
-            placeholder="Escríbele al orquestador…"
-            aria-label="Mensaje al orquestador"
-            data-testid="auton-composer"
-            className="min-h-10 flex-1"
-            rows={1}
-          />
-          <Button
-            type="button"
-            size="icon"
-            onClick={submit}
-            disabled={!draft.trim()}
-            aria-label="Enviar al orquestador"
-            data-testid="auton-composer-send"
-          >
-            <Send className="size-3.5" />
-          </Button>
+      {showComposer ? (
+        <div className="border-border border-t px-4 py-3">
+          <div className="mx-auto flex max-w-3xl items-end gap-2">
+            <Textarea
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  submit();
+                }
+              }}
+              placeholder="Escríbele al orquestador…"
+              aria-label="Mensaje al orquestador"
+              data-testid="auton-composer"
+              className="min-h-10 flex-1"
+              rows={1}
+            />
+            <Button
+              type="button"
+              size="icon"
+              onClick={submit}
+              disabled={!draft.trim()}
+              aria-label="Enviar al orquestador"
+              data-testid="auton-composer-send"
+            >
+              <Send className="size-3.5" />
+            </Button>
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }

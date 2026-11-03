@@ -1,5 +1,8 @@
 export { AutonWorkspaceApp } from "./AutonWorkspaceApp.js";
 export type { AutonWorkspaceAppProps } from "./AutonWorkspaceApp.js";
+export { AutonSpaceLive } from "./AutonSpaceLive.js";
+export type { AutonSpaceLiveProps } from "./AutonSpaceLive.js";
+export { useAutonClock } from "./clock.js";
 export { AutonProjectsScreen } from "./ProjectListScreen.js";
 export type { AutonProjectDraft, AutonProjectsScreenProps } from "./ProjectListScreen.js";
 export { AutonProjectSpace } from "./ProjectSpaceScreen.js";
@@ -16,5 +19,15 @@ export { AutonPlanBlock } from "./PlanBlock.js";
 export type { AutonPlanBlockProps } from "./PlanBlock.js";
 export { AutonEvidenceBlock } from "./EvidenceBlock.js";
 export type { AutonEvidenceBlockProps } from "./EvidenceBlock.js";
-export { demoDataForProject, demoProjects } from "./demo.js";
+export {
+  projectAutonEvidence,
+  projectAutonMessages,
+  projectAutonPlan,
+  projectAutonSpace,
+  projectAutonTramos,
+  projectAutonWorkers,
+} from "./projection.js";
+export type { AutonConversationSource } from "./projection.js";
+export { sampleConversationRows, sampleProjects } from "./sample.js";
+export { mountAutonSpace } from "./standalone.js";
 export * from "./model.js";
