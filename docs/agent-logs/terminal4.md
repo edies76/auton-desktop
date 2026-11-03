@@ -117,3 +117,5 @@ Verificado con: Muse real (echo x2 y meta x1) a través del adaptador; auton-mus
 
 Ajuste de cierre: el arranque de Muse en Windows pasa por cmd.exe con cada argumento citado (espacios y & en la ruta del workspace); el nombre pelado `muse` va sin citar porque su .cmd resuelve el launcher con %~dp0. Probado contra el Muse real en una carpeta con espacio y &.
 La fábrica real del prompt (buildMuseWorkerPrompt) se prueba ahora con el hijo de contrato y afirma identidad, rol, modo, esfuerzo, canal, REPORTE, encargo e instrucciones del proyecto antes de que el motor lo reciba.
+
+El puerto real de sesión se ejercita con Muse echo: `launch(engine: "muse")` en el runtime real, la tarea termina `completed` y su salida contiene la capa de Auton (`MODO DE TRABAJO: read`), `## ENCARGO` y el brief. Eso cierra el eslabón entre la fábrica real y el motor.

@@ -369,6 +369,73 @@ describe.runIf(runRealMuse)("Muse Code real (opt-in con AUTON_MUSE_E2E=1)", () =
     }
   }, 120_000);
 
+  it("el puerto real de sesión usa el motor Muse y entrega la capa de Auton al motor", async () => {
+    const root = await mkdtemp(join(tmpdir(), "muse-real-port-"));
+    const previousProvider = process.env.AUTON_MUSE_PROVIDER;
+    process.env.AUTON_MUSE_PROVIDER = "echo";
+    try {
+      const parent = createTestAgentRuntime(
+        createSessionId("auton-muse-real-port"),
+        {
+          mode: "build",
+          autonWorkerMode: "session",
+          workingDirectory: root,
+          workspacePath: root,
+        },
+        {
+          eventStore: createTestSessionEventStore(),
+          modelAdapter: {
+            async generateText(): Promise<never> {
+              throw new Error("el modelo de ZCode no debe usarse con Muse");
+            },
+          } as never,
+        },
+      );
+      const port = (
+        parent as unknown as {
+          autonSessionWorkerPort: {
+            launch(request: unknown): Promise<{ agentId: string }>;
+            getTask(id: string): Promise<
+              { status: string; outputFile?: string; waitingForAnswer?: boolean } | undefined
+            >;
+          };
+        }
+      ).autonSessionWorkerPort;
+      expect(port).toBeTruthy();
+
+      const launched = await port.launch({
+        sessionId: parent.sessionId,
+        parentToolCallId: "tool_muse_real",
+        agentType: "auton-worker",
+        description: "encargo muse real",
+        prompt: "Di hola",
+        engine: "muse",
+        mode: "read",
+        workingDirectory: root,
+        workspaceRoot: root,
+        trace: { traceId: "trace-muse-real", sessionId: parent.sessionId } as never,
+        runInBackground: true,
+      });
+
+      let task = await port.getTask(launched.agentId);
+      for (let attempt = 0; attempt < 120 && task?.status !== "completed"; attempt += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        task = await port.getTask(launched.agentId);
+      }
+      expect(task?.status).toBe("completed");
+      expect(task?.outputFile).toBeTruthy();
+      const output = await readFile(task!.outputFile!, "utf8");
+      expect(output).toContain("echo:");
+      expect(output).toContain("MODO DE TRABAJO: read");
+      expect(output).toContain("## ENCARGO");
+      expect(output).toContain("Di hola");
+    } finally {
+      if (previousProvider === undefined) delete process.env.AUTON_MUSE_PROVIDER;
+      else process.env.AUTON_MUSE_PROVIDER = previousProvider;
+      await rm(root, { recursive: true, force: true });
+    }
+  }, 180_000);
+
   it("lanza headless con el proveedor meta y devuelve texto", async () => {
     const root = await mkdtemp(join(tmpdir(), "muse-real-meta-"));
     try {
