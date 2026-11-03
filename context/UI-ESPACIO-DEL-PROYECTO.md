@@ -62,6 +62,52 @@ Dentro de la conversación, y en orden con el texto:
 | **Plan** | El plan del proyecto: sprints con su estado, su dueño y su criterio de hecho. *(La tarjeta del plan ya está en construcción por otra sesión: `packages/ui/src/auton/plan-card.tsx`.)* |
 | **Evidencia** | Al cerrar un sprint: el comando que se corrió, su salida y los archivos tocados. Es la prueba de que está bien. |
 
+### 2.4 La regla de layout: crónica intercalada (propuesta, pendiente del visto bueno de Edi)
+
+**Esto no es un retoque de color: es el cambio que hace que se sienta un chat único y vivo.** Hoy el hilo
+usa el agrupado de ZCode: un bloque colapsable tipo "trabajó X segundos" y **la respuesta final debajo**.
+Esa forma es de un agente que **hace** el trabajo. El orquestador **no hace el trabajo: lo dirige**, así que
+esa forma sobra.
+
+**La regla:**
+
+> El hilo es **una crónica**: narración → bloque de trabajo del tramo → narración → bloque → … y así
+> indefinidamente, **sin cerrar el turno**.
+
+- **Se acabó el bloque por turno.** No hay "trabajó Xs" con la respuesta abajo: hay **narración del
+  orquestador**, y **un bloque por worker** (no por turno), que se abre y se cierra sin límite.
+- **El trabajo no tiene "fase de work" y "fase de respuesta".** Todo ocurre **en el mismo hilo y a la vez**:
+  el orquestador puede estar narrando, un worker trabajando y otro preguntando, sin que nada espere a nada.
+- **Dónde se cambia**: los componentes que hoy agrupan por turno — `ConversationTimeline` y
+  `ConversationTurnGroup` — pasan a componer por **evento en orden**: narración, canal de worker, evento
+  del sistema, pregunta.
+- **Nada de huecos**: si el orquestador espera, lo dice; si no tiene nada que decir, marca el tramo en
+  espera y sigue vivo.
+
+**Por qué importa tanto**: sin esto, en reposo la app **se siente como un agente normal**, y toda la
+promesa —multiagente, un solo chat, el orquestador como director— se queda invisible aunque el código la
+cumpla.
+
+### 2.5 Los eventos: mismo tratamiento que los de ZCode
+
+- **El evento de pregunta de un worker se camufla como un evento más del bloque de trabajo**: una fila,
+  como las demás. Ni banner centrado, ni color propio, ni salto de layout.
+- **Los workers no preguntan al humano.** El worker pregunta **al orquestador**; el orquestador decide si
+  responde él o si le pregunta al humano, y para eso usa **la tool de preguntas que ZCode ya trae**.
+- Lo mismo para el resto de eventos: **copiar el tratamiento que ZCode ya tiene** para sus filas de
+  herramientas. Si algo se ve raro, es que se inventó en vez de copiarse.
+
+### 2.6 Colores: solo los de ZCode (corrección pedida)
+
+- **Nada de colores nuevos.** Ni azul para los workers, ni ámbar o verde propios: se usan **los tokens de
+  ZCode**. Si ZCode no tiene un color para "pregunta" o "espera", se resuelve con **neutros y un solo
+  acento**, igual que sus propias filas.
+- **El estado se distingue por forma y palabra** —etiqueta, punto, parpadeo— **no por un arcoíris**. Cinco
+  estados no son cinco colores.
+
+> **Pendiente**: estas tres reglas (2.4, 2.5 y 2.6) las propone Grok y esperan el visto bueno de Edi antes
+> de tocar la interfaz.
+
 ## Estados y animaciones (lo nuevo)
 
 - **Estado por worker**: los cinco de arriba, con color distinto. Y **parpadeo suave** cuando lleva mucho
