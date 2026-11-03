@@ -44,9 +44,9 @@ describe("proyección del espacio desde filas reales", () => {
     expect(data.messages[0]?.text).toContain("Mejora el diseño del chat");
 
     expect(data.workers.map((worker) => worker.name)).toEqual([
-      "worker 1",
-      "worker 2",
-      "worker 3",
+      "ajustando el cuadro de mensajes",
+      "¿el login debe recordar la sesión entre reinicios?",
+      "2 archivos, build en verde",
     ]);
     expect(data.workers.map((worker) => worker.status)).toEqual([
       "trabajando",
@@ -134,5 +134,30 @@ describe("proyección del espacio desde filas reales", () => {
     expect(projectAutonPlan(rows)?.items).toHaveLength(3);
     expect(projectAutonEvidence(rows)?.command).toContain("test");
     expect(projectAutonMessages(rows).every((message) => message.text.length > 0)).toBe(true);
+  });
+
+  it("usa la descripción del Agent como nombre y deriva la sesión del entityId", () => {
+    const toolCall = {
+      rowId: 0,
+      createdAtSeq: 0,
+      createdAt: "2026-11-02T11:59:00.000Z",
+      turnId: "t1",
+      kind: "toolCall",
+      toolCallId: "call-agent",
+      toolName: "Agent",
+      status: "success",
+      input: { description: "Revisar README" },
+      inputText: "{}",
+    } as unknown as ConversationRow;
+    const row = {
+      ...subagent(2, "success", "Listo"),
+      parentToolCallId: "call-agent",
+      childSessionId: undefined,
+      entityId: "agent-1",
+    } as unknown as ConversationRow;
+
+    const [worker] = projectAutonWorkers([toolCall, row], Date.UTC(2026, 10, 2, 12, 0, 0));
+    expect(worker?.name).toBe("Revisar README");
+    expect(worker?.id).toBe("sess_auton_agent-1");
   });
 });

@@ -29,8 +29,6 @@ export interface WorkspaceHeaderTitleSectionProps {
   localWorkspacePath?: string;
   projectName: string;
   activeTaskTitle: string;
-  /** El chat activo es la conversación publicada del proyecto, no un worker ni un legado. */
-  isProjectOrchestrator?: boolean;
   activeTaskChangeSummary?: ZCodeTaskChangeSummary | null;
   activeTaskId: string | null;
   activeTraceId: string | null;

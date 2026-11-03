@@ -35,9 +35,13 @@ function AutonWorkersSidebarContents({
   });
   const { layer } = useV4Conversation();
   const [lease, setLease] = useState<SessionLease | null>(null);
+  const [workerLease, setWorkerLease] = useState<SessionLease | null>(null);
   const focusedWorkerId = useAutonWorkerFocusStore((state) => state.selectedWorkerId);
+  const listWorkerId = useAutonWorkerFocusStore((state) => state.listWorkerId);
   const projection = useConversationProjection(lease);
+  const workerProjection = useConversationProjection(workerLease);
   const rows = projection.snapshot?.rows.window ?? [];
+  const workerRows = listWorkerId ? (workerProjection.snapshot?.rows.window ?? []) : [];
   const now = useAutonClock();
   const services = useBaseWorkspaceServices();
 
@@ -61,14 +65,37 @@ function AutonWorkersSidebarContents({
     return () => next.release();
   }, [layer, leaseTaskId]);
 
+  useEffect(() => {
+    if (!listWorkerId) {
+      setWorkerLease(null);
+      return;
+    }
+    const next = layer.acquire(listWorkerId);
+    setWorkerLease(next);
+    return () => next.release();
+  }, [layer, listWorkerId]);
+
   const groups = useMemo(() => {
     const conversationWorkers = projectAutonWorkers(rows, now);
-    return buildAutonWorkerGroups({
-      agentWorkers: conversationWorkers.filter((worker) => worker.kind === "agent"),
-      subagentWorkers: conversationWorkers.filter((worker) => worker.kind !== "agent"),
+    const subagents = listWorkerId
+      ? projectAutonWorkers(workerRows, now).filter((worker) => worker.kind !== "agent")
+      : [];
+    const agents = conversationWorkers
+      .filter((worker) => worker.kind === "agent")
+      .map((worker) =>
+        worker.id === listWorkerId
+          ? { ...worker, subagentCount: subagents.length }
+          : worker,
+      );
+    const built = buildAutonWorkerGroups({
+      agentWorkers: agents,
+      subagentWorkers: subagents,
       canStop: Boolean(stopTaskId),
     });
-  }, [now, rows, stopTaskId]);
+    return listWorkerId
+      ? built
+      : built.filter((group) => group.kind !== "subagent");
+  }, [listWorkerId, now, rows, stopTaskId, workerRows]);
 
   useEffect(() => {
     useAutonWorkerFocusStore
@@ -89,6 +116,16 @@ function AutonWorkersSidebarContents({
       }
     },
     [groups, workspaceIdentity, workspacePath],
+  );
+
+  const openSubagent = useCallback(
+    (workerId: string) => {
+      if (!listWorkerId) return;
+      useAutonWorkerFocusStore
+        .getState()
+        .select(workerId, workspacePath, workspaceIdentity, listWorkerId);
+    },
+    [listWorkerId, workspaceIdentity, workspacePath],
   );
 
   const stopWorker = useCallback(
@@ -116,6 +153,7 @@ function AutonWorkersSidebarContents({
           now={now}
           selectedWorkerId={focusedWorkerId}
           onOpenWorker={openWorker}
+          onOpenSubagent={openSubagent}
           onStopWorker={stopWorker}
           embedded
         />

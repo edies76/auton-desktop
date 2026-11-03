@@ -53,7 +53,6 @@ export function WorkspaceHeader({
   localWorkspacePath,
   projectName,
   activeTaskTitle,
-  isProjectOrchestrator = false,
   activeTaskChangeSummary,
   hasUpdateReady,
   activeTaskId,
@@ -101,7 +100,6 @@ export function WorkspaceHeader({
   localWorkspacePath?: string;
   projectName: string;
   activeTaskTitle: string;
-  isProjectOrchestrator?: boolean;
   activeTaskChangeSummary?: ZCodeTaskChangeSummary | null;
   hasUpdateReady: boolean;
   activeTaskId: string | null;
@@ -195,7 +193,6 @@ export function WorkspaceHeader({
             localWorkspacePath={localWorkspacePath}
             projectName={projectName}
             activeTaskTitle={activeTaskTitle}
-            isProjectOrchestrator={isProjectOrchestrator}
             activeTaskChangeSummary={activeTaskChangeSummary}
             activeTaskId={activeTaskId}
             activeTraceId={activeTraceId}

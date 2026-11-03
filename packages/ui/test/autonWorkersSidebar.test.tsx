@@ -110,7 +110,7 @@ afterEach(() => {
 });
 
 describe("sidebar de workers del proyecto", () => {
-  it("los agentes completos salen de la proyección viva y los subagentes se separan", () => {
+  it("en la vista del orquestador solo lista agentes completos", () => {
     state.rows = [subagentRow(), fullWorkerRow()];
     renderSidebar();
 
@@ -119,9 +119,26 @@ describe("sidebar de workers del proyecto", () => {
     expect(screen.getByTestId("auton-worker-group-agent").textContent).not.toContain(
       "Arreglar login",
     );
-    expect(screen.getByTestId("auton-worker-group-subagent").textContent).toContain("Explore 1");
+    expect(screen.queryByTestId("auton-worker-group-subagent")).toBeNull();
     expect(screen.getByTestId("auton-worker-group-muse").textContent).toContain("Próximamente");
-    expect(screen.getAllByTestId("auton-worker-row")).toHaveLength(2);
+    expect(screen.getAllByTestId("auton-worker-row")).toHaveLength(1);
+  });
+
+  it("al abrir un worker aparecen sus subagentes y el contador", () => {
+    state.rows = [subagentRow(), fullWorkerRow()];
+    renderSidebar();
+
+    fireEvent.click(
+      within(screen.getByTestId("auton-worker-group-agent")).getByTestId("auton-worker-open"),
+    );
+
+    const subagents = screen.getByTestId("auton-worker-group-subagent");
+    expect(subagents.textContent).toContain("Revisando el login");
+    expect(
+      within(screen.getByTestId("auton-worker-group-agent")).getByTestId(
+        "auton-worker-subagent-count",
+      ).textContent,
+    ).toContain("1");
   });
 
   it("abre el worker completo en la interfaz del orquestador", () => {
@@ -132,7 +149,6 @@ describe("sidebar de workers del proyecto", () => {
       within(screen.getByTestId("auton-worker-group-agent")).getByTestId("auton-worker-open"),
     );
     expect(useAutonWorkerFocusStore.getState().selectedWorkerId).toBe("auton-1");
-    expect(useAutonWorkerFocusStore.getState().mode).toBe("summary");
   });
 
   it("con una sesión de worker activa sigue leyendo el orquestador publicado", () => {
@@ -173,8 +189,11 @@ describe("sidebar de workers del proyecto", () => {
   });
 
   it("un subagente se para interrumpiendo el turno del orquestador", () => {
-    state.rows = [subagentRow()];
+    state.rows = [subagentRow(), fullWorkerRow()];
     renderSidebar();
+    fireEvent.click(
+      within(screen.getByTestId("auton-worker-group-agent")).getByTestId("auton-worker-open"),
+    );
 
     fireEvent.click(
       within(screen.getByTestId("auton-worker-group-subagent")).getByTestId("auton-worker-stop"),

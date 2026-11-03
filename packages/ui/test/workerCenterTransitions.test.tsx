@@ -13,8 +13,6 @@ import {
   useAutonWorkerFocusStore,
 } from "../src/auton/project-space/workerFocusStore.js";
 
-const stopGeneration = vi.hoisted(() => vi.fn(async () => undefined));
-
 vi.mock("@/v4/V4ChatPane.js", () => ({
   V4ChatPane: ({ sessionId, readOnly }: { sessionId: string; readOnly?: boolean }) => (
     <div
@@ -23,10 +21,6 @@ vi.mock("@/v4/V4ChatPane.js", () => ({
       data-readonly={readOnly ? "true" : "false"}
     />
   ),
-}));
-
-vi.mock("@/hooks/useWorkspaceServices.js", () => ({
-  useBaseWorkspaceServices: () => ({ zcodeTaskService: { stopGeneration } }),
 }));
 
 const A: AutonWorkerView = {
@@ -102,28 +96,21 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
-  stopGeneration.mockClear();
   useAutonWorkerFocusStore.getState().close();
   useAutonWorkerFocusStore.getState().setLiveWorkers([]);
 });
 
 describe("transiciones del centro entre orquestador y workers", () => {
-  it("una selección del panel gana sobre la sesión de worker activa", () => {
+  it("abrir un worker muestra su chat completo y la selección del panel gana", () => {
     render(<Harness initialActiveTaskId={A.id} orchestratorTaskId="orch" />);
 
-    expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Worker A");
+    expect(screen.getByTestId("auton-worker-chat")).toBeTruthy();
+    expect(screen.getByTestId("v4-chat-pane").dataset.sessionId).toBe(A.id);
 
     selectPanelWorker(B.id);
-    expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Worker B");
-    expect(screen.getByTestId("auton-worker-summary").textContent).not.toContain("Worker A");
-
-    fireEvent.click(screen.getByText("Ver chat completo"));
     expect(screen.getByTestId("v4-chat-pane").dataset.sessionId).toBe(B.id);
     expect(screen.getByTestId("v4-chat-pane").dataset.readonly).toBe("true");
-
-    selectPanelWorker(A.id);
-    expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Worker A");
-    expect(screen.queryByTestId("auton-worker-chat")).toBeNull();
+    expect(screen.queryByTestId("auton-worker-summary")).toBeNull();
   });
 
   it("volver desde la sesión de worker llega al orquestador en una sola acción", () => {
@@ -139,7 +126,7 @@ describe("transiciones del centro entre orquestador y workers", () => {
     fireEvent.click(screen.getByTestId("auton-worker-focus-back"));
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(useAutonWorkerFocusStore.getState().selectedWorkerId).toBeNull();
-    expect(screen.queryByTestId("auton-worker-summary")).toBeNull();
+    expect(screen.queryByTestId("auton-worker-chat")).toBeNull();
     expect(screen.getByTestId("orchestrator-chat")).toBeTruthy();
   });
 
@@ -154,11 +141,11 @@ describe("transiciones del centro entre orquestador y workers", () => {
     );
 
     selectPanelWorker(B.id);
-    expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Worker B");
+    expect(screen.getByTestId("v4-chat-pane").dataset.sessionId).toBe(B.id);
 
     fireEvent.click(screen.getByTestId("auton-worker-focus-back"));
     expect(onSelect).toHaveBeenCalledTimes(1);
-    expect(screen.queryByTestId("auton-worker-summary")).toBeNull();
+    expect(screen.queryByTestId("auton-worker-chat")).toBeNull();
     expect(screen.getByTestId("orchestrator-chat")).toBeTruthy();
   });
 
@@ -167,35 +154,19 @@ describe("transiciones del centro entre orquestador y workers", () => {
 
     selectPanelWorker("worker-borrado");
 
-    expect(screen.queryByTestId("auton-worker-summary")).toBeNull();
+    expect(screen.queryByTestId("auton-worker-chat")).toBeNull();
     expect(screen.getByTestId("orchestrator-chat")).toBeTruthy();
   });
 
-  it("parar usa el turno del orquestador y no el id del worker", () => {
-    render(<Harness initialActiveTaskId={A.id} orchestratorTaskId="orch" />);
-
-    fireEvent.click(screen.getByTestId("auton-worker-focus-stop"));
-    expect(stopGeneration).toHaveBeenCalledWith({
-      taskId: "orch",
-      workspacePath: "/workspace/lunar",
-    });
-  });
-
-  it("sin orquestador publicado no ofrece parar y no cae al worker", () => {
+  it("sin orquestador publicado el chat se abre sin botón de vuelta", () => {
     render(<Harness initialActiveTaskId={A.id} orchestratorTaskId={null} />);
 
-    expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Worker A");
-    expect(screen.queryByTestId("auton-worker-focus-stop")).toBeNull();
+    expect(screen.getByTestId("v4-chat-pane").dataset.sessionId).toBe(A.id);
     expect(screen.queryByTestId("auton-worker-focus-back")).toBeNull();
 
     selectPanelWorker(B.id);
-    expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Worker B");
-    expect(screen.queryByTestId("auton-worker-focus-stop")).toBeNull();
-    expect(screen.getByTestId("auton-worker-focus-back").textContent).toContain("Volver");
-
-    fireEvent.click(screen.getByTestId("auton-worker-focus-back"));
-    expect(screen.getByTestId("auton-worker-summary").textContent).toContain("Worker A");
-    expect(stopGeneration).not.toHaveBeenCalled();
+    expect(screen.getByTestId("v4-chat-pane").dataset.sessionId).toBe(B.id);
+    expect(screen.queryByTestId("auton-worker-focus-back")).toBeNull();
   });
 
   it("cambiar de workspace cierra selección y datos viejos", () => {

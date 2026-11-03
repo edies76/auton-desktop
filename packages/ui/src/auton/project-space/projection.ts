@@ -104,15 +104,51 @@ function subagentStatus(row: SubagentRow): AutonWorkerStatus {
   return "trabajando";
 }
 
-function workerName(row: SubagentRow, index: number): string {
+function subagentSessionId(row: SubagentRow): string {
+  // Un `auton-worker` siempre vive en el namespace propio; una fila antigua
+  // pudo guardar el prefijo `subagent_` antes de la migración.
+  if (row.subagentType === "auton-worker" && row.entityId) {
+    return `sess_auton_${row.entityId}`;
+  }
+  if (row.childSessionId) return row.childSessionId;
+  if (row.entityId) {
+    return `sess_${row.subagentType === "auton-worker" ? "auton" : "subagent"}_${row.entityId}`;
+  }
+  return `worker-${row.rowId}`;
+}
+
+function toolDescription(
+  rows: readonly ConversationRow[],
+  parentToolCallId: string | undefined,
+): string | undefined {
+  if (!parentToolCallId) return undefined;
+  const tool = rows.find(
+    (row): row is ToolCallRow => row.kind === "toolCall" && row.toolCallId === parentToolCallId,
+  );
+  if (!tool) return undefined;
+  const input = recordOf(tool);
+  return (
+    stringField(input, "description") ??
+    stringField(input, "prompt")?.split("\n")[0]?.trim() ??
+    undefined
+  );
+}
+
+function workerName(
+  row: SubagentRow,
+  index: number,
+  rows: readonly ConversationRow[],
+): string {
+  const description = toolDescription(rows, row.parentToolCallId);
+  const summaryLine = row.summaryText.trim().split("\n")[0]?.trim();
   if (row.subagentType === "auton-worker") {
     const title = (row as SubagentRow & { title?: string }).title?.trim();
-    return title || `worker ${index + 1}`;
+    return title || description || summaryLine || `worker ${index + 1}`;
   }
   if (row.subagentType.startsWith("auton-")) {
-    return `worker ${index + 1}`;
+    return description || summaryLine || `worker ${index + 1}`;
   }
-  return `${row.subagentType || "worker"} ${index + 1}`;
+  return description || summaryLine || `${row.subagentType || "worker"} ${index + 1}`;
 }
 
 /** `auton-worker` es el agente completo de ZCode; el resto son subagentes. */
@@ -138,8 +174,8 @@ export function projectAutonWorkers(
     const status = subagentStatus(row);
     const summary = row.summaryText.trim();
     return {
-      id: row.childSessionId ?? `worker-${row.rowId}`,
-      name: workerName(row, index),
+      id: subagentSessionId(row),
+      name: workerName(row, index, rows),
       status,
       startedAt,
       lastSignalAt: endedAt ?? lastActivityAt,

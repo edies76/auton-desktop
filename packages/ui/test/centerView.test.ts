@@ -33,8 +33,6 @@ describe("resolveCenterView", () => {
       expected: {
         kind: "worker-session",
         taskId: WORKER_SESSION,
-        stopTaskId: "orch",
-        canStop: true,
         canGoBack: true,
       },
     },
@@ -44,8 +42,6 @@ describe("resolveCenterView", () => {
       expected: {
         kind: "worker-session",
         taskId: WORKER_SESSION,
-        stopTaskId: null,
-        canStop: false,
         canGoBack: false,
       },
     },
@@ -55,10 +51,8 @@ describe("resolveCenterView", () => {
       expected: {
         kind: "worker-focus",
         workerId: "worker-panel",
-        stopTaskId: "orch",
-        canStop: true,
         backToOrchestrator: false,
-        backLabel: "Orquestador",
+        canGoBack: true,
       },
     },
     {
@@ -72,10 +66,8 @@ describe("resolveCenterView", () => {
       expected: {
         kind: "worker-focus",
         workerId: OTHER_WORKER,
-        stopTaskId: "orch",
-        canStop: true,
         backToOrchestrator: true,
-        backLabel: "Orquestador",
+        canGoBack: true,
       },
     },
     {
@@ -89,10 +81,8 @@ describe("resolveCenterView", () => {
       expected: {
         kind: "worker-focus",
         workerId: WORKER_SESSION,
-        stopTaskId: "orch",
-        canStop: true,
         backToOrchestrator: true,
-        backLabel: "Orquestador",
+        canGoBack: true,
       },
     },
     {
@@ -111,8 +101,6 @@ describe("resolveCenterView", () => {
       expected: {
         kind: "worker-session",
         taskId: WORKER_SESSION,
-        stopTaskId: "orch",
-        canStop: true,
         canGoBack: true,
       },
     },
@@ -132,10 +120,8 @@ describe("resolveCenterView", () => {
       expected: {
         kind: "worker-focus",
         workerId: "worker-panel",
-        stopTaskId: null,
-        canStop: false,
         backToOrchestrator: false,
-        backLabel: "Orquestador",
+        canGoBack: true,
       },
     },
     {
@@ -150,10 +136,8 @@ describe("resolveCenterView", () => {
       expected: {
         kind: "worker-focus",
         workerId: OTHER_WORKER,
-        stopTaskId: null,
-        canStop: false,
         backToOrchestrator: false,
-        backLabel: "Volver",
+        canGoBack: false,
       },
     },
     {
@@ -162,8 +146,6 @@ describe("resolveCenterView", () => {
       expected: {
         kind: "worker-session",
         taskId: WORKER_SESSION,
-        stopTaskId: "orch",
-        canStop: true,
         canGoBack: true,
       },
     },
@@ -190,8 +172,6 @@ describe("resolveCenterView", () => {
       expected: {
         kind: "worker-session",
         taskId: WORKER_SESSION,
-        stopTaskId: "orch",
-        canStop: true,
         canGoBack: true,
       },
     },

@@ -1,6 +1,5 @@
 import { ArrowLeft, Send, Sparkles } from "lucide-react";
 import { useState } from "react";
-import { Badge } from "@/components/ui/badge.js";
 import { Button } from "@/components/ui/button.js";
 import { Textarea } from "@/components/ui/textarea.js";
 import { cn } from "@/components/lib/utils.js";
@@ -62,10 +61,6 @@ export function AutonThreadView({
           <p className="truncate text-ui-sm font-medium text-foreground">{project.name}</p>
           <p className="truncate text-ui-xs text-foreground-subtlest">{project.path}</p>
         </div>
-        <Badge variant="secondary" className="shrink-0 gap-1 rounded-full" data-testid="auton-orchestrator-badge">
-          <Sparkles className="size-2.5" />
-          Orquestador
-        </Badge>
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4" data-testid="auton-thread-scroll">

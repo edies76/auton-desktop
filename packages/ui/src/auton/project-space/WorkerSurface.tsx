@@ -1,5 +1,5 @@
 import type { ZCodeTaskMeta } from "@zcode/shared";
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { workerFromTaskMeta, type CenterView } from "./centerView.js";
 import type { AutonWorkerView } from "./model.js";
 import { AutonWorkerFocusPane } from "./WorkerFocusPane.js";
@@ -47,13 +47,6 @@ export function AutonWorkerSurface({
     return null;
   }, [activeTaskMeta, activeTaskTitle, liveWorkers, view]);
 
-  const setMode = useAutonWorkerFocusStore((state) => state.setMode);
-  const workerId = worker?.id ?? null;
-  useEffect(() => {
-    // Cambiar de worker vuelve al resumen; el chat es una decisión por worker.
-    setMode("summary");
-  }, [setMode, workerId]);
-
   if (!worker || view.kind === "orchestrator") return null;
 
   const close = useAutonWorkerFocusStore.getState().close;
@@ -72,12 +65,10 @@ export function AutonWorkerSurface({
       worker={worker}
       workspacePath={workspacePath}
       workspaceIdentity={workspaceIdentity}
-      stopTaskId={view.stopTaskId}
-      canStop={view.canStop}
       isDesktop={isDesktop}
       onBack={onBack}
-      canGoBack={view.kind === "worker-session" ? view.canGoBack : true}
-      backLabel={view.kind === "worker-focus" ? view.backLabel : "Orquestador"}
+      canGoBack={view.canGoBack}
+      backLabel="Volver"
     />
   );
 }

@@ -19,25 +19,21 @@ export type CenterView =
   | {
       kind: "worker-focus";
       workerId: string;
-      stopTaskId: string | null;
-      canStop: boolean;
       /** La vuelta navega al orquestador, no a la sesión de worker activa. */
       backToOrchestrator: boolean;
-      backLabel: "Orquestador" | "Volver";
+      canGoBack: boolean;
     }
   | {
       kind: "worker-session";
       taskId: string;
-      stopTaskId: string | null;
-      canStop: boolean;
       canGoBack: boolean;
     };
 
 /**
  * Una sola regla decide qué ocupa el centro: la selección explícita del panel
  * gana; si no hay, una sesión de worker activa; si no, el orquestador. El
- * orquestador nunca se trata como worker. Parar exige el turno del orquestador:
- * sin él no hay `stopTaskId` y la UI no ofrece parada.
+ * orquestador nunca se trata como worker. La parada vive en el panel, cuyo
+ * `stopTaskId` es solo el orquestador publicado.
  */
 export function resolveCenterView(input: CenterViewInput): CenterView {
   const {
@@ -62,11 +58,8 @@ export function resolveCenterView(input: CenterViewInput): CenterView {
     return {
       kind: "worker-focus",
       workerId: selectedWorkerId,
-      stopTaskId: orchestratorTaskId,
-      canStop: Boolean(orchestratorTaskId),
       backToOrchestrator: activeWorkerSession && Boolean(orchestratorTaskId),
-      backLabel:
-        activeWorkerSession && !orchestratorTaskId ? "Volver" : "Orquestador",
+      canGoBack: Boolean(orchestratorTaskId) || !activeWorkerSession,
     };
   }
 
@@ -78,8 +71,6 @@ export function resolveCenterView(input: CenterViewInput): CenterView {
     return {
       kind: "worker-session",
       taskId: activeTaskId,
-      stopTaskId: orchestratorTaskId,
-      canStop: Boolean(orchestratorTaskId),
       canGoBack: Boolean(orchestratorTaskId),
     };
   }

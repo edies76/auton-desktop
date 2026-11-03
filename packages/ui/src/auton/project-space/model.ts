@@ -42,6 +42,8 @@ export interface AutonWorkerView {
   /** Rol del canal: agente completo de ZCode, subagente o motor Muse. */
   kind?: AutonWorkerKind;
   engine?: AutonWorkerEngine;
+  /** Subagentes creados por este worker, cuando la sesión los expone. */
+  subagentCount?: number;
 }
 
 export interface AutonWorkerGroup {

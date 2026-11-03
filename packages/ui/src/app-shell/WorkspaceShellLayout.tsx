@@ -20,7 +20,6 @@ import {
 } from "@/auton/project-space/workerFocusStore.js";
 import {
   isPublishedLegacyTask,
-  isPublishedOrchestrator,
   useAutonProjectConversationStore,
 } from "@/project-sidebar/projectConversationStore.js";
 import { V4ChatPane } from "@/v4/V4ChatPane.js";
@@ -542,9 +541,6 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
   const liveWorkers = useAutonWorkerFocusStore((state) => state.liveWorkers);
   const selectedWorkerExists = Boolean(
     selectedWorkerId && liveWorkers.some((worker) => worker.id === selectedWorkerId),
-  );
-  const isProjectOrchestrator = useAutonProjectConversationStore((state) =>
-    isPublishedOrchestrator(state, workspaceKey, activeTaskId),
   );
   const publishedOrchestratorId = useAutonProjectConversationStore((state) =>
     state.workspaceKey === workspaceKey ? state.orchestratorTaskId : null,
@@ -2096,7 +2092,6 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                 localWorkspacePath={workspaceLocalPathForRemoteMcpSync}
                 projectName={projectName}
                 activeTaskTitle={activeTaskTitle}
-                isProjectOrchestrator={isProjectOrchestrator}
                 activeTaskChangeSummary={activeTaskChangeSummary}
                 hasUpdateReady={hasUpdateStatusButton}
                 activeTaskId={activeTaskId}
@@ -2502,8 +2497,7 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                             localWorkspacePath={workspaceLocalPathForRemoteMcpSync}
                             projectName={projectName}
                             activeTaskTitle={activeTaskTitle}
-                            isProjectOrchestrator={isProjectOrchestrator}
-                            activeTaskChangeSummary={activeTaskChangeSummary}
+                                        activeTaskChangeSummary={activeTaskChangeSummary}
                             hasUpdateReady={hasUpdateStatusButton}
                             activeTaskId={activeTaskId}
                             user={user}
