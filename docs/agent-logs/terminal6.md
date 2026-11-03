@@ -187,3 +187,4 @@ sobre un worker activo mostraba la sesión de worker en vez del orquestador.
 
 Verificado con: `autonWorkersSidebar` (6), `centerView` (17), `workerCenterTransitions` (7) y la
 suite de UI 97/97. Typecheck raíz 0 con 8 GB; lint raíz 0 errores/105 avisos.
+- Arranque limpio final (`launch-final5.png`, `launch-final5.log`): chat del orquestador, `Orquestador` + `WORKERS 9`, foco cerrado y compositor visible; cero excepciones de renderer.
