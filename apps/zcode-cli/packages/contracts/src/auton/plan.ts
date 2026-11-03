@@ -71,10 +71,78 @@ export const AutonGoalSchema = z
   })
   .strict();
 
+/**
+ * Los límites que gobiernan qué puede hacer un orquestador sin preguntar.
+ * Son datos, no texto: viven junto al plan para que todos los consumidores
+ * (UI, watcher, orquestador, registro de decisiones) lean la misma versión.
+ */
+export const AutonLimitsSchema = z
+  .object({
+    version: z.number().int().positive().default(1),
+    maxAttempts: z
+      .number()
+      .int()
+      .positive()
+      .default(3)
+      .describe("Retries per item before it passes to blocked"),
+    approval: z
+      .object({
+        deleteMove: z.boolean().default(true).describe("Ask before deleting or moving files"),
+        outsideProject: z.boolean().default(true).describe("Ask before touching paths outside the project"),
+        pushMergeRebase: z
+          .boolean()
+          .default(true)
+          .describe("Ask before git push, merge or rebase"),
+        installDependencies: z
+          .boolean()
+          .default(true)
+          .describe("Ask before installing global dependencies"),
+        outsideScope: z
+          .boolean()
+          .default(true)
+          .describe("Ask before acting outside the agreed scope"),
+      })
+      .default({}),
+    unknownHandling: z
+      .enum(["wait", "ask", "safe_default"])
+      .default("wait")
+      .describe("wait: item goes to waiting with a question; ask: ask immediately; safe_default: take the least risky option and note it"),
+  })
+  .strict();
+
+export const AutonLimitChangeSchema = z
+  .object({
+    at: z.string().min(1).describe("ISO timestamp"),
+    field: z.string().min(1).describe("What changed, e.g. approval.deleteMove or unknownHandling"),
+    from: z.string().nullable(),
+    to: z.string().nullable(),
+    reason: z.string().min(1).describe("Why the limit changed, in one line"),
+    approvedBy: z.enum(["human", "orchestrator"]).describe("Who approved the change"),
+  })
+  .strict();
+
+/**
+ * Un cambio de límites inválido no debe tirar un plan bueno.
+ * Sin limits el plan queda "sin versión": las decisiones de escalación ya
+ * tomadas no se inventan a posteriori.
+ */
+export function normalizeLegacyPlan(plan: AutonPlan): AutonPlan {
+  return {
+    version: plan.version ?? AUTON_PLAN_FILE_VERSION,
+    goal: plan.goal,
+    limits: plan.limits,
+    limitHistory: plan.limitHistory ?? [],
+    items: plan.items ?? [],
+    updatedAt: plan.updatedAt,
+  };
+}
+
 export const AutonPlanSchema = z
   .object({
     version: z.number().int().positive().default(AUTON_PLAN_FILE_VERSION),
     goal: AutonGoalSchema.optional(),
+    limits: AutonLimitsSchema.optional(),
+    limitHistory: z.array(AutonLimitChangeSchema).default([]),
     items: z.array(AutonPlanItemSchema).default([]),
     updatedAt: z.string().optional(),
   })
@@ -83,6 +151,8 @@ export const AutonPlanSchema = z
 export type AutonPlan = z.infer<typeof AutonPlanSchema>;
 export type AutonPlanItem = z.infer<typeof AutonPlanItemSchema>;
 export type AutonPlanItemStatus = z.infer<typeof AutonPlanItemStatusSchema>;
+export type AutonLimits = z.infer<typeof AutonLimitsSchema>;
+export type AutonLimitChange = z.infer<typeof AutonLimitChangeSchema>;
 
 export const AutonPlanInputSchema = z.discriminatedUnion("action", [
   z.object({ action: z.literal("read") }).strict(),
@@ -90,6 +160,8 @@ export const AutonPlanInputSchema = z.discriminatedUnion("action", [
     .object({
       action: z.literal("write"),
       goal: AutonGoalSchema.optional(),
+      limits: AutonLimitsSchema.optional(),
+      limitHistory: z.array(AutonLimitChangeSchema).optional(),
       items: z.array(AutonPlanItemSchema),
     })
     .strict(),
@@ -144,6 +216,30 @@ export function summarizeAutonPlan(items: readonly AutonPlanItem[]): AutonPlanSu
 
 export function formatAutonPlanForModel(plan: AutonPlan): string {
   const lines: string[] = [];
+  if (plan.limits) {
+    lines.push(
+      `Limits v${plan.limits.version}: maxAttempts ${plan.limits.maxAttempts}, unknownHandling ${plan.limits.unknownHandling}`,
+    );
+    const approval = plan.limits.approval;
+    const flags = [
+      `deleteMove=${approval.deleteMove ? "ask" : "auto"}`,
+      `outsideProject=${approval.outsideProject ? "ask" : "auto"}`,
+      `pushMergeRebase=${approval.pushMergeRebase ? "ask" : "auto"}`,
+      `installDependencies=${approval.installDependencies ? "ask" : "auto"}`,
+      `outsideScope=${approval.outsideScope ? "ask" : "auto"}`,
+    ];
+    lines.push(`  approval: ${flags.join(", ")}`);
+    if (plan.limitHistory.length > 0) {
+      lines.push("Limit history:");
+      for (const change of plan.limitHistory) {
+        lines.push(
+          `  - ${change.at} · ${change.field}: ${change.from ?? "—"} → ${change.to ?? "—"} · ${change.reason} (${change.approvedBy})`,
+        );
+      }
+    }
+  } else if (plan.limitHistory.length > 0) {
+    lines.push(`Limits: sin versión vigente (${plan.limitHistory.length} cambios registrados)`);
+  }
   if (plan.goal) {
     lines.push(`Goal: ${plan.goal.title}`);
     if (plan.goal.statement) lines.push(`Intent: ${plan.goal.statement}`);

@@ -53,6 +53,17 @@ const ORCHESTRATOR_PROCEDURE = [
   "y continúas con la respuesta en el mismo turno. Nunca preguntes lo que puedes",
   "deducir ni pidas permiso para lo obvio. Si hay un default razonable, elígelo,",
   "dilo y sigue.",
+  "",
+  "## Cuando no sabes decidir",
+  "",
+  "Si te falta información o no sabes qué camino elegir, NO avances por inercia:",
+  "- Deja el item en `waiting` con AutonPlan y escribe la pregunta exacta en",
+  "  `questions`. Esa pregunta es lo que ve la bandeja de decisiones del humano.",
+  "- Sigue con cualquier otro item listo que no dependa de esa decisión.",
+  "- Si no hay nada más que hacer, un ítem en waiting es un final correcto:",
+  "  dormir esperando la respuesta es un final válido, y así lo reportas.",
+  "- Nada de dormir con un bucle, dormir consultando el estado, ni inventarte",
+  "  una respuesta: la ausencia de decisión se vuelve idéntica a la ausencia de actividad.",
 ].join("\n");
 
 export function buildOrchestratorSection(): ContextSection {

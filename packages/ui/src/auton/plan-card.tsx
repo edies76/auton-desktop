@@ -22,10 +22,28 @@ interface PlanItemView {
   questions: string[];
 }
 
+interface LimitChangeView {
+  at: string;
+  field: string;
+  from?: string;
+  to?: string;
+  reason: string;
+  approvedBy?: string;
+}
+
+interface LimitsView {
+  version: number;
+  maxAttempts?: number;
+  unknownHandling?: string;
+  approvalAsk: string[];
+  history: LimitChangeView[];
+}
+
 interface PlanView {
   goalTitle?: string;
   goalStatement?: string;
   constraints: string[];
+  limits?: LimitsView;
   items: PlanItemView[];
   total: number;
   done: number;
@@ -66,6 +84,49 @@ function readStringArray(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
 }
 
+const APPROVAL_LABELS: Record<string, string> = {
+  deleteMove: "delete/move",
+  outsideProject: "outside project",
+  pushMergeRebase: "push/merge/rebase",
+  installDependencies: "install dependencies",
+  outsideScope: "outside scope",
+};
+
+function readLimitsView(plan: Record<string, unknown>): LimitsView | undefined {
+  const history: LimitChangeView[] = [];
+  if (Array.isArray(plan.limitHistory)) {
+    for (const raw of plan.limitHistory) {
+      if (!isRecord(raw)) continue;
+      const at = readString(raw.at);
+      const field = readString(raw.field);
+      const reason = readString(raw.reason);
+      if (!at || !field || !reason) continue;
+      history.push({
+        at,
+        field,
+        from: typeof raw.from === "string" ? raw.from : undefined,
+        to: typeof raw.to === "string" ? raw.to : undefined,
+        reason,
+        approvedBy: readString(raw.approvedBy),
+      });
+    }
+  }
+  if (!isRecord(plan.limits)) {
+    return history.length > 0
+      ? { version: 0, approvalAsk: [], history }
+      : undefined;
+  }
+  const approval = isRecord(plan.limits.approval) ? plan.limits.approval : {};
+  const approvalAsk = Object.keys(APPROVAL_LABELS).filter((key) => approval[key] === true);
+  return {
+    version: typeof plan.limits.version === "number" ? plan.limits.version : 1,
+    maxAttempts: typeof plan.limits.maxAttempts === "number" ? plan.limits.maxAttempts : undefined,
+    unknownHandling: readString(plan.limits.unknownHandling),
+    approvalAsk,
+    history,
+  };
+}
+
 function readPlanView(value: unknown): PlanView | null {
   const record = parseJsonCandidate(value);
   if (!isRecord(record) || !isRecord(record.plan)) return null;
@@ -100,6 +161,7 @@ function readPlanView(value: unknown): PlanView | null {
     goalTitle: readString(goal.title),
     goalStatement: readString(goal.statement),
     constraints: readStringArray(goal.constraints),
+    limits: readLimitsView(record.plan),
     items,
     total: count("total") || items.length,
     done: count("done"),
@@ -153,6 +215,38 @@ export function AutonPlanToolCallBlock(context: ToolCallBlockRenderContext) {
           <p className="text-ui-xs text-foreground-subtlest">
             Constraints: {view.constraints.join(" · ")}
           </p>
+        ) : null}
+        {view.limits ? (
+          <div className="space-y-1">
+            <p className="text-ui-xs text-foreground-subtlest">
+              {view.limits.version > 0 ? `Limits v${view.limits.version}` : "Limits: unversioned"}
+              {view.limits.maxAttempts !== undefined
+                ? ` · up to ${view.limits.maxAttempts} attempts`
+                : ""}
+              {view.limits.unknownHandling
+                ? ` · when undecided: ${view.limits.unknownHandling}`
+                : ""}
+              {view.limits.approvalAsk.length > 0
+                ? ` · asks before: ${view.limits.approvalAsk
+                    .map((key) => APPROVAL_LABELS[key] ?? key)
+                    .join(", ")}`
+                : ""}
+            </p>
+            {view.limits.history.length > 0 ? (
+              <div className="space-y-0.5">
+                {view.limits.history.map((change, index) => (
+                  <p
+                    key={`${change.at}-${change.field}-${index}`}
+                    className="text-ui-xs text-foreground-subtlest"
+                  >
+                    {change.at} · {change.field}: {change.from ?? "—"} → {change.to ?? "—"} ·{" "}
+                    {change.reason}
+                    {change.approvedBy ? ` (${change.approvedBy})` : ""}
+                  </p>
+                ))}
+              </div>
+            ) : null}
+          </div>
         ) : null}
         {view.items.length === 0 ? (
           <p className="text-ui-sm text-foreground-subtle">This project has no plan yet.</p>

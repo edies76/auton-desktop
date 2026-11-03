@@ -14,6 +14,7 @@ import {
   AutonPlanOutputJsonSchema,
   AutonPlanOutputSchema,
   AutonPlanSchema,
+  normalizeLegacyPlan,
   summarizeAutonPlan,
   type AutonPlan,
   type AutonPlanInput,
@@ -34,13 +35,17 @@ function projectRoot(context: {
   return context.workspaceRoot?.trim() || context.workingDirectory;
 }
 
+function emptyPlan(): AutonPlan {
+  return { version: AUTON_PLAN_FILE_VERSION, limitHistory: [], items: [] };
+}
+
 async function readPlanFile(path: string): Promise<AutonPlan> {
   let raw: string;
   try {
     raw = await readFile(path, "utf8");
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-      return { version: AUTON_PLAN_FILE_VERSION, items: [] };
+      return emptyPlan();
     }
     throw error;
   }
@@ -49,13 +54,11 @@ async function readPlanFile(path: string): Promise<AutonPlan> {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return { version: AUTON_PLAN_FILE_VERSION, items: [] };
+    return emptyPlan();
   }
 
   const result = AutonPlanSchema.safeParse(parsed);
-  return result.success
-    ? { ...result.data, items: result.data.items ?? [] }
-    : { version: AUTON_PLAN_FILE_VERSION, items: [] };
+  return result.success ? normalizeLegacyPlan(result.data) : emptyPlan();
 }
 
 export const autonPlanHandler: ToolHandler = async (input, context) => {
@@ -72,9 +75,14 @@ export const autonPlanHandler: ToolHandler = async (input, context) => {
   }
 
   // write: the orchestrator sends the complete plan; it replaces the file.
+  // El historial de límites se conserva si el write lo omite: un cambio de
+  // límites sin escribir no existe, y borrarlo por omisión sería peor.
+  const previous = await readPlanFile(path);
   const plan: AutonPlan = {
     version: AUTON_PLAN_FILE_VERSION,
     goal: parsed.goal,
+    limits: parsed.limits,
+    limitHistory: parsed.limitHistory ?? previous.limitHistory,
     items: parsed.items,
     updatedAt: new Date().toISOString(),
   };
@@ -101,6 +109,8 @@ export const autonPlanToolEntry: ToolEntry = {
 
 Use \`action: "read"\` to load the current plan before you plan or dispatch anything.
 Use \`action: "write"\` with the COMPLETE list of work items to replace the plan; it is the source of truth, so send every item each time.
+
+Limits: \`limits\` carries the versioned rules for what you may do without asking (version, maxAttempts, approval flags, unknownHandling). Every limit change appends a \`limitHistory\` entry with timestamp, field, from/to, reason and who approved it. If a write omits \`limitHistory\`, the stored history is preserved. Plans without \`limits\` stay unversioned: never invent limits for work already dispatched.
 
 Work item statuses: ready, running, waiting, blocked, done, dropped. Use \`waiting\` when an item needs a human decision, and put that question in \`questions\`.
 Set \`effort\` (minimal, standard, thorough), \`owner\` (programmer by default;
