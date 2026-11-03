@@ -109,7 +109,7 @@ Por qué: el worker completo de ZCode debe seguir siendo agente después de cerr
 la spec exige distinguir de un vistazo el orquestador del worker.
 
 Verificado con: `transcript-hydration.test.ts` 80/80, `workspaceHeaderTitleSection.test.ts` 9/9 y la
-suite Auton de UI 55/55. Dos arranques limpios de `pnpm dev:desktop` (`launch-1.*`, `launch-2.*`)
+suite Auton de UI 56/56. Dos arranques limpios de `pnpm dev:desktop` (`launch-1.*`, `launch-2.*`)
 mostraron el mismo proyecto, un solo chat, `WORKERS` por defecto, `Agentes ZCode` 6,
 `Subagentes` 3, `Muse Code` 0 y cero excepciones de renderer. La interacción por CDP
 (`launch-1-state.json`, `launch-2-state.json`) abrió un worker, comprobó el resumen sin compositor,
