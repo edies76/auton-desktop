@@ -60,7 +60,13 @@ Pedir contexto es barato y no ensucia el proyecto. Por eso el orquestador lee pa
 
 Un encargo puede correr en el motor de casa (ZCode) o en Muse Code. El orquestador lo elige y lo dice. El contrato no cambia: el mismo brief, el mismo modo, la misma exigencia de evidencia y el mismo reporte de cierre.
 
-Muse Code trabaja en su propia carpeta y devuelve su reporte al terminar. Es un motor de una sola pasada: recibe el encargo completo y responde al cerrar. Si no está instalado o autenticado, el despacho lo dice con el motivo exacto y no finge que funcionó.
+Muse Code trabaja en su propia carpeta y devuelve su reporte al terminar. Mantiene una sesión viva: el orquestador puede mandarle otro mensaje y el worker sigue con el contexto acumulado, también a mitad de turno como steer. Si no está instalado o autenticado, el despacho lo dice con el motivo exacto y no finge que funcionó.
+
+## 4.4. Puedes seguir hablando con un worker
+
+Un worker no es una caja que se cierra al entregar. Mientras trabaja, el orquestador puede mandarle más instrucciones en la misma sesión, y cuando termina puede reanudarlo en la misma carpeta para una segunda ronda, conservando lo que ya sabía.
+
+En el detalle del worker ves su conversación completa: lo que pidió el orquestador, lo que respondió el worker, las herramientas que usó y cómo cerró. Cada worker queda además en un índice del proyecto, con su motor, su sesión, su carpeta y sus tiempos.
 
 ## 5. Comprueba antes de cerrar
 

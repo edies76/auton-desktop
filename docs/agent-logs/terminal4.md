@@ -1,26 +1,26 @@
-# terminal4 ÔÇö grok-build (Grok)
+# terminal4 — grok-build (Grok)
 
-Tema: l├¡mites que gobiernan el despacho y superficie del espacio del proyecto.
+Tema: límites que gobiernan el despacho y superficie del espacio del proyecto.
 Inicio: 2026-11-03.
 
-## 2026-11-03 ÔÇö l├¡mites: intentos, no evaluable y reportes
+## 2026-11-03 — límites: intentos, no evaluable y reportes
 
-Qu├®: AutonPlan cuenta los intentos, rechaza el despacho sin l├¡mites o sin intentos, admite el estado
-`not_evaluable` con pregunta obligatoria y registra los reportes de calibraci├│n de los workers.
+Qué: AutonPlan cuenta los intentos, rechaza el despacho sin límites o sin intentos, admite el estado
+`not_evaluable` con pregunta obligatoria y registra los reportes de calibración de los workers.
 Las cuatro piezas: handler en `core/src/auton/plan-handler.ts`; registro en `builtInTools` con schema de
-`attempts`/`needsApproval`/`limitReports` y status `not_evaluable`; l├¡nea en
-`core/src/auton/contextAuton.ts` (cu├índo usarlos) ensamblada por `context/builder.ts`; pruebas 8 y 9 de
+`attempts`/`needsApproval`/`limitReports` y status `not_evaluable`; línea en
+`core/src/auton/contextAuton.ts` (cuándo usarlos) ensamblada por `context/builder.ts`; pruebas 8 y 9 de
 `context/PRUEBAS-QUE-PROMETEMOS.md`.
 Verificado con: `auton-four-pieces.test.ts` (5), `auton-limits-governance.test.ts` (15),
 `auton-plan-tool.test.ts` (10) y `auton-limits-guard.test.ts` (3); 33 en verde.
-Prueba de la regla: el test four-pieces comprueba registro, prompt ensamblado y cat├ílogo. La elecci├│n
-del modelo (prueba 17) necesita una sesi├│n real y no se ejecut├│ aqu├¡.
+Prueba de la regla: el test four-pieces comprueba registro, prompt ensamblado y catálogo. La elección
+del modelo (prueba 17) necesita una sesión real y no se ejecutó aquí.
 
-## 2026-11-03 ÔÇö UI del espacio del proyecto (otro checkout)
+## 2026-11-03 — UI del espacio del proyecto (otro checkout)
 
-Qu├®: pantalla de proyectos, espacio con un compositor, workers en vivo con parada y bloques
-Trabajo/Plan/Evidencia en `C:\nueva-carpeta\auton-desktop`. No a├▒ade herramienta al orquestador: es
-superficie humana; la parada y el env├¡o usan el `answer` existente.
+Qué: pantalla de proyectos, espacio con un compositor, workers en vivo con parada y bloques
+Trabajo/Plan/Evidencia en `C:\nueva-carpeta\auton-desktop`. No añade herramienta al orquestador: es
+superficie humana; la parada y el envío usan el `answer` existente.
 
 ## 2026-11-03 — worker como sesión, detrás de un interruptor
 
@@ -119,3 +119,11 @@ Ajuste de cierre: el arranque de Muse en Windows pasa por cmd.exe con cada argum
 La fábrica real del prompt (buildMuseWorkerPrompt) se prueba ahora con el hijo de contrato y afirma identidad, rol, modo, esfuerzo, canal, REPORTE, encargo e instrucciones del proyecto antes de que el motor lo reciba.
 
 El puerto real de sesión se ejercita con Muse echo: `launch(engine: "muse")` en el runtime real, la tarea termina `completed` y su salida contiene la capa de Auton (`MODO DE TRABAJO: read`), `## ENCARGO` y el brief. Eso cierra el eslabón entre la fábrica real y el motor.
+
+## 2026-11-03 - conversación en la misma sesión, reanudación, índice y transcripción
+
+Qué: Muse deja de ser una pasada. El transporte por defecto es `muse serve` (MSP, JSON-RPC 2.0 con una línea por frame): `initialize → initialized → session/start → turn/start`, y una segunda entrada entra por `turn/steer` con `expectedTurnId` sobre la misma sesión. `exec` queda como alternativa con `AUTON_MUSE_TRANSPORT=exec`. Un worker ZCode terminado se reanuda en la misma sesión y carpeta; dos reanudaciones conservan el id. Cada worker deja su entrada en `.auton/workers/index.json` (motor, id de sesión del motor, carpeta, estado, tiempos, modo y esfuerzo) y su conversación en `.auton/worker-transcript.json`, y el detalle del worker pinta las filas reales.
+
+Handshake real: `session/start` exige la notificación `initialized`, devuelve `result.session.sessionId` y acepta `approvalMode: "allowAll"`; `"never"` no es válido. Los `commandId` son UUIDv7. `session-message` sigue sin soporte en Windows.
+
+Verificado con: Muse real y `AUTON_MUSE_E2E=1` — dos entradas con `echo` y respuestas en orden (16,1 s), puerto real de sesión con índice (8,5 s) y steer en caliente con `meta` (30,8 s), en `muse-msp.log`. Reanudación ZCode dos veces con el mismo `sessionId` y carpeta (2 pruebas, `zcode-resume.log`). Conversación, índice y transcripción con host simulado (`worker-index.log`). UI: proyección y panel, 15 pruebas (`worker-transcript.log`). Typecheck de contratos, núcleo y UI en cero; lint de los archivos tocados sin avisos (`typecheck*.log`, `lint.log`); sitio generado con 11 páginas públicas y 23 privadas (`docs.log`). La suite de Auton quedó en verde; la suite completa del núcleo conserva fallos previos de este entorno Windows (rutas de workflow y búsqueda de herramientas), ajenos a este cambio y capturados en `full-core.log`.

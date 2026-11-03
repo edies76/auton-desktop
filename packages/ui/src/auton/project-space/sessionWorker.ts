@@ -23,6 +23,15 @@ export interface AutonSessionWorkerSnapshot {
   error?: string;
   /** Eventos del canal, si el runtime los tiene a mano. */
   events?: readonly { id: string; at: number; kind: AutonWorkerEvent["kind"]; text: string }[];
+  /** Conversación normalizada del motor (Muse items o eventos ZCode). */
+  transcript?: readonly {
+    id: string;
+    at: number;
+    kind: AutonWorkerEvent["kind"];
+    role?: "worker" | "orchestrator";
+    text: string;
+    status?: string;
+  }[];
 }
 
 export function sessionWorkerStatus(snapshot: AutonSessionWorkerSnapshot): AutonWorkerStatus {
@@ -43,8 +52,20 @@ export function projectSessionWorkerView(
   const status = sessionWorkerStatus(snapshot);
   const lastSignalAt = snapshot.completedAt ?? snapshot.startedAt;
   const transcript: AutonWorkerEvent[] = [];
-  for (const event of snapshot.events ?? []) {
-    transcript.push({ id: event.id, at: event.at, kind: event.kind, text: event.text });
+  if (snapshot.transcript?.length) {
+    for (const entry of snapshot.transcript) {
+      transcript.push({
+        id: entry.id,
+        at: entry.at,
+        kind: entry.kind,
+        text:
+          entry.role === "orchestrator" ? `Orquestador: ${entry.text}` : entry.text,
+      });
+    }
+  } else {
+    for (const event of snapshot.events ?? []) {
+      transcript.push({ id: event.id, at: event.at, kind: event.kind, text: event.text });
+    }
   }
   if (snapshot.lastLine && !transcript.some((event) => event.text === snapshot.lastLine)) {
     transcript.push({

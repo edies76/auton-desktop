@@ -23,8 +23,14 @@ import { deriveChildClientPorts } from "../helpers/child-client-ports.js";
 import { createCoordinatorResponsePort } from "../../subagent/coordinator-response.js";
 import { buildAutonWorkerPromptForRequest } from "../../auton/workerPolicy.js";
 import { createMuseWorkerHandle } from "../../auton/museWorker.js";
+import { createMuseMspWorkerHandle } from "../../auton/museMspWorker.js";
 import { resolveWorkerBrowserScope } from "../../auton/worker-mode.js";
 import { modeDisallowedTools } from "../../auton/workerTaskMode.js";
+import {
+  transcriptFromSessionEvents,
+  transcriptFromSessionMessages,
+  type WorkerTranscriptEntry,
+} from "../../auton/workerTranscript.js";
 import {
   createAutonSessionWorkerPort,
   type AutonSessionWorkerFactoryInput,
@@ -55,11 +61,14 @@ export function createDefaultAutonSessionWorkerPort(
       return undefined;
     },
     factory: async (input) => createWorkerSessionRuntime(this, deps, input),
-    museFactory: async (input) =>
-      createMuseWorkerHandle({
-        input,
-        prompt: buildMuseWorkerPrompt(this, input),
-      }),
+    museFactory: async (input) => {
+      const prompt = buildMuseWorkerPrompt(this, input);
+      const transport = process.env.AUTON_MUSE_TRANSPORT?.trim().toLowerCase();
+      if (transport === "exec") {
+        return createMuseWorkerHandle({ input, prompt });
+      }
+      return createMuseMspWorkerHandle({ input, prompt });
+    },
   });
 }
 
@@ -103,6 +112,8 @@ async function createWorkerSessionRuntime(
   });
   const childSelection = cloneModelSelection(selection);
   const abort = new AbortController();
+  const capturedEvents: import("@zcode/contracts").SessionEvent[] = [];
+  let lastTranscript: readonly WorkerTranscriptEntry[] = [];
   // La carpeta del worker existe antes de arrancar: su primer comando corre
   // ahí, no en una ruta que todavía no está creada.
   await mkdir(placement.workingDirectory, { recursive: true });
@@ -233,6 +244,7 @@ async function createWorkerSessionRuntime(
       traceContext: request.trace,
       eventSink: {
         onSessionEvent: async (event) => {
+          capturedEvents.push(event);
           input.reportActivity?.();
           // `onEvent` es el emisor del puerto: él se encarga de espejar al padre.
           await onEvent(event);
@@ -241,11 +253,14 @@ async function createWorkerSessionRuntime(
     },
   );
 
-  await childRuntime.ensureSessionPersistedForExternalActivity(request.prompt, {
-    traceContext: request.trace,
-  });
-
+  // En una reanudación la sesión ya existe: persistir otra vez la duplicaría.
+  if (input.resume !== true) {
+    await childRuntime.ensureSessionPersistedForExternalActivity(request.prompt, {
+      traceContext: request.trace,
+    });
+  }
   return {
+    transcript: (): readonly WorkerTranscriptEntry[] => lastTranscript,
     async run() {
       const result = await childRuntime.executeTurn(request.prompt, undefined, {
         abortSignal: abort.signal,
@@ -253,6 +268,19 @@ async function createWorkerSessionRuntime(
         inputPresentation: "coordinator_input",
         traceContext: request.trace,
       });
+      try {
+        const events = await deps.eventStore.getEvents(sessionId);
+        lastTranscript = transcriptFromSessionEvents(events);
+        if (lastTranscript.length === 0 && deps.sessionStore) {
+          const stored = await deps.sessionStore.messages({ sessionID: sessionId });
+          lastTranscript = transcriptFromSessionMessages(stored);
+        }
+        if (lastTranscript.length === 0) {
+          lastTranscript = transcriptFromSessionEvents(capturedEvents);
+        }
+      } catch {
+        lastTranscript = transcriptFromSessionEvents(capturedEvents);
+      }
       return { response: result.response, events: result.events };
     },
     async steer(steerInput) {

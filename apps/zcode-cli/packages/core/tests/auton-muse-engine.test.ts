@@ -137,7 +137,7 @@ describe("contrato del motor", () => {
     );
     expect(spec.command).toBe("cmd.exe");
     expect(spec.args.slice(0, 3)).toEqual(["/d", "/s", "/c"]);
-    expect(spec.args[3]?.startsWith('"muse ')).toBe(true);
+    expect(spec.args[3]?.startsWith("muse ")).toBe(true);
     expect(spec.args[3]).toContain('"C:\\pro yecto\\a&b"');
     expect(spec.args[3]).toContain('"C:\\pro yecto\\p.txt"');
     expect(spec.windowsVerbatimArguments).toBe(true);

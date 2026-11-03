@@ -54,8 +54,7 @@ describe("worker de sesión en el espacio del proyecto", () => {
     expect(view.transcript.at(-1)).toMatchObject({ kind: "close", text: "no compila" });
   });
 
-  it("se añade al espacio sin duplicar al que ya vino como subagente", () => {
-    const space = {
+  it("se añade al espacio sin duplicar al que ya vino como subagente", () => {    const space = {
       messages: [],
       workers: [
         {
@@ -78,6 +77,32 @@ describe("worker de sesión en el espacio del proyecto", () => {
     expect(merged.workers.map((worker) => worker.id)).toEqual([
       "sess_auton_agent_1",
       "sess_auton_agent_2",
+    ]);
+  });
+
+  it("pinta la conversación del motor en la transcripción, con voces y herramientas", () => {
+    const view = projectSessionWorkerView(
+      snapshot({
+        transcript: [
+          {
+            id: "t1",
+            at: 1_000,
+            kind: "message",
+            role: "orchestrator",
+            text: "primer encargo",
+          },
+          { id: "t2", at: 1_100, kind: "tool", text: "leyendo el proyecto", status: "completed" },
+          { id: "t3", at: 1_200, kind: "message", role: "worker", text: "listo, revisé todo" },
+          { id: "t4", at: 1_300, kind: "close", text: "turno completado", status: "completed" },
+        ],
+      }),
+    );
+
+    expect(view.transcript).toEqual([
+      { id: "t1", at: 1_000, kind: "message", text: "Orquestador: primer encargo" },
+      { id: "t2", at: 1_100, kind: "tool", text: "leyendo el proyecto" },
+      { id: "t3", at: 1_200, kind: "message", text: "listo, revisé todo" },
+      { id: "t4", at: 1_300, kind: "close", text: "turno completado" },
     ]);
   });
 });

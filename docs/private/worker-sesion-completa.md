@@ -40,9 +40,9 @@ Una sola resolución produce todo lo que depende de él:
 El orquestador usa la misma herramienta para los dos modos: crear, mandar, detener y leer. El puerto del worker de sesión expone ese ciclo y no pasa por el runner de subagentes.
 
 - **Crear**: lanza el turno en segundo plano y devuelve el identificador del worker y el de su sesión.
-- **Mandar**: entrega el mensaje como guía del turno en curso; con `requires_answer` el worker recibe el encabezado de decisión requerida y queda marcado esperando respuesta.
+- **Mandar**: entrega el mensaje como guía del turno en curso; con `requires_answer` el worker recibe el encabezado de decisión requerida y queda marcado esperando respuesta. Si el worker ZCode ya terminó, se reanuda en la misma sesión y carpeta; si es Muse, la sesión sigue viva hasta el stop.
 - **Detener**: aborta el turno y deja el worker visible como detenido. Si el turno termina después de la parada, no cambia el estado ni emite aviso de cierre: un stop no se convierte en "completado". La parada del orquestador y la del botón del panel resuelven el destino por el puerto que conoce la tarea.
-- **Leer**: el estado vive en el registro de tareas, con su carpeta y su marca de aislamiento.
+- **Leer**: el estado vive en el registro de tareas, con su carpeta, su id de sesión del motor y su marca de aislamiento. El índice durable por motor y la transcripción quedan en `<proyecto>/.auton/workers/index.json` y `.auton/worker-transcript.json`.
 
 El registro de tareas es compartido con los subagentes. Por eso el puerto de sesión solo reclama como suyas las tareas que él creó: si bastara con que la tarea exista en el registro, cualquier subagente parecería suyo y `SendMessage` o `TaskStop` lo tratarían como worker de sesión. Esa propiedad es la que mantiene intacta la ruta anterior.
 

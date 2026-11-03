@@ -78,3 +78,6 @@ __pycache__/
 
 site/dist/
 site/private-dist/
+
+# Artefactos del worker Auton (indice, transcripciones, progreso)
+.auton/

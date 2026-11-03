@@ -96,10 +96,15 @@ export function buildMuseSpawnSpec(
   if (process.platform !== "win32" || !isWindowsCommandScript(command)) {
     return { command, args: [...args] };
   }
-  const line = [quoteWindowsCommand(command), ...args.map(quoteWindowsCmdArg)].join(" ");
+  const quotedCommand = quoteWindowsCommand(command);
+  const line = [quotedCommand, ...args.map(quoteWindowsCmdArg)].join(" ");
+  // Con el comando pelado no se envuelve la línea: los quotes internos de los
+  // argumentos cerrarían el quote externo. Con una ruta citada sí se envuelve,
+  // que es la forma que `/s` espera para desenvolver.
+  const commandIsQuoted = quotedCommand.startsWith('"');
   return {
     command: env.ComSpec?.trim() || "cmd.exe",
-    args: ["/d", "/s", "/c", `"${line}"`],
+    args: ["/d", "/s", "/c", commandIsQuoted ? `"${line}"` : line],
     windowsVerbatimArguments: true,
   };
 }

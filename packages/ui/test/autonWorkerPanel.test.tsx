@@ -224,4 +224,35 @@ describe("espacio del proyecto", () => {
     fireEvent.click(screen.getByTestId("auton-worker-back"));
     expect(screen.getByTestId("auton-composer")).toBeTruthy();
   });
+
+  it("el detalle muestra la conversación completa del motor", () => {
+    const sessionWorker = projectSessionWorkerView({
+      agentId: "agent_muse",
+      description: "muse",
+      status: "completed",
+      startedAt: NOW - 20_000,
+      completedAt: NOW,
+      childSessionId: "sess_auton_agent_muse",
+      transcript: [
+        {
+          id: "c1",
+          at: NOW - 20_000,
+          kind: "message",
+          role: "orchestrator",
+          text: "primer encargo",
+        },
+        { id: "c2", at: NOW - 19_000, kind: "tool", text: "leyendo el proyecto" },
+        { id: "c3", at: NOW - 18_000, kind: "message", role: "worker", text: "listo, revisé todo" },
+        { id: "c4", at: NOW, kind: "close", text: "turno completado" },
+      ],
+    });
+
+    renderUi(<AutonWorkerDetail worker={sessionWorker} now={NOW} onBack={vi.fn()} />);
+
+    const transcript = screen.getByTestId("auton-worker-transcript").textContent ?? "";
+    expect(transcript).toContain("Orquestador: primer encargo");
+    expect(transcript).toContain("leyendo el proyecto");
+    expect(transcript).toContain("listo, revisé todo");
+    expect(transcript).toContain("turno completado");
+  });
 });

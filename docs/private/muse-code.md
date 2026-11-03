@@ -13,13 +13,17 @@ ni se mete su código en el repo.
 
 - Binario: `muse` en el PATH, o `AUTON_MUSE_BIN` con una ruta.
 - Versión: `muse --version` → `Muse Code 1.4.14 (1.4.14-R7309.1)`.
-- Headless: `muse exec --json --prompt-file <archivo> --workspace <carpeta>`.
+- Headless de una pasada: `muse exec --json --prompt-file <archivo> --workspace <carpeta>`.
+- Conversacional: `muse serve` habla **MSP** (JSON-RPC 2.0 sobre stdio), que es el transporte por
+  defecto del worker. Ver `conversacion-y-sesiones.md` para el handshake completo.
 - `--json` emite **JSONL**: eventos de sesión, tareas y el cierre `run.terminal.completed` (o `failed`).
   El texto final viene en `payload.text`; el estado, en `payload.terminal`.
 - Sandbox y aprobaciones vienen encendidos. Para trabajo autónomo el adaptador usa
-  `--approval-mode never` y `--disable-request-user-input`.
+  `--approval-mode never` con `exec` y `approvalMode: "allowAll"` con `serve`, más
+  `--disable-request-user-input`.
 - Autenticación: el proveedor Meta ya está configurado en este equipo; la corrida real devolvió texto.
-- Canal a mitad de corrida: `muse session-message` **no está soportado en Windows**. `exec` es one-shot.
+- El canal a mitad de corrida va por `turn/steer` sobre `serve`. `muse session-message` **no está
+  soportado en Windows** y no se usa.
 
 ## Cómo se elige
 
@@ -56,22 +60,34 @@ brief, mismo modo, mismo REPORTE de cuatro estados, misma exigencia de evidencia
 
 ## Ciclo de vida
 
-- **Lanzar**: crea la carpeta propia del worker, escribe `.auton/muse-prompt.txt`, arranca `muse exec`
-  con `cwd` y `--workspace` en esa carpeta.
-- **Leer**: el adaptador lee el JSONL y guarda todas las líneas en `.auton/muse-progress.jsonl`. El
-  texto final se devuelve al puerto del worker, que lo escribe como salida de la tarea.
-- **Detener**: mata el árbol de procesos (`taskkill /T /F` en Windows). Si el turno cierra después de
-  la parada, el estado no se convierte en “completado”.
-- **Cerrar**: `run.terminal.completed` → respuesta; `failed` o `cancelled` → error explícito con el
-  motivo; sin terminal → error con el stderr y el código de salida.
-- **Mensajes a mitad de corrida**: no soportados. `steer` falla con un mensaje claro en vez de fingir el
-  canal. Para conversar en caliente, el worker va en `zcode`.
+El transporte por defecto es `serve` (conversacional); `AUTON_MUSE_TRANSPORT=exec` conserva la pasada
+única.
+
+- **Lanzar (`serve`)**: crea la carpeta propia del worker, arranca `muse serve` con `cwd`, hace
+  `initialize → initialized → session/start`, captura el `sessionId` del motor y manda el prompt con
+  `turn/start`.
+- **Lanzar (`exec`)**: escribe `.auton/muse-prompt.txt` y arranca `muse exec` con `--workspace`.
+- **Leer (`serve`)**: consume `turn/started`, `item/started|delta|completed`, `turn/completed` y
+  `session/tokenUsage`; acumula la conversación y guarda el cierre como salida.
+- **Leer (`exec`)**: lee el JSONL y guarda todas las líneas en `.auton/muse-progress.jsonl`; el texto
+  final se devuelve al puerto.
+- **Detener**: `turn/interrupt` y cierre del cliente; en `exec`, mata el árbol de procesos
+  (`taskkill /T /F` en Windows). Si el turno cierra después de la parada, el estado no se convierte en
+  “completado”.
+- **Cerrar (`serve`)**: mantiene la sesión viva (`keepAlive`) hasta que el puerto la para; la
+  conversación queda disponible para otra entrada.
+- **Cerrar (`exec`)**: `run.terminal.completed` → respuesta; `failed` o `cancelled` → error explícito
+  con el motivo; sin terminal → error con el stderr y el código de salida.
+- **Mensajes**: con `serve`, un mensaje nuevo en el mismo turno se entrega como `turn/steer` con
+  `expectedTurnId`, y uno posterior abre otro turno de la misma sesión. Con `exec`, `steer` falla con
+  un mensaje claro en vez de fingir el canal.
 
 ## Variables de entorno
 
 | Variable | Efecto |
 | --- | --- |
 | `AUTON_MUSE_BIN` | Ruta o nombre del binario (por defecto `muse`) |
+| `AUTON_MUSE_TRANSPORT` | `serve` (por defecto, conversacional) o `exec` (una pasada) |
 | `AUTON_MUSE_PROVIDER` | Proveedor para la corrida (`meta`, `echo`) |
 | `AUTON_MUSE_MODEL` | Modelo concreto |
 | `AUTON_MUSE_MAX_STEPS` | Tope de pasos del modelo |
@@ -79,15 +95,19 @@ brief, mismo modo, mismo REPORTE de cuatro estados, misma exigencia de evidencia
 ## Verificación
 
 - `auton-muse-engine.test.ts`: resolución, sonda, flags de modo, argumentos y parser del REPORTE.
-- `auton-muse-engine.test.ts`: adaptador contra un proceso hijo real (fixture) y, con
-  `AUTON_MUSE_E2E=1`, contra el Muse real: `echo` dos veces y `meta` una, con resultado consistente.
+- `auton-muse-engine.test.ts`: adaptador `exec` contra un proceso hijo real (fixture) y, con
+  `AUTON_MUSE_E2E=1`, contra el Muse real: `echo` dos veces y `meta` una.
+- `auton-muse-msp.test.ts`: handshake MSP y conversación real, con `echo` y `meta`, y el puerto real
+  lanzando Muse una vez.
+- `auton-worker-conversation.test.ts` y `auton-worker-port-conversation.test.ts`: reanudación,
+  conversación, índice y transcripción.
 - `auton-engine-dispatch.test.ts`: selección de motor, ausencia de fallback silencioso y paso de
   `engine` por la herramienta.
-- `auton-worker-task-mode.test.ts`: el prompt ensamblado del orquestador menciona Muse y su límite.
+- `auton-worker-task-mode.test.ts`: el prompt ensamblado del orquestador describe el motor y su sesión.
 
 ## Límites
 
-- Muse es one-shot: sin `steer` a mitad de corrida en este entorno.
+- Un `steer` exige `expectedTurnId`; fuera de un turno activo, el mensaje abre un turno nuevo.
 - La autenticación desatendida depende de la configuración del equipo; si falla, la sonda lo dice.
 - No se replica su sistema de aprobaciones ni su interfaz.
 - El coste de una corrida real con Meta es del orden de decenas de miles de tokens de entrada.

@@ -80,6 +80,8 @@ export interface RuntimeTaskSnapshot extends SubagentTaskSnapshot {
   isolatedWorkspace?: boolean;
   /** Carpeta real del worker cuando corre como sesión completa. */
   workingDirectory?: string;
+  /** Id de la sesión dentro del motor (Muse session id; ZCode child session lo tiene en childSessionId). */
+  engineSessionId?: string;
 }
 
 export interface RuntimeTaskRegistry {
