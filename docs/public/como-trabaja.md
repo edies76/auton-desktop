@@ -46,6 +46,14 @@ La conversación se ve en el mismo hilo, dentro del bloque de esa pieza. No hace
 
 Cuando el orquestador necesita una decisión que el programador no puede tomar, marca el mensaje como **decisión requerida**: esa pieza se detiene antes de continuar y contesta. Las demás siguen su curso. Si la decisión es tuya, el orquestador te la trae y deja la pieza esperando mientras adelanta otro frente.
 
+## 4.2. Cada encargo tiene un modo
+
+Además de cuánto esfuerzo pone, un encargo lleva un modo: construir, leer, investigar, depurar o refactorizar. El orquestador lo elige y lo dice.
+
+Un encargo de lectura explora y devuelve contexto con rutas, sin tocar un solo archivo. Uno de investigación compara alternativas y termina en una recomendación con razones, no en una lista de enlaces. Uno de depuración trae el comando que reproduce el fallo y la causa señalada, y deja el arreglo para un encargo de construcción. Uno de refactor cambia la forma manteniendo los tests en verde.
+
+Pedir contexto es barato y no ensucia el proyecto. Por eso el orquestador lee para decidir y manda leer para tener contexto, en vez de explorarlo todo a ciegas.
+
 ## 5. Comprueba antes de cerrar
 
 Una pieza terminada pasa por una revisión independiente. Se comprueba el criterio de hecho, no la seguridad con la que el modelo cuenta que lo hizo.

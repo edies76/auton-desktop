@@ -217,6 +217,26 @@ ayer.
 - **Cómo se prueba**: un cambio de interfaz despachado en modo sesión (`worker_mode: "session"`), con la instrucción de abrirlo y revisarlo en su navegador.
 - **Qué tiene que verse**: el worker con **su propia carpeta** y **su propio navegador**; un mensaje suyo por el canal con lo que vio; la fila del worker en el espacio del proyecto con su reloj, su estado y su transcripción; y poder **detenerlo a mano**. Con el interruptor apagado, el mismo encargo vuelve a comportarse como un subagente.
 
+### 19. read: contexto con rutas y ni un archivo tocado **[auto]**
+- **Qué prometemos**: el modo `read` consigue contexto para decidir sin poder modificar el proyecto.
+- **Cómo se prueba**: pide "lee cómo está montado X y dime dónde tocar Y" con `mode: "read"`.
+- **Qué tiene que verse**: un resumen **con rutas** de archivo; **ninguna entrada nueva** en `.auton/changes.jsonl` (el diario no registra un solo archivo); y el worker sin herramientas de escritura en su juego.
+
+### 20. research: recomendación con razones, no una lista de enlaces **[auto]**
+- **Qué prometemos**: el modo `research` ayuda a decidir entre alternativas externas sin tocar código.
+- **Cómo se prueba**: pide comparar dos alternativas externas con `mode: "research"`.
+- **Qué tiene que verse**: una **recomendación con razones** y fuentes citadas; **no** una entrega en forma de lista de enlaces; y el diario **sin entradas** de archivos.
+
+### 21. debug: el comando que reproduce el fallo **[auto]**
+- **Qué prometemos**: el modo `debug` señala la causa y deja reproducir el fallo, sin arreglarlo.
+- **Cómo se prueba**: un fallo reproducible con `mode: "debug"`.
+- **Qué tiene que verse**: **el comando exacto** que reproduce el fallo y la **causa raíz** señalada; ningún arreglo aplicado: el diario no registra ediciones de código y el arreglo queda para un `build`.
+
+### 22. refactor: cambia la forma, los tests siguen verdes **[auto]**
+- **Qué prometemos**: el modo `refactor` cambia la forma sin cambiar el comportamiento.
+- **Cómo se prueba**: un refactor acotado con `mode: "refactor"`.
+- **Qué tiene que verse**: **la suite previa sigue en verde**, el comportamiento observable no cambió y el reporte dice qué se movió y qué no.
+
 ---
 
 ## Lo que estas pruebas protegen

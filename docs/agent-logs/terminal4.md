@@ -84,3 +84,15 @@ Cada hallazgo quedó cerrado en el código actual, no en una nota:
 4. Panel: WorkerPanel.tsx usa worker.agentId ?? worker.id; autonWorkerPanel.test.tsx lo prueba sobre el panel real.
 5. Escritorio: worker-launch-retry.log termina con bloque de comando, timeout 120 s, PID, veredicto, exit code n/a, evidencia de ventana y stderr incrustado.
 Evidencia de esta corrida: channel-parity.log (21 pruebas), typecheck.log (contratos), typecheck-core.log y ui-projection.log (13).
+
+## 2026-11-03 — eje de modo de trabajo (build/read/research/debug/refactor)
+
+Qué: el modo es un eje aparte del esfuerzo. El prompt del worker se compone con su criterio de hecho
+y sus prohibiciones, y el runtime le retira las herramientas que puedan escribir cuando el modo es
+read o research.
+Cuatro piezas: (1) contrato `mode` en la herramienta Agent, el request del despacho y el item del
+plan, con prompt compuesto desde el modo; (2) registro `mode` con sus cinco valores en la
+herramienta; (3) línea en la doctrina del orquestador con el cuándo de cada modo; (4) pruebas 19 a 22
+de `context/PRUEBAS-QUE-PROMETEMOS.md`.
+Verificado con: `auton-worker-task-mode` (10), `auton-worker-mode-safety` (4) y
+`auton-worker-dispatch` (10); capturado en mode-prompt.log, mode-safety.log y mode-dispatch.log.
