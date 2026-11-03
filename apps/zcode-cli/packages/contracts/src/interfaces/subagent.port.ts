@@ -16,6 +16,8 @@ export interface SubagentRunRequest {
   description: string;
   /** Política de esfuerzo fijada por el orquestador; el brief no la lleva. */
   effort?: "minimal" | "standard" | "thorough";
+  /** Nivel de thinking pedido por el orquestador; viaja distinto del esfuerzo. */
+  thinkingLevel?: string;
   prompt: string;
   callerCanReadOutputFile?: boolean;
   workingDirectory: string;

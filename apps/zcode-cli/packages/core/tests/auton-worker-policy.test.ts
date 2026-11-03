@@ -49,6 +49,25 @@ describe("auton worker system prompt", () => {
   });
 });
 
+describe("thinking viaja distinto del esfuerzo y llega a la identidad del worker", () => {
+  it("thinking_level aparece en la identidad, effort sigue mandando en el alcance", () => {
+    const prompt = buildAutonWorkerSystemPrompt("thorough", {
+      description: "revisar el checkout",
+      reasoningLevel: "max",
+    });
+    expect(prompt).toContain("Tu nivel de thinking para este encargo: max");
+    expect(prompt).toContain("POLÍTICA DE ESFUERZO: thorough");
+    expect(prompt).toContain("revisar el checkout");
+    expect(prompt).not.toContain("nivel de esfuerzo");
+  });
+
+  it("sin thinking_level, la identidad no inventa nivel", () => {
+    const prompt = buildAutonWorkerSystemPrompt("minimal");
+    expect(prompt).not.toContain("nivel de thinking");
+    expect(prompt).toContain("POLÍTICA DE ESFUERZO: minimal");
+  });
+});
+
 describe("auton-worker registrado como built-in", () => {
   it("aparece en los perfiles built-in, independiente de general-purpose", () => {
     const names = normalizeAgentProfiles([]).map((profile) => profile.name);

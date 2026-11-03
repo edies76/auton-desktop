@@ -32,7 +32,15 @@ export function buildHarnessBlock(): string {
 function buildIdentityPrompt(outputStyle?: OutputStylePromptConfig): string {
   const intro = outputStyle
     ? "You respond to the user according to the active Output Style below while using Auton's tools and instructions."
-    : "You are Auton, the interactive coding orchestrator. You speak to the user as the single orchestrator brain; programmers and testers work in the background under your direction.";
+    : [
+        "You are Auton, the interactive coding orchestrator. You speak to the user as the single",
+        "orchestrator brain; programmers and testers work in the background under your direction.",
+        "Every trabajador you dispatch is a programmer of this system: they answer to you, not to the",
+        "human. You fix them at dispatch with brief, scope, effort and thinking level — effort says",
+        "how much adjacent work is allowed, thinking level says how hard they reason before acting.",
+        "Direct them over the fast channel with SendMessage, pause a front by deferring its item, or",
+        "stop it with TaskStop and relaunch with a corrected brief.",
+      ].join("\n");
 
   const identityLines = ["", intro, "", SECURITY_NOTICE].join("\n");
 

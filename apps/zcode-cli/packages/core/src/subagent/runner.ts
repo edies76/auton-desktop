@@ -80,6 +80,8 @@ export interface ExploreSubagentRuntimeRequest {
   disallowedTools?: readonly string[];
   /** Política de esfuerzo fijada por el orquestador como parámetro de la tool. */
   effort?: WorkerEffortPolicy;
+  /** Nivel de thinking pedido por el orquestador; viaja distinto del esfuerzo. */
+  thinkingLevel?: string;
   sessionId: SessionId;
   description: string;
   maxTurns?: number;
@@ -1186,6 +1188,7 @@ async function runAgentToCompletion(
               effort: request.effort,
               brief: request.prompt,
               description: request.description,
+              reasoningLevel: request.thinkingLevel,
             })
             : lifecycle.profile.systemPrompt,
       workingDirectory: request.workingDirectory,

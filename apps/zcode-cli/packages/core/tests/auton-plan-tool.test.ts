@@ -51,6 +51,18 @@ describe("AutonPlan tool", () => {
       {
         action: "write",
         goal: { title: "Auton medianamente funcional", constraints: ["sin tocar la UI base"] },
+        limits: {
+          version: 1,
+          maxAttempts: 3,
+          approval: {
+            deleteMove: true,
+            outsideProject: true,
+            pushMergeRebase: true,
+            installDependencies: true,
+            outsideScope: true,
+          },
+          unknownHandling: "wait",
+        },
         items,
       },
       context(dir),
@@ -74,6 +86,286 @@ describe("AutonPlan tool", () => {
     };
     expect(read.plan.goal.title).toBe("Auton medianamente funcional");
     expect(read.plan.items.map((item) => item.status)).toEqual(["running", "waiting"]);
+  });
+
+  it("rejects dispatch without limits and counts attempts up to maxAttempts", async () => {
+    const dir = await makeWorkspace();
+    const noLimits = (await autonPlanToolEntry.handler(
+      {
+        action: "write",
+        items: [{ id: "s1", title: "Despacho sin gobierno", status: "running" }],
+      },
+      context(dir),
+    )) as { result?: boolean; errorCode?: number; message?: string };
+    expect(noLimits.result).toBe(false);
+    expect(noLimits.errorCode).toBe(42201);
+
+    await autonPlanToolEntry.handler(
+      {
+        action: "write",
+        limits: {
+          version: 1,
+          maxAttempts: 2,
+          approval: {
+            deleteMove: true,
+            outsideProject: true,
+            pushMergeRebase: true,
+            installDependencies: true,
+            outsideScope: true,
+          },
+          unknownHandling: "wait",
+        },
+        limitHistory: [],
+        items: [{ id: "s1", title: "Contar intentos", status: "ready", attempts: 0 }],
+      },
+      context(dir),
+    );
+    await autonPlanToolEntry.handler(
+      {
+        action: "write",
+        limits: { version: 1, maxAttempts: 2, unknownHandling: "wait" },
+        items: [{ id: "s1", title: "Contar intentos", status: "running", attempts: 0 }],
+      },
+      context(dir),
+    );
+    const first = (await autonPlanToolEntry.handler({ action: "read" }, context(dir))) as {
+      plan: { items: { attempts: number; status: string }[] };
+    };
+    expect(first.plan.items[0]?.attempts).toBe(1);
+    expect(first.plan.items[0]?.status).toBe("running");
+
+    await autonPlanToolEntry.handler(
+      {
+        action: "write",
+        limits: { version: 1, maxAttempts: 2, unknownHandling: "wait" },
+        items: [{ id: "s1", title: "Contar intentos", status: "blocked", attempts: 1 }],
+      },
+      context(dir),
+    );
+    await autonPlanToolEntry.handler(
+      {
+        action: "write",
+        limits: { version: 1, maxAttempts: 2, unknownHandling: "wait" },
+        items: [{ id: "s1", title: "Contar intentos", status: "running", attempts: 1 }],
+      },
+      context(dir),
+    );
+    const second = (await autonPlanToolEntry.handler({ action: "read" }, context(dir))) as {
+      plan: { limits?: { version: number }; items: { attempts: number; status: string }[] };
+    };
+    expect(second.plan.items[0]?.attempts).toBe(2);
+
+    await autonPlanToolEntry.handler(
+      {
+        action: "write",
+        goal: { title: "Tercer intento" },
+        limits: { version: 1, maxAttempts: 2, unknownHandling: "wait" },
+        items: [{ id: "s1", title: "Contar intentos", status: "ready", attempts: 2 }],
+      },
+      context(dir),
+    );
+    await autonPlanToolEntry.handler(
+      {
+        action: "write",
+        limits: { version: 1, maxAttempts: 2, unknownHandling: "wait" },
+        items: [{ id: "s1", title: "Contar intentos", status: "running", attempts: 2 }],
+      },
+      context(dir),
+    );
+    const exceeded = (await autonPlanToolEntry.handler({ action: "read" }, context(dir))) as {
+      plan: { items: { attempts: number; status: string }[] };
+    };
+    expect(exceeded.plan.items[0]?.attempts).toBe(2);
+  });
+
+  it("writes rejection carries an error code for unhandled dispatch", async () => {
+    const dir = await makeWorkspace();
+    await autonPlanToolEntry.handler(
+      {
+        action: "write",
+        goal: { title: "Aprobación previa" },
+        limits: {
+          version: 1,
+          maxAttempts: 3,
+          unknownHandling: "wait",
+          approval: {
+            deleteMove: true,
+            outsideProject: true,
+            pushMergeRebase: true,
+            installDependencies: true,
+            outsideScope: true,
+          },
+        },
+        limitHistory: [],
+        items: [
+          {
+            id: "s1",
+            title: "Borrar fuera del alcance",
+            status: "ready",
+            attempts: 0,
+            needsApproval: ["deleteMove", "outsideScope"],
+          },
+        ],
+      },
+      context(dir),
+    );
+
+    const blocked = (await autonPlanToolEntry.handler(
+      {
+        action: "write",
+        goal: { title: "Aprobación previa" },
+        limits: {
+          version: 1,
+          maxAttempts: 3,
+          unknownHandling: "wait",
+          approval: {
+            deleteMove: true,
+            outsideProject: true,
+            pushMergeRebase: true,
+            installDependencies: true,
+            outsideScope: true,
+          },
+        },
+        items: [
+          {
+            id: "s1",
+            title: "Borrar fuera del alcance",
+            status: "running",
+            attempts: 0,
+            needsApproval: ["deleteMove", "outsideScope"],
+          },
+        ],
+      },
+      context(dir),
+    )) as { result?: boolean; errorCode?: number };
+    expect(blocked.result).toBe(false);
+    expect(blocked.errorCode).toBe(42203);
+  });
+
+  it("rejects unrecorded limit changes and history rewrites", async () => {
+    const dir = await makeWorkspace();
+    const limitsV1 = {
+      version: 1,
+      maxAttempts: 3,
+      unknownHandling: "wait" as const,
+      approval: {
+        deleteMove: true,
+        outsideProject: true,
+        pushMergeRebase: true,
+        installDependencies: true,
+        outsideScope: true,
+      },
+    };
+    const limitsV2Silent = {
+      ...limitsV1,
+      version: 2,
+      maxAttempts: 5,
+    };
+    await autonPlanToolEntry.handler(
+      {
+        action: "write",
+        goal: { title: "Historial" },
+        limits: limitsV1,
+        limitHistory: [],
+        items: [{ id: "s1", title: "Item", status: "ready", attempts: 0 }],
+      },
+      context(dir),
+    );
+    const silent = (await autonPlanToolEntry.handler(
+      {
+        action: "write",
+        goal: { title: "Historial" },
+        limits: limitsV2Silent,
+        items: [{ id: "s1", title: "Item", status: "ready", attempts: 0 }],
+      },
+      context(dir),
+    )) as { result?: boolean; errorCode?: number; message?: string };
+    expect(silent.result).toBe(false);
+    expect(silent.result).toBe(false);
+    expect(silent.errorCode).toBe(42204);
+
+    const recorded = (await autonPlanToolEntry.handler(
+      {
+        action: "write",
+        goal: { title: "Historial" },
+        limits: limitsV2Silent,
+        limitHistory: [
+          {
+            at: "2026-11-02T11:00:00.000Z",
+            field: "maxAttempts",
+            from: "3",
+            to: "5",
+            reason: "Items con red necesitan más aire",
+            approvedBy: "human",
+          },
+        ],
+        items: [{ id: "s1", title: "Item", status: "ready", attempts: 0 }],
+      },
+      context(dir),
+    )) as { plan?: { limits?: { version: number }; limitHistory: { field: string }[] } };
+    expect(recorded.plan?.limits?.version).toBe(2);
+    expect(recorded.plan?.limitHistory).toHaveLength(1);
+
+    const rewritten = (await autonPlanToolEntry.handler(
+      {
+        action: "write",
+        goal: { title: "Historial" },
+        limits: limitsV2Silent,
+        limitHistory: [],
+        items: [{ id: "s1", title: "Item", status: "ready", attempts: 0 }],
+      },
+      context(dir),
+    )) as { result?: boolean; errorCode?: number };
+    expect(rewritten.result).toBe(false);
+    expect(rewritten.errorCode).toBe(42204);
+  });
+
+  it("accepts not_evaluable with a question and rejects it mute", async () => {
+    const dir = await makeWorkspace();
+    const limits = {
+      version: 1,
+      maxAttempts: 3,
+      unknownHandling: "wait" as const,
+      approval: {
+        deleteMove: true,
+        outsideProject: true,
+        pushMergeRebase: true,
+        installDependencies: true,
+        outsideScope: true,
+      },
+    };
+    const mute = (await autonPlanToolEntry.handler(
+      {
+        action: "write",
+        goal: { title: "No evaluable mudo" },
+        limits,
+        limitHistory: [],
+        items: [{ id: "s1", title: "Decisión de producto", status: "not_evaluable", attempts: 0 }],
+      },
+      context(dir),
+    )) as { result?: boolean; errorCode?: number };
+    expect(mute.result).toBe(false);
+    expect(mute.errorCode).toBe(42206);
+
+    const spoken = (await autonPlanToolEntry.handler(
+      {
+        action: "write",
+        goal: { title: "No evaluable mudo" },
+        limits,
+        limitHistory: [],
+        items: [
+          {
+            id: "s1",
+            title: "Decisión de producto",
+            status: "not_evaluable",
+            attempts: 0,
+            questions: ["¿La pantalla va con el diseño nuevo o con el actual?"],
+          },
+        ],
+      },
+      context(dir),
+    )) as { summary?: { notEvaluable: number } };
+    expect(spoken.summary?.notEvaluable).toBe(1);
   });
 
   it("round-trips versioned limits and their history", async () => {
@@ -114,12 +406,13 @@ describe("AutonPlan tool", () => {
 
     const read = (await autonPlanToolEntry.handler({ action: "read" }, context(dir))) as {
       plan: {
-        limits?: { version: number; unknownHandling: string };
+        limits?: { version: number; unknownHandling: string; maxAttempts: number };
         limitHistory: { field: string; approvedBy: string }[];
       };
     };
     expect(read.plan.limits?.version).toBe(2);
     expect(read.plan.limits?.unknownHandling).toBe("wait");
+    expect(read.plan.limits?.maxAttempts).toBe(3);
     expect(read.plan.limitHistory).toHaveLength(1);
     expect(read.plan.limitHistory[0]).toMatchObject({ field: "unknownHandling", approvedBy: "human" });
   });

@@ -27,6 +27,11 @@ export const AgentInputSchema = z.object({
       "and the root cause of what it touches; thorough = the brief plus sensible adjacent work, " +
       "announced first. This parameter rules the worker's scope.",
   ),
+  thinking_level: z.string().min(1).max(80).optional().describe(
+    "Thinking level for subagent_type=auton-worker, e.g. low, medium, high, max. " +
+      "This travels apart from effort: effort sets how much adjacent work is allowed, " +
+      "thinking_level sets how hard the worker reasons before acting.",
+  ),
   item_id: z
     .string()
     .optional()
