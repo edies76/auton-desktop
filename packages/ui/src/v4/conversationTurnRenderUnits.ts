@@ -44,7 +44,7 @@ interface DraftTurnRenderUnit {
   orderedRows: ConversationRow[];
 }
 
-function hasAutonWorkerRows(rows: readonly ConversationRow[]): boolean {
+export function hasAutonWorkerRows(rows: readonly ConversationRow[]): boolean {
   return rows.some((row) => {
     if (row.kind === "subagent") return row.subagentType === "auton-worker";
     if (row.kind !== "toolCall" || row.toolName !== "Agent") return false;
@@ -293,6 +293,7 @@ function materializeDraftUnit(
     // En un turno Auton la crónica se ve desde el principio: el trabajo no se
     // esconde detrás de "Worked for". Los turnos de ZCode conservan su regla.
     forceOpenHistory: forceOpenHistory || hasAutonWorkerRows(orderedBodyRows),
+    interleaveAssistantText: hasAutonWorkerRows(orderedBodyRows),
     timelineOnly,
     nowMs: options.nowMs,
     ...(options.pluginUiPinResolver ? { pluginUiPinResolver: options.pluginUiPinResolver } : {}),

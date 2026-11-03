@@ -148,6 +148,7 @@ export function buildConversationTurnWorkSegments(options: {
   isLastTurn: boolean;
   isInterrupted: boolean;
   forceOpenHistory: boolean;
+  interleaveAssistantText: boolean;
   timelineOnly: boolean;
   nowMs?: number;
   /** 插件卡片进不进折叠区的裁决；缺省沿用"全部常驻"。 */
@@ -214,6 +215,7 @@ export function buildConversationTurnWorkSegments(options: {
         ? { latestAssistantTextRow: options.latestAssistantTextRow }
         : {}),
       timelineOnly: options.timelineOnly,
+      interleaveAssistantText: options.interleaveAssistantText,
     });
     return {
       key: segmentKey,

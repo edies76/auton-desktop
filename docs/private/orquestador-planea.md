@@ -157,8 +157,10 @@ pero el layout no está especificado ni implementado. Para que el chat se sienta
 único y vivo hay que romper ese agrupamiento global y dejar el bloque de trabajo
 por worker, no por turno. Es el siguiente cambio de UI, no un retoque de estilo.
 
-**Primer paso hecho**: los turnos con canales `auton-worker` abren la crónica por
-defecto (sin pulsar "Worked for"); los turnos de ZCode no cambian. El orden es
-temporal por `rowId`, no por prioridad; la prioridad solo encola despertares. La
-spec de los siete tipos, el scroll condicionado y la prueba de orden están en
-`context/UI-CHAT-INTERCALADO.md`.
+**Implementado**: los turnos con canales `auton-worker` abren la crónica por
+defecto y cada `assistantText` se pinta en su posición, entre las tools y los
+canales; el texto final ya no se dibuja como sección aparte. Los turnos de ZCode
+no cambian. El orden es temporal por `rowId`, no por prioridad; la prioridad solo
+encola despertares. La spec de los siete tipos, el scroll condicionado y la prueba
+de orden están en `context/UI-CHAT-INTERCALADO.md`. Pendiente: bloque por worker,
+mapeo propio de systemEvent/evidence/plan y el estilo Grok.

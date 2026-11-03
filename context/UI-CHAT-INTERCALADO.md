@@ -1,9 +1,11 @@
 # Chat intercalado: una sola crónica, no un bloque de trabajo y una respuesta
 
-**Estado: propuesta. Primer paso implementado.** Los turnos con canales
-`auton-worker` abren la crónica por defecto (el trabajo y la narración se ven sin
-pulsar "Worked for"); los turnos de ZCode conservan su regla. La lista plana de
-siete tipos y el bloque por worker siguen pendientes.
+**Estado: núcleo implementado.** Los turnos con canales `auton-worker` abren la
+crónica por defecto y **cada mensaje del orquestador se pinta en su posición**,
+entre las tools y los canales; el texto final ya no se dibuja como una sección
+aparte. Los turnos de ZCode conservan su layout. Pendiente: el bloque colapsable
+por worker (hoy el bloque es por tramo), el mapeo explícito de `systemEvent`,
+`evidence` y `plan` como entradas propias, y el estilo tipo Grok.
 
 ## El problema
 

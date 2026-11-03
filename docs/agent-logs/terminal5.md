@@ -74,3 +74,14 @@ Verificado con: `v4ConversationTurnRenderUnits` 42, `autonThreadChannels` 6 (inc
 latido anterior y dos eventos con la misma marca). Pendiente: lista plana de siete tipos y bloque
 por worker; el estilo Grok se deja para después.
 
+## 2026-11-03 — la narración se intercala con el trabajo
+
+Qué: en turnos con canales `auton-worker`, todos los `assistantText` se pintan en su posición entre
+tools y canales; el texto final ya no se dibuja aparte. El turno Auton abre la crónica; ZCode no
+cambia. La spec de layout queda con siete tipos, orden por `rowId`, scroll condicionado y prueba de
+orden.
+Por qué: el orquestador no debe sentirse como un agente que trabaja en silencio y responde al final.
+Verificado con: `v4ConversationTurnGroup` 103 (incluye orden narración → canal → narración),
+`v4ConversationTurnRenderUnits` 42, `autonThreadChannels` 6. Pendiente: bloque por worker, entradas
+propias de systemEvent/evidence/plan y estilo Grok.
+

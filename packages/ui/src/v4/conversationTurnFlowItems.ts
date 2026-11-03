@@ -50,6 +50,11 @@ export function buildConversationFlowItems(options: {
   /** 整个 product turn 唯一可挂 action 的最终正文。 */
   latestAssistantTextRow?: AssistantTextRow;
   timelineOnly: boolean;
+  /**
+   * Auton: la narración del orquestador se intercala con el trabajo. Cada
+   * assistantText se pinta en su posición, no solo el último.
+   */
+  interleaveAssistantText?: boolean;
 }): ConversationTurnFlowItem[] {
   const historyRowIds = new Set(options.assistantHistoryRows.map((row) => row.rowId));
   const followingRowIds = new Set(options.assistantFollowingRows.map((row) => row.rowId));
@@ -66,6 +71,16 @@ export function buildConversationFlowItems(options: {
     // flowItems，renderer 会把它渲染在定时任务卡片、文件 summary 和消息操作栏之前。
     // 这里只保留真实 flow；boundary 由 TurnGroup 在全部 turn-local 附属 UI 之后统一收尾。
     if (tailRowIds.has(row.rowId)) continue;
+    if (options.interleaveAssistantText && isAssistantTextRow(row)) {
+      // Auton: cada mensaje del orquestador va en su sitio, entre las tools y
+      // los canales. El último conserva las acciones; los demás son narración.
+      items.push({
+        kind: "assistantText",
+        row,
+        latest: row.rowId === options.latestAssistantTextRow?.rowId,
+      });
+      continue;
+    }
     if (
       isAssistantTextRow(row) &&
       (row.rowId === options.visibleAssistantTextRow?.rowId || !historyRowIds.has(row.rowId)) &&

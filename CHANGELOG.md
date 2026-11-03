@@ -4,6 +4,22 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases públicas.
 
+## [0.11.0] — 2026-11-03
+
+La narración del orquestador se intercala con el trabajo.
+
+### Cambiado
+
+- En los turnos con canales `auton-worker`, **cada mensaje del orquestador se
+  pinta en su posición**, entre las tools y los canales; el texto final deja de
+  dibujarse como una sección aparte. Los turnos de ZCode conservan su layout.
+- El turno Auton abre la crónica por defecto; ZCode mantiene su colapso.
+
+### Conocido
+
+- El bloque colapsable por worker, el mapeo propio de `systemEvent`, `evidence` y
+  `plan`, y el estilo tipo Grok siguen pendientes.
+
 ## [0.10.0] — 2026-11-03
 
 La crónica del turno Auton se ve desde el principio y el orden es temporal.

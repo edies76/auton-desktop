@@ -3003,4 +3003,35 @@ describe("topic preparation flow membership", () => {
     expect(html).not.toContain("Responder");
     expect(html).toContain("Abrir");
   });
+
+  it("la narración del orquestador se intercala con el trabajo", () => {
+    const rows = [
+      turnHeader(),
+      userInputRow(2),
+      assistantTextRow(3, { text: "Voy a revisar el README." }),
+      toolCallRow(4, "Agent", {
+        description: "Revisión del README",
+        subagent_type: "auton-worker",
+      }),
+      subagentRow(5, {
+        parentToolCallId: "tool-4",
+        subagentType: "auton-worker",
+        status: "running",
+        summaryText: "leyendo",
+        startedAt: "2026-11-02T20:00:00.000Z",
+        lastActivityAt: "2026-11-02T20:00:00.000Z",
+      }),
+      assistantTextRow(6, { text: "Listo: el README está desactualizado." }),
+    ] as never[];
+
+    const [unit] = buildConversationTurnRenderUnits(rows);
+    const html = renderUnit(unit!, { messageStreamShowReasoning: false });
+
+    const before = html.indexOf("Voy a revisar el README");
+    const channel = html.indexOf("Revisión del README");
+    const after = html.indexOf("Listo: el README está desactualizado.");
+    expect(before).toBeGreaterThanOrEqual(0);
+    expect(channel).toBeGreaterThan(before);
+    expect(after).toBeGreaterThan(channel);
+  });
 });

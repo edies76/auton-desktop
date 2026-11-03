@@ -24,6 +24,8 @@ Auton tiene autonomía alta **dentro de lo acordado**: tú validas la dirección
 
 No espera a que le pidas: al abrir un proyecto saluda, cuenta qué está revisando y te ofrece dos o tres caminos con una recomendación.
 
+El hilo muestra la ejecución mientras ocurre: el orquestador dice qué va a hacer, delega y sigue contando lo que encuentra; su mensaje final es una intervención más, no el único mensaje que ves.
+
 Cuando la dirección del producto importa, el plan se te presenta para que lo apruebes. Tú decides si el camino es el correcto.
 
 ## 3. Reparte el trabajo

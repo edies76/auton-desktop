@@ -107,6 +107,7 @@ import type {
   ConversationTurnRenderUnit,
   ConversationTurnWorkSegment,
 } from "@/v4/conversationTurnRenderUnits.js";
+import { hasAutonWorkerRows } from "@/v4/conversationTurnRenderUnits.js";
 import { formatConversationWorkDuration } from "@/v4/conversationWorkDuration.js";
 import { ConversationTurnRow, resolveAssistantCopyText } from "@/v4/ConversationTurnRow.js";
 import { ConversationHookDetailsAction } from "@/v4/ConversationHookDetailsAction.js";
@@ -1368,6 +1369,7 @@ function ConversationTurnGroupImpl({
     [context, firstReasoningRowId],
   );
   const latestAssistantTextRow = unit.latestAssistantTextRow;
+  const interleavedAutonText = hasAutonWorkerRows(unit.assistantWorkRows);
   const assistantPreviewPptxAutoOpenTarget = context.assistantPreviewPptxAutoOpenTarget;
   const codeCommentCardsEnabled = useAssistantCodeCommentFeatureEnabled();
   const assistantCodeCommentProjectionEnabled =
@@ -1615,7 +1617,7 @@ function ConversationTurnGroupImpl({
               assistantCodeCommentProjectionEnabled={assistantCodeCommentProjectionEnabled}
             />
           ) : null}
-          {canRenderAssistantActions && latestAssistantTextRow ? (
+          {canRenderAssistantActions && latestAssistantTextRow && !interleavedAutonText ? (
             // 文件 summary 是整轮完成后的聚合结果；轮尾工具栏如果跟着
             // assistant text 内联渲染，会插到 summary 前面，读起来像 summary 不是本轮收尾。
             <ConversationAssistantTextActions
