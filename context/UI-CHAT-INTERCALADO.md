@@ -1,6 +1,9 @@
 # Chat intercalado: una sola crónica, no un bloque de trabajo y una respuesta
 
-**Estado: propuesta. Pendiente del visto bueno de Edi. No implementado.**
+**Estado: propuesta. Primer paso implementado.** Los turnos con canales
+`auton-worker` abren la crónica por defecto (el trabajo y la narración se ven sin
+pulsar "Worked for"); los turnos de ZCode conservan su regla. La lista plana de
+siete tipos y el bloque por worker siguen pendientes.
 
 ## El problema
 

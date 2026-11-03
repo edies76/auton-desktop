@@ -64,3 +64,13 @@ Por qué: el worker habla con el orquestador, no con el humano, y el estilo prop
 Verificado con: proyección 4, UI 29, core 20 archivos/108 pruebas y `v4ConversationTurnGroup` 102.
 Propuesta de layout en `context/UI-CHAT-INTERCALADO.md`, pendiente de aprobación.
 
+## 2026-11-03 — la crónica se abre sola y el orden es temporal
+
+Qué: los turnos con canales `auton-worker` abren la crónica por defecto; ZCode conserva su colapso.
+La spec de layout queda con los siete tipos, el orden por `rowId` (no por prioridad), el scroll
+condicionado y la prueba de orden; `UI-ESPACIO` 2.4-2.6 apuntan a ella.
+Por qué: el trabajo del orquestador se escondía tras "Worked for" y la prioridad no debe pintar.
+Verificado con: `v4ConversationTurnRenderUnits` 42, `autonThreadChannels` 6 (incluye el caso de
+latido anterior y dos eventos con la misma marca). Pendiente: lista plana de siete tipos y bloque
+por worker; el estilo Grok se deja para después.
+

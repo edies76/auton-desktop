@@ -525,6 +525,27 @@ describe("buildConversationTurnRenderUnits", () => {
     expect(units[0]?.workSegments?.[0]?.assistantHistoryDefaultOpen).toBe(false);
   });
 
+  it("abre la crónica del turno Auton aunque exista respuesta final", () => {
+    const units = buildConversationTurnRenderUnits([
+      turnHeader(1, { state: "completedSuccess" }),
+      userInput(2, "revisa el README"),
+      toolCall(3, "Agent", {
+        input: { subagent_type: "auton-worker", description: "Revisión del README" },
+      }),
+      subagent(4, {
+        subagentType: "auton-worker",
+        status: "success",
+        summaryText: "README revisado",
+      }),
+      assistantText(5, "Listo: el README está desactualizado."),
+    ]);
+
+    // El trabajo y la narración se ven desde el principio; no se esconden
+    // detrás de "Worked for" como en un turno normal de ZCode.
+    expect(units[0]?.assistantHistoryDefaultOpen).toBe(true);
+    expect(units[0]?.workSegments?.[0]?.assistantHistoryDefaultOpen).toBe(true);
+  });
+
   it("不按 raw /compact 文本隐藏 CLI 标记为 visible 的 user input", () => {
     const units = buildConversationTurnRenderUnits([
       turnHeader(1),

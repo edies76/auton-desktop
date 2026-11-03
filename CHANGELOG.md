@@ -4,6 +4,30 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases públicas.
 
+## [0.10.0] — 2026-11-03
+
+La crónica del turno Auton se ve desde el principio y el orden es temporal.
+
+### Añadido
+
+- **Spec de layout completa** en `context/UI-CHAT-INTERCALADO.md`: siete tipos de
+  entrada (narración, canal, evento, pregunta nativa, systemEvent, evidence y
+  plan), orden por `rowId`, scroll solo si el humano está abajo y prueba de orden.
+  `UI-ESPACIO-DEL-PROYECTO.md` 2.4-2.6 quedan como punteros a esa spec.
+
+### Cambiado
+
+- Los turnos con canales `auton-worker` abren la crónica por defecto: el trabajo y
+  la narración se ven sin pulsar "Worked for". Los turnos de ZCode conservan su
+  regla de colapso.
+- El orden de pantalla es siempre temporal por `rowId`; la prioridad solo encola y
+  despierta al orquestador. Un latido anterior no se adelanta por prioridad.
+
+### Conocido
+
+- La lista plana de siete tipos y el bloque por worker siguen pendientes.
+- El estilo tipo Grok (mensajes separados, menos botones) se deja para después.
+
 ## [0.9.0] — 2026-11-03
 
 El aviso del worker deja de ser una pregunta al humano y se pinta como una fila

@@ -44,6 +44,18 @@ interface DraftTurnRenderUnit {
   orderedRows: ConversationRow[];
 }
 
+function hasAutonWorkerRows(rows: readonly ConversationRow[]): boolean {
+  return rows.some((row) => {
+    if (row.kind === "subagent") return row.subagentType === "auton-worker";
+    if (row.kind !== "toolCall" || row.toolName !== "Agent") return false;
+    const input: unknown = row.input;
+    return (
+      typeof input === "object" &&
+      input !== null &&
+      (input as { subagent_type?: unknown }).subagent_type === "auton-worker"
+    );
+  });
+}
 function isAssistantTextRow(row: ConversationRow): row is AssistantTextRow {
   return row.kind === "assistantText";
 }
@@ -278,7 +290,9 @@ function materializeDraftUnit(
     isRunning,
     isLastTurn,
     isInterrupted,
-    forceOpenHistory,
+    // En un turno Auton la crónica se ve desde el principio: el trabajo no se
+    // esconde detrás de "Worked for". Los turnos de ZCode conservan su regla.
+    forceOpenHistory: forceOpenHistory || hasAutonWorkerRows(orderedBodyRows),
     timelineOnly,
     nowMs: options.nowMs,
     ...(options.pluginUiPinResolver ? { pluginUiPinResolver: options.pluginUiPinResolver } : {}),
@@ -354,16 +368,19 @@ function normalizeRenderUnitPosition(
 ): ConversationTurnRenderUnit {
   const isLastTurn = index === total - 1;
   const forceOpenHistory = shouldForceOpenAbnormalHistory(unit.header, options.sessionPhase);
+  const hasAutonWorker = hasAutonWorkerRows(unit.assistantWorkRows);
   const assistantHistoryDefaultOpen =
     unit.workSegments && unit.workSegments.length > 0
       ? !unit.timelineOnly &&
         (forceOpenHistory ||
+          hasAutonWorker ||
           (isLastTurn && unit.workSegments.at(-1)?.workStatus?.state === "running") ||
           (unit.workSegments.length === 1 &&
             unit.latestAssistantTextRow === undefined &&
             unit.assistantWorkRows.length > 0))
       : !unit.timelineOnly &&
         (forceOpenHistory ||
+          hasAutonWorker ||
           (isLastTurn && unit.workStatus?.state === "running") ||
           (unit.latestAssistantTextRow === undefined && unit.assistantWorkRows.length > 0));
   const workSegments = unit.workSegments?.map((segment, segmentIndex, segments) =>
@@ -373,6 +390,7 @@ function normalizeRenderUnitPosition(
           assistantHistoryDefaultOpen:
             !unit.timelineOnly &&
             (forceOpenHistory ||
+              hasAutonWorker ||
               (isLastTurn && segment.workStatus?.state === "running") ||
               (segments.length === 1 &&
                 unit.latestAssistantTextRow === undefined &&
@@ -441,3 +459,4 @@ export function buildConversationTurnRenderUnits(
   );
   return markHighspeedOutputFooterUnits(normalizedUnits, options.nowMs ?? Date.now());
 }
+

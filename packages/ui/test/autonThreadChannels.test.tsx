@@ -303,6 +303,56 @@ describe("hilo real con dos canales y eventos despertadores", () => {
     expect(question ? wakeEventAction(question, ctx) : "missing").toBeUndefined();
   });
 
+  it("el orden de pantalla es temporal, no por prioridad", () => {
+    const rows = [
+      agentRow(1, "tool-silent", "running"),
+      subagentRow({
+        rowId: 11,
+        parentToolCallId: "tool-silent",
+        status: "running",
+        lastActivityAt: "2026-11-02T20:00:00.000Z",
+        summaryText: "silencio largo",
+      }),
+      agentRow(2, "tool-ask", "running"),
+      subagentRow({
+        rowId: 12,
+        parentToolCallId: "tool-ask",
+        status: "running",
+        lastActivityAt: "2026-11-02T20:04:50.000Z",
+        lastWorkerMessageAt: "2026-11-02T20:04:50.000Z",
+        summaryText: "pregunta posterior",
+      }),
+    ] as never;
+
+    // El latido (fila 11) ocurrió antes que la pregunta (fila 12): va arriba
+    // aunque la pregunta tenga más prioridad para despertar al orquestador.
+    const wakes = wakesOf(build(rows));
+    expect(wakes.map((item) => item.event.kind)).toEqual(["heartbeat", "question"]);
+    expect(wakes.map((item) => item.subagentRow.rowId)).toEqual([11, 12]);
+
+    // Dos eventos con la misma marca conservan el orden de fila.
+    const sameMoment = [
+      agentRow(1, "tool-a", "running"),
+      subagentRow({
+        rowId: 11,
+        parentToolCallId: "tool-a",
+        status: "running",
+        lastWorkerMessageAt: "2026-11-02T20:04:50.000Z",
+        summaryText: "primero",
+      }),
+      agentRow(2, "tool-b", "running"),
+      subagentRow({
+        rowId: 12,
+        parentToolCallId: "tool-b",
+        status: "running",
+        lastWorkerMessageAt: "2026-11-02T20:04:50.000Z",
+        summaryText: "segundo",
+      }),
+    ] as never;
+    const ordered = wakesOf(build(sameMoment));
+    expect(ordered.map((item) => item.subagentRow.rowId)).toEqual([11, 12]);
+  });
+
   it("sin pregunta pendiente ni silencio suficiente no se inventan filas", () => {
     const rows = [
       agentRow(1, "tool-live", "running"),
