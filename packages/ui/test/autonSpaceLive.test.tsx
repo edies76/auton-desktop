@@ -90,7 +90,7 @@ describe("espacio del proyecto conectado a la sesión real", () => {
 
     expect(screen.getByTestId("auton-project-space")).toBeTruthy();
     expect(screen.getAllByTestId("auton-worker-row")).toHaveLength(4);
-    expect(screen.getAllByText("ajustando el cuadro de mensajes").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("worker 1").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Agente worker").length).toBeGreaterThan(0);
     expect(screen.getByTestId("auton-worker-panel").textContent).not.toContain("Orquestador");
     expect(screen.getByTestId("auton-thread").textContent).toContain("Mejora el diseño del chat");

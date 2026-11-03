@@ -44,9 +44,9 @@ describe("proyección del espacio desde filas reales", () => {
     expect(data.messages[0]?.text).toContain("Mejora el diseño del chat");
 
     expect(data.workers.map((worker) => worker.name)).toEqual([
-      "ajustando el cuadro de mensajes",
-      "¿el login debe recordar la sesión entre reinicios?",
-      "2 archivos, build en verde",
+      "worker 1",
+      "worker 2",
+      "worker 3",
     ]);
     expect(data.workers.map((worker) => worker.status)).toEqual([
       "trabajando",

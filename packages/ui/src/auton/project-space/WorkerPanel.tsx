@@ -126,7 +126,7 @@ function WorkerRow({
           ) : null}
         </span>
       </button>
-      {canStop && worker.status !== "terminado" ? (
+      {canStop && worker.status !== "terminado" && worker.status !== "bloqueado" ? (
         <Button
           type="button"
           variant="ghost"

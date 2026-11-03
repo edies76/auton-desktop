@@ -85,7 +85,7 @@ export function AutonWorkerFocusPane({ isDesktop = false }: AutonWorkerFocusPane
           {worker.name}
         </span>
         <span className="text-ui-sm text-foreground-subtlest">{meta.label}</span>
-        {worker.status !== "terminado" ? (
+        {worker.status !== "terminado" && worker.status !== "bloqueado" ? (
           <Button
             variant="ghost"
             size="sm"

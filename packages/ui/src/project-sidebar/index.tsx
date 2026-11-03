@@ -32,6 +32,7 @@ import {
   isLegacyProjectTask,
   projectConversationKey,
   rememberProjectOrchestrator,
+  shouldOpenProjectOrchestrator,
 } from "@/project-sidebar/projectConversation.js";
 import { useProjectTaskNavigation } from "@/project-sidebar/useProjectTaskNavigation.js";
 import { useProjectFileTree } from "@/project-sidebar/useProjectFileTree.js";
@@ -156,10 +157,16 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
   useEffect(() => {
     const orchestratorId = activeConversation?.conversation.orchestratorTaskId;
     if (orchestratorId) {
-      if (activeTaskId === orchestratorId || autoOpenedRef.current === orchestratorId) return;
+      if (autoOpenedRef.current === orchestratorId) return;
       // La sesión activa manda salvo que sea un chat legado del proyecto; en
       // ese caso se abre la conversación persistida del orquestador.
-      if (activeTaskId && !isLegacyProjectTask(activeConversation?.key ?? "", activeTaskId)) {
+      if (
+        !shouldOpenProjectOrchestrator({
+          activeTaskId,
+          orchestratorTaskId: orchestratorId,
+          legacyTaskIds: activeConversation?.conversation.legacyTaskIds ?? [],
+        })
+      ) {
         return;
       }
       const orchestrator = tree.tasks.find((task) => task.taskId === orchestratorId);

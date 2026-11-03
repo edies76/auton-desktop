@@ -6,6 +6,7 @@ import {
   ensureProjectConversation,
   isLegacyProjectTask,
   rememberProjectOrchestrator,
+  shouldOpenProjectOrchestrator,
 } from "../src/project-sidebar/projectConversation.js";
 
 function task(taskId: string, createdAt: number, updatedAt: number): ProjectTask {
@@ -63,4 +64,12 @@ describe("una conversación de orquestador por proyecto", () => {
     expect(claimProjectConversationCreation(created, "ws::p1")).toBe(true);
     expect(claimProjectConversationCreation(created, "ws::p2")).toBe(true);
     expect(claimProjectConversationCreation(created, "ws::p1")).toBe(false);
+  });
+
+  it("solo abre el orquestador persistido cuando la activa es legado o no hay activa", () => {
+    const base = { orchestratorTaskId: "orch", legacyTaskIds: ["old"] };
+    expect(shouldOpenProjectOrchestrator({ ...base, activeTaskId: null })).toBe(true);
+    expect(shouldOpenProjectOrchestrator({ ...base, activeTaskId: "old" })).toBe(true);
+    expect(shouldOpenProjectOrchestrator({ ...base, activeTaskId: "orch" })).toBe(false);
+    expect(shouldOpenProjectOrchestrator({ ...base, activeTaskId: "nueva" })).toBe(false);
   });
