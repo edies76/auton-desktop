@@ -173,7 +173,7 @@ export function claimProjectConversationCreation(created: Set<string>, key: stri
   return true;
 }
 
-/** La sesión activa manda; solo se abre otra si es legado o no hay ninguna. */
+/** La sesión activa manda; solo se abre otra si es legado, worker o no hay ninguna. */
 export function shouldOpenProjectOrchestrator(input: {
   activeTaskId: string | null;
   orchestratorTaskId: string;
@@ -182,5 +182,8 @@ export function shouldOpenProjectOrchestrator(input: {
   if (!input.orchestratorTaskId) return false;
   if (!input.activeTaskId) return true;
   if (input.activeTaskId === input.orchestratorTaskId) return false;
+  // Al abrir el proyecto, una sesión de worker restaurada no es el chat del
+  // humano: se abre la conversación del orquestador.
+  if (isWorkerSessionTaskId(input.activeTaskId)) return true;
   return input.legacyTaskIds.includes(input.activeTaskId);
 }

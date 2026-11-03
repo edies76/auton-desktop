@@ -79,6 +79,7 @@ describe("una conversación de orquestador por proyecto", () => {
     const base = { orchestratorTaskId: "orch", legacyTaskIds: ["old"] };
     expect(shouldOpenProjectOrchestrator({ ...base, activeTaskId: null })).toBe(true);
     expect(shouldOpenProjectOrchestrator({ ...base, activeTaskId: "old" })).toBe(true);
+    expect(shouldOpenProjectOrchestrator({ ...base, activeTaskId: "sess_auton_agent_1" })).toBe(true);
     expect(shouldOpenProjectOrchestrator({ ...base, activeTaskId: "orch" })).toBe(false);
     expect(shouldOpenProjectOrchestrator({ ...base, activeTaskId: "nueva" })).toBe(false);
   });
