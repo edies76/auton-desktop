@@ -258,10 +258,11 @@ export function buildConversationTurnWorkSegments(options: {
       assistantHistoryDefaultOpen:
         !options.timelineOnly &&
         (options.forceOpenHistory ||
-          (options.isLastTurn && segmentWorkStatus?.state === "running") ||
-          (visualDrafts.length === 1 &&
-            visibleAssistantTextRow === undefined &&
-            segmentFlowRows.length > 0)),
+          (!options.interleaveAssistantText &&
+            ((options.isLastTurn && segmentWorkStatus?.state === "running") ||
+              (visualDrafts.length === 1 &&
+                visibleAssistantTextRow === undefined &&
+                segmentFlowRows.length > 0)))),
       autonLoop: options.interleaveAssistantText,
       ...(segmentWorkStatus ? { workStatus: segmentWorkStatus } : {}),
     };

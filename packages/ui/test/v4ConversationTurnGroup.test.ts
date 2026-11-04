@@ -2990,12 +2990,9 @@ describe("topic preparation flow membership", () => {
     const [unit] = buildConversationTurnRenderUnits(rows);
     const html = renderUnit(unit!, { messageStreamShowReasoning: false });
 
-    // Es el mismo hilo del orquestador: canales anidados con reloj y estado.
-    expect(html).toContain("en marcha");
-    expect(html).toContain("terminó");
-
-    // Los eventos del worker van dentro de ese mismo hilo, como filas de
-    // trabajo; la pregunta al humano usa la tool nativa de preguntas.
+    // Es el mismo hilo del orquestador: el loop con su header y los eventos
+    // despertadores fuera, sin las tools sueltas bajo cada mensaje.
+    expect(html).toContain("chat-assistant-history-trigger");
     expect(html).toContain('data-testid="auton-wake-event"');
     expect(html).toContain('data-kind="question"');
     expect(html).toContain('data-kind="closed"');
@@ -3028,14 +3025,14 @@ describe("topic preparation flow membership", () => {
     const html = renderUnit(unit!, { messageStreamShowReasoning: false });
 
     const before = html.indexOf("Voy a revisar el README");
-    const channel = html.indexOf("Revisión del README");
+    const loop = html.indexOf("chat-assistant-history-trigger");
     const after = html.indexOf("Listo: el README está desactualizado.");
     expect(before).toBeGreaterThanOrEqual(0);
-    expect(channel).toBeGreaterThan(before);
-    expect(after).toBeGreaterThan(channel);
+    expect(loop).toBeGreaterThan(before);
+    expect(after).toBeGreaterThan(loop);
   });
 
-  it("el loop se abre con su contador y se colapsa al terminar, con la narración fuera", () => {
+  it("el loop deja el header con su contador y el contenido cerrado", () => {
     const rowsFor = (state: "running" | "completedSuccess") =>
       [
         turnHeader({ state }),
@@ -3066,9 +3063,12 @@ describe("topic preparation flow membership", () => {
     expect(beforeLoop).toBeGreaterThanOrEqual(0);
     expect(loopHeader).toBeGreaterThan(beforeLoop);
     expect(afterLoop).toBeGreaterThan(loopHeader);
-    expect(runningHtml).toContain('data-history-open="true"');
-    expect(runningHtml).toContain("Working for");
-    expect(runningHtml).toContain("Lectura del README");
+    expect(runningHtml).toContain('data-history-open="false"');
+    expect(runningHtml).toContain("Working");
+    // Las tools quedan dentro del bloque cerrado, no debajo de cada mensaje.
+    expect(runningHtml).not.toContain("Lectura del README");
+    // Y el mensaje no lleva la barra de acciones (copiar, reaccionar, fork).
+    expect(runningHtml).not.toContain('data-testid="v4-copy-6"');
 
     const [completed] = buildConversationTurnRenderUnits(rowsFor("completedSuccess"));
     const completedHtml = renderUnit(completed!, { locale: "en-US" });
@@ -3134,16 +3134,14 @@ describe("topic preparation flow membership", () => {
     const html = renderUnit(unit!, { messageStreamShowReasoning: true });
     const planningIndex = html.indexOf('data-row-id="3"');
     const headerIndex = html.indexOf('data-testid="chat-assistant-history-trigger');
-    const toolIndex = html.indexOf('data-row-id="5"');
     const translationIndex = html.indexOf('data-row-id="7"');
     expect(planningIndex).toBeGreaterThanOrEqual(0);
     expect(headerIndex).toBeGreaterThanOrEqual(0);
     expect(planningIndex).toBeLessThan(headerIndex);
-    expect(toolIndex).toBeGreaterThan(headerIndex);
-    expect(translationIndex).toBeGreaterThan(toolIndex);
-    // Los tres reasoning tienen su bloque visible (aunque el contenido se abra
-    // a mano): dos fuera del loop y uno dentro.
-    expect(html.match(/data-testid="chat-reasoning-trigger"/g) ?? []).toHaveLength(3);
+    expect(translationIndex).toBeGreaterThan(headerIndex);
+    // El reasoning de la tool queda dentro del loop cerrado; los dos de cara al
+    // humano se ven fuera.
+    expect(html.match(/data-testid="chat-reasoning-trigger"/g) ?? []).toHaveLength(2);
   });
 
   it("un turno reanudado abre con lo que llegó, trabaja en el loop y traduce fuera", () => {
@@ -3186,7 +3184,7 @@ describe("topic preparation flow membership", () => {
     expect(openingIndex).toBeGreaterThanOrEqual(0);
     expect(triggerIndex).toBeGreaterThan(openingIndex);
     expect(translationIndex).toBeGreaterThan(triggerIndex);
-    expect(runningHtml).toContain('data-history-open="true"');
+    expect(runningHtml).toContain('data-history-open="false"');
     expect(runningHtml).toContain("Working");
     expect(runningHtml).toContain("Reporte del worker");
 

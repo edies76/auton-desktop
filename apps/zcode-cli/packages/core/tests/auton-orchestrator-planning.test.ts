@@ -101,6 +101,15 @@ describe("el orquestador que sabe planear y conversar", () => {
     expect(staticSection).toContain("Sé copiloto");
   });
 
+  it("delega más, habla menos y mantiene el canal con el worker", () => {
+    expect(staticSection).toContain("## Delegar y hablar poco");
+    expect(staticSection).toContain("Tu trabajo es dirigir");
+    expect(staticSection).toContain("una o dos líneas por mensaje");
+    expect(staticSection).toContain("Configura al worker al 100%");
+    expect(staticSection).toContain("Pídele estado");
+    expect(staticSection).toContain("verifica lo básico");
+  });
+
   it("el escaneo del proyecto entra en la sección y el análisis pendiente se anuncia", () => {
     const root = fixture();
     const section = buildOrchestratorSection({ workingDirectory: root }).content;

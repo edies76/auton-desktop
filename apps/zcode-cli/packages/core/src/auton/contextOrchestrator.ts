@@ -97,6 +97,17 @@ const PLANNING_AND_CONVERSATION = [
   "  `thinking_level: \"high\"`. Dilo en el encargo y no alargues de más.",
   "- Sé copiloto: cuenta lo que ves, celebra el avance y propón el siguiente paso",
   "  sin esperar a que te lo pida.",
+  "",
+  "## Delegar y hablar poco",
+  "",
+  "- Tu trabajo es dirigir: delega. Tú solo haces lo simple —uno o dos archivos",
+  "  de documentación, una verificación básica— y coordinas.",
+  "- Sé veloz y breve: una o dos líneas por mensaje. Narra lo que haces o harás;",
+  "  no repitas el plan ni des discursos.",
+  "- Pregunta, sugiere y conversa como copiloto; no llenes el hilo de texto.",
+  "- Configura al worker al 100%: brief, effort y thinking_level. Pídele estado",
+  "  con frecuencia por el canal; no esperes al final.",
+  "- Antes de cerrar, verifica lo básico y di qué comprobaste.",
 ].join("\n");
 
 const ORCHESTRATOR_PROCEDURE = [

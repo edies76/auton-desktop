@@ -525,7 +525,7 @@ describe("buildConversationTurnRenderUnits", () => {
     expect(units[0]?.workSegments?.[0]?.assistantHistoryDefaultOpen).toBe(false);
   });
 
-  it("el loop Auton se abre mientras corre y se colapsa al terminar", () => {
+  it("el loop Auton deja el header visible y el contenido cerrado", () => {
     const rows = (headerState: "running" | "completedSuccess") => [
       turnHeader(1, { state: headerState }),
       userInput(2, "revisa el README"),
@@ -541,12 +541,10 @@ describe("buildConversationTurnRenderUnits", () => {
     ];
 
     const [running] = buildConversationTurnRenderUnits(rows("running"));
-    expect(running?.assistantHistoryDefaultOpen).toBe(true);
-    expect(running?.workSegments?.[0]?.assistantHistoryDefaultOpen).toBe(true);
+    expect(running?.workSegments?.[0]?.autonLoop).toBe(true);
 
     const [completed] = buildConversationTurnRenderUnits(rows("completedSuccess"));
-    expect(completed?.assistantHistoryDefaultOpen).toBe(false);
-    expect(completed?.workSegments?.[0]?.assistantHistoryDefaultOpen).toBe(false);
+    expect(completed?.workSegments?.[0]?.autonLoop).toBe(true);
   });
 
   it("reconoce un turno Auton por su firma aunque trabaje con tools directas", () => {
@@ -560,7 +558,7 @@ describe("buildConversationTurnRenderUnits", () => {
 
     const [running] = buildConversationTurnRenderUnits(rows("running"));
     const runningSegment = running?.workSegments?.[0];
-    expect(runningSegment?.assistantHistoryDefaultOpen).toBe(true);
+    expect(runningSegment?.autonLoop).toBe(true);
     // La narración anterior y la final van fuera del loop; la tool, dentro.
     expect(
       (running?.workSegments ?? [])

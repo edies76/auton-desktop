@@ -81,6 +81,8 @@ export interface ConversationAssistantWorkRenderOptions {
   nowMs?: number;
   /** Umbral de silencio antes de pintar el latido. */
   heartbeatMs?: number;
+  /** El hilo Auton pinta los eventos fuera del loop; el historial no los repite. */
+  suppressWakeEvents?: boolean;
 }
 
 const SUBAGENT_TOOL_NAMES = new Set(["Agent", "Task", "subagent"]);
@@ -346,7 +348,7 @@ export function buildAssistantWorkRenderItems(
         });
         // Las filas despertadoras son del trabajo Auton: se derivan del mismo
         // mapeo que el canal, con el título que el humano ya ve en la fila.
-        if (pairedSubagent.subagentType === "auton-worker") {
+        if (pairedSubagent.subagentType === "auton-worker" && !options?.suppressWakeEvents) {
           const nowMs = options?.nowMs ?? Date.now();
           const title =
             getAgentPrimaryText(toolCallRowToLegacyNode(row).toolCall, "") ||
