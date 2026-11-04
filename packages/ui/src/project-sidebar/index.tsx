@@ -1,5 +1,6 @@
 import { SidebarTooltipProvider } from "@/ControlHintTooltip.js";
 export { AutonProjectList } from "@/project-sidebar/AutonProjectList.js";
+export { ProjectHomeOverview } from "@/project-sidebar/ProjectHomeOverview.js";
 export { readProjectSidebarView } from "@/project-sidebar/view-preference.js";
 export { ArchiveManagement } from "@/project-sidebar/ArchiveManagement.js";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -273,10 +274,17 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
       workspaceKey,
     ],
   );
+  const requestedProjectId = useAutonHomeStore((state) => state.requestedProjectId);
+  const consumeProjectRequest = useAutonHomeStore((state) => state.consumeProjectRequest);
+  useEffect(() => {
+    if (!requestedProjectId) return;
+    const project = projects.find((entry) => entry.id === requestedProjectId);
+    consumeProjectRequest();
+    if (project) selectProject(project);
+  }, [consumeProjectRequest, projects, requestedProjectId, selectProject]);
   const openSettings = useCallback(() => {
     tabStore.getState().openSettingsTab();
-  }, [tabStore]);
-  const changeLocale = useCallback(
+  }, [tabStore]);  const changeLocale = useCallback(
     (value: string) => setLocalePreference(value as Locale | "system"),
     [setLocalePreference],
   );

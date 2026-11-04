@@ -53,7 +53,11 @@ import {
   useRemotePaneSessionLookup,
 } from "@/v4/usePaneSessionPersistence.js";
 import { requestV4ComposerDraftWorkspaceTransfer } from "@/v4/composer/composerDraftWorkspaceTransfer.js";
-import { ProjectComposerMenu, ProjectDirectoryProvider } from "@/project-sidebar/index.js";
+import {
+  ProjectComposerMenu,
+  ProjectDirectoryProvider,
+  ProjectHomeOverview,
+} from "@/project-sidebar/index.js";
 import { DesktopTopOverlay } from "@/DesktopTopOverlay.js";
 import { DesktopWindowFrame } from "@/DesktopWindowFrame.js";
 import { WorkspacePluginPreview } from "@/workspace-plugin-preview/index.js";
@@ -2232,6 +2236,10 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                 </div>
               </AutomationsMainBreadcrumbFrame>
             </main>
+          ) : homeVisible ? (
+            <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col">
+              <ProjectHomeOverview />
+            </div>
           ) : (
             <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col">
               {/* Bugfix: 手机远控聊天页中间层必须继续提供 flex 高度链。
@@ -2682,7 +2690,9 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                         ) : (
                           <main className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden">
                             {renderChatFindDialog()}
-                            {centerView.kind !== "orchestrator" ? (
+                            {homeVisible ? (
+                              <ProjectHomeOverview />
+                            ) : centerView.kind !== "orchestrator" ? (
                               <AutonWorkerSurface
                                 view={centerView}
                                 activeTaskTitle={activeTaskTitle}
