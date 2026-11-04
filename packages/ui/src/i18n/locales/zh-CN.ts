@@ -1239,6 +1239,7 @@ const zhCN: Record<string, string> = {
   "login.apiKey.providerLabel": "API key 提供方",
   "login.apiKey.provider.zai": "Z.ai",
   "login.apiKey.provider.bigmodel": "BigModel",
+  "login.apiKey.provider.meta": "Meta",
   "login.apiKey.getApiKey": "获取 API Key",
   "login.apiKey.cancel": "取消",
   "login.apiKey.continue": "继续",
