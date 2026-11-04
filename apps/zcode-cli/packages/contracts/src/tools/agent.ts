@@ -72,9 +72,10 @@ export const AgentInputSchema = z.object({
     ),
   engine: AutonWorkerEngineSchema.optional().describe(
     "Engine that runs subagent_type=auton-worker. zcode (default) uses the in-process ZCode " +
-      "session. muse runs Muse Code headless in the worker's own workspace with the same brief, " +
-      "mode, effort and REPORTE contract, but it is one-shot: it does not accept mid-run messages " +
-      "in this environment. Use muse when the sprint should run on the Meta engine. An unknown or " +
+      "session. muse runs Muse Code in the worker's own workspace with the same brief, " +
+      "mode, effort and REPORTE contract, and keeps its session alive: the orchestrator " +
+      "can send another message, and a message during a turn is delivered as steer. " +
+      "Use muse when the sprint should run on the Meta engine. An unknown or " +
       "unavailable engine fails explicitly; it never falls back to another engine.",
   ),
   worker_mode: z

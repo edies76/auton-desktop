@@ -76,7 +76,7 @@ export const AutonPlanItemSchema = z
         "without changing behavior. Separate from effort. An unknown value falls back to build.",
     ),
     engine: AutonWorkerEngineSchema.optional().describe(
-      "Engine for this item: zcode (default) or muse (Muse Code, one-shot headless).",
+      "Engine for this item: zcode (default) or muse (Muse Code, live session).",
     ),
     owner: AutonOwnerSchema
       .optional()

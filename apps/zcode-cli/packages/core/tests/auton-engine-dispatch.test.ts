@@ -70,6 +70,10 @@ describe("el motor se elige en el despacho, nunca en silencio", () => {
   });
 
   it("el esquema rechaza un motor inventado", () => {
+    const description = AgentInputSchema.shape.engine.description ?? "";
+    expect(description).toContain("steer");
+    expect(description).toContain("session alive");
+    expect(description).not.toContain("one-shot");
     expect(() =>
       AgentInputSchema.parse({
         description: "x",
