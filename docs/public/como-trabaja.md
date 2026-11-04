@@ -77,6 +77,10 @@ Un worker no es una caja que se cierra al entregar. Mientras trabaja, el orquest
 
 En el detalle del worker ves su conversación completa: lo que pidió el orquestador, lo que respondió el worker, las herramientas que usó y cómo cerró. Cada worker queda además en un índice del proyecto, con su motor, su sesión, su carpeta y sus tiempos.
 
+## 4.5. La memoria no depende del hilo
+
+Lo que pasa queda escrito en el proyecto, no solo en la conversación. Cada cambio del plan y cada reversión se anotan en un registro durable con identificador, fecha y fuente. Cuando el orquestador duda de una decisión vieja, consulta ese registro y responde con punteros: qué se decidió, cuándo y de dónde salió. Si no está, lo dice; no lo inventa. La consulta devuelve unas pocas líneas, no el contenido de tus archivos.
+
 ## 5. Comprueba antes de cerrar
 
 Una pieza terminada pasa por una revisión independiente. Se comprueba el criterio de hecho, no la seguridad con la que el modelo cuenta que lo hizo.
