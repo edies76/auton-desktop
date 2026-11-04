@@ -17,53 +17,54 @@ const MAX_REF_LENGTH = 300;
 const DEFAULT_LIMIT = 5;
 const MAX_LIMIT = 20;
 
-const AutonRecallSelectorsSchema = z
-  .object({
-    query: z
-      .string()
-      .trim()
-      .min(1)
-      .max(MAX_QUERY_LENGTH)
-      .optional()
-      .describe("Texto libre: título, resumen o referencias de una ficha durable"),
-    id: z
-      .string()
-      .min(1)
-      .max(MAX_ID_LENGTH)
-      .optional()
-      .describe("Identificador exacto de una ficha, por ejemplo item:s1 o evt:..."),
-    kind: AutonRegistryKindSchema.optional().describe("Tipo de ficha que se busca"),
-    ref: z
-      .string()
-      .min(1)
-      .max(MAX_REF_LENGTH)
-      .optional()
-      .describe("Referencia exacta, por ejemplo item:s1 o src/login.ts"),
-    limit: z
-      .number()
-      .int()
-      .min(1)
-      .max(MAX_LIMIT)
-      .default(DEFAULT_LIMIT)
-      .describe("Máximo de líneas a devolver; 5 por defecto, 20 como tope"),
-  })
-  .strict();
+const QuerySchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(MAX_QUERY_LENGTH)
+  .describe("Texto libre: título, resumen o referencias de una ficha durable");
+
+const IdSchema = z
+  .string()
+  .min(1)
+  .max(MAX_ID_LENGTH)
+  .describe("Identificador exacto de una ficha, por ejemplo item:s1 o evt:...");
+
+const KindSchema = AutonRegistryKindSchema.describe("Tipo de ficha que se busca");
+
+const RefSchema = z
+  .string()
+  .min(1)
+  .max(MAX_REF_LENGTH)
+  .describe("Referencia exacta, por ejemplo item:s1 o src/login.ts");
+
+const LimitSchema = z
+  .number()
+  .int()
+  .min(1)
+  .max(MAX_LIMIT)
+  .default(DEFAULT_LIMIT)
+  .describe("Máximo de líneas a devolver; 5 por defecto, 20 como tope");
+
+const sharedSelectors = {
+  query: QuerySchema.optional(),
+  id: IdSchema.optional(),
+  kind: KindSchema.optional(),
+  ref: RefSchema.optional(),
+  limit: LimitSchema,
+};
 
 /**
- * Al menos uno de `query`, `id`, `ref` o `kind` debe venir. Sin selector la
- * herramienta no adivina: falla por validación.
+ * Al menos uno de `query`, `id`, `ref` o `kind` debe venir. Se expresa como
+ * unión de cuatro variantes, cada una con un selector obligatorio, para que el
+ * JSON Schema visible al modelo también exija uno: `{}` no satisface ninguna.
  */
-export const AutonRecallInputSchema = AutonRecallSelectorsSchema.refine(
-  (value) =>
-    value.query !== undefined ||
-    value.id !== undefined ||
-    value.kind !== undefined ||
-    value.ref !== undefined,
-  {
-    message: "AutonRecall necesita al menos un selector: query, id, ref o kind.",
-    path: ["query"],
-  },
-);
+export const AutonRecallInputSchema = z.union([
+  z.object({ ...sharedSelectors, query: QuerySchema }).strict(),
+  z.object({ ...sharedSelectors, id: IdSchema }).strict(),
+  z.object({ ...sharedSelectors, kind: KindSchema }).strict(),
+  z.object({ ...sharedSelectors, ref: RefSchema }).strict(),
+]);
 
 export type AutonRecallInput = z.infer<typeof AutonRecallInputSchema>;
 
@@ -92,6 +93,13 @@ export const AutonRecallOutputSchema = z
 
 export type AutonRecallOutput = z.infer<typeof AutonRecallOutputSchema>;
 
-export const AutonRecallInputJsonSchema = toToolJsonSchema(AutonRecallSelectorsSchema);
+export const AutonRecallInputJsonSchema = toToolJsonSchema(AutonRecallInputSchema);
+// `toToolJsonSchema` normaliza `anyOf` a `oneOf`; aquí la diferencia importa:
+// los selectores se pueden combinar (`query` + `kind`), así que "al menos uno"
+// es `anyOf`, no "exactamente uno".
+if (Array.isArray(AutonRecallInputJsonSchema.oneOf)) {
+  AutonRecallInputJsonSchema.anyOf = AutonRecallInputJsonSchema.oneOf;
+  delete AutonRecallInputJsonSchema.oneOf;
+}
 export const AutonRecallMatchJsonSchema = toToolJsonSchema(AutonRecallMatchSchema);
 export const AutonRecallOutputJsonSchema = toToolJsonSchema(AutonRecallOutputSchema);

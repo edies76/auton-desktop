@@ -11,6 +11,7 @@ import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import {
   AUTON_RECALL_TOOL_NAME,
+  AutonRecallInputJsonSchema,
   AutonRecallInputSchema,
   AutonRecallOutputSchema,
   type AutonRegistryAppendInput,
@@ -198,6 +199,37 @@ describe("AutonRecall tool (Nivel 1B)", () => {
 
     expect(AutonRecallInputSchema.safeParse({}).success).toBe(false);
     await expect(autonRecallHandler({}, context(root))).rejects.toThrow();
+  });
+
+  it("el JSON Schema visible al modelo también exige al menos un selector", () => {
+    const schema = AutonRecallInputJsonSchema as {
+      oneOf?: Array<{ required?: string[] }>;
+      anyOf?: Array<{ required?: string[] }>;
+    };
+    const variants = schema.oneOf ?? schema.anyOf;
+    const selectors = new Set(["query", "id", "kind", "ref"]);
+
+    // "Al menos uno" es anyOf: los selectores pueden combinarse.
+    expect(schema.anyOf).toBeDefined();
+    expect(schema.oneOf).toBeUndefined();
+    expect(Array.isArray(variants)).toBe(true);
+    expect(variants).toHaveLength(4);
+
+    const requiredSelectors = (variants ?? []).map((variant) =>
+      (variant.required ?? []).filter((key) => selectors.has(key)),
+    );
+    // Cada variante exige exactamente un selector y ninguna acepta `{}`.
+    for (const required of requiredSelectors) expect(required).toHaveLength(1);
+    expect(new Set(requiredSelectors.map((required) => required[0]))).toEqual(selectors);
+    expect(
+      (variants ?? []).some((variant) => (variant.required ?? []).length === 0),
+    ).toBe(false);
+
+    // El runtime mantiene la misma semántica: un selector por sí solo basta.
+    expect(AutonRecallInputSchema.safeParse({ query: "login" }).success).toBe(true);
+    expect(AutonRecallInputSchema.safeParse({ id: "item:s1" }).success).toBe(true);
+    expect(AutonRecallInputSchema.safeParse({ kind: "dispatch" }).success).toBe(true);
+    expect(AutonRecallInputSchema.safeParse({ ref: "item:s1" }).success).toBe(true);
   });
 
   it("limit 50 falla y el límite por defecto es 5", async () => {
