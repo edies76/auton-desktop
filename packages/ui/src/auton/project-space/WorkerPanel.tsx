@@ -93,6 +93,14 @@ function WorkerRow({
       >
         <WorkerStatusIcon status={worker.status} />
         <span className="min-w-0 flex-1 truncate text-ui-base text-foreground">{worker.name}</span>
+        {worker.kind === "muse" || worker.engine === "muse" ? (
+          <span
+            className="shrink-0 rounded border border-border px-1 py-0.5 text-ui-xs uppercase tracking-wide text-foreground-subtlest"
+            data-testid="auton-worker-muse-badge"
+          >
+            Muse
+          </span>
+        ) : null}
       </button>
       <span className="ml-2 flex shrink-0 items-center gap-1.5 text-ui-xs text-foreground-subtle">
         {(worker.subagentCount ?? 0) > 0 ? (
@@ -281,7 +289,7 @@ export function AutonWorkerPanel({
                 ) : expanded ? (
                   <p className="px-3 py-1 text-ui-sm text-foreground-subtlest">
                     {group.kind === "muse"
-                      ? "Próximamente"
+                      ? "Sin workers Muse."
                       : group.kind === "subagent"
                         ? "Sin subagentes"
                         : "Sin workers todavía."}
