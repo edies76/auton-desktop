@@ -156,3 +156,17 @@ Cada nivel tuvo constructor y verificador independiente en worktrees separados; 
 fueron PASS.
 Pendiente: merge a `auton-desktop` tras revisión final; la verificación visual del desktop sigue
 bloqueada por el entorno nativo.
+
+## 2026-11-04 — tablero de sprints e inspector de evidencia (etapa 3 de A)
+
+Qué: entrada Plan en el espacio del proyecto, tablero que lee `.auton/plan.json`
+en vivo con siete columnas por estado, e inspector de evidencia por sprint con
+aviso cuando un sprint terminado no tiene evidencia. Diseño minimalista casi
+monocromo con los tokens de la app.
+Por qué: el registro durable ya existía, pero el humano no tenía pantalla para
+ver el plan ni la prueba de que un sprint cerró; solo el orquestador lo leía.
+Verificado con: constructores separados para tablero e inspector, verificador
+independiente con tests propios (PASS), 57 tests de UI y 58 del registro en el
+árbol mergeado, `oxlint` sin hallazgos. Merge a `auton-desktop` en 98666a2d.
+Pendiente: la prueba visual en la app real, bloqueada aquí por el entorno
+(Node 22 sin pnpm ni herramientas nativas).

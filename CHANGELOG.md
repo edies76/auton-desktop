@@ -4,6 +4,21 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases p├║blicas.
 
+## [0.16.0] — 2026-11-04
+
+El plan del proyecto se ve como tablero, con su evidencia al lado.
+
+### Añadido
+
+- **Tablero de sprints**: entrada Plan en el espacio del proyecto; lee
+  `.auton/plan.json` en vivo y agrupa los sprints en siete columnas por estado
+  (pendientes, activos, esperando, bloqueados, no evaluables, terminados y
+  descartados), con el objetivo y el resumen arriba.
+- **Inspector de evidencia**: al elegir un sprint muestra su requisito, los
+  archivos declarados, la evidencia declarada, los intentos y las preguntas
+  abiertas. Un sprint terminado sin evidencia se marca como no demostrado.
+- Diseño minimalista casi monocromo, con los tokens y componentes de la app.
+
 ## [0.15.0] ÔÇö 2026-11-04
 
 Un loop colapsable por worker.
