@@ -56,6 +56,18 @@ export function hasAutonWorkerRows(rows: readonly ConversationRow[]): boolean {
     );
   });
 }
+
+/**
+ * La firma que el prompt de Auton exige al cerrar. Sirve para reconocer un
+ * turno del orquestador cuando trabajó con tools directas (sin `auton-worker`),
+ * sin cambiar el layout de sesiones de ZCode que no firman.
+ */
+function hasAutonSignature(rows: readonly ConversationRow[]): boolean {
+  return rows.some(
+    (row) =>
+      row.kind === "assistantText" && /(^|\n)\s*—\s*Auton\b/u.test(row.text),
+  );
+}
 function isAssistantTextRow(row: ConversationRow): row is AssistantTextRow {
   return row.kind === "assistantText";
 }
@@ -270,7 +282,8 @@ function materializeDraftUnit(
     // bodyRows 抽取截图，它仍会被塞回正文流并在轮尾再次渲染，造成重复和顺序错乱。
     (row) => !leadingBoundaryRowIds.has(row.rowId) && !browserTurnEndRowIds.has(row.rowId),
   );
-  const isAutonTurn = hasAutonWorkerRows(flowRows);
+  const isAutonTurn =
+    hasAutonWorkerRows(flowRows) || hasAutonSignature(flowRows);
   const latestAssistantTextRow =
     actionAssistantTextRow ??
     ((!isRunning || isAutonTurn) && lastFlowRow && isAssistantTextRow(lastFlowRow)

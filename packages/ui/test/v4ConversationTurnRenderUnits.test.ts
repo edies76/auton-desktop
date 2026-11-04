@@ -549,6 +549,29 @@ describe("buildConversationTurnRenderUnits", () => {
     expect(completed?.workSegments?.[0]?.assistantHistoryDefaultOpen).toBe(false);
   });
 
+  it("reconoce un turno Auton por su firma aunque trabaje con tools directas", () => {
+    const rows = (headerState: "running" | "completedSuccess") => [
+      turnHeader(1, { state: headerState }),
+      userInput(2, "hola, ¿qué quieres hacer?"),
+      assistantText(3, "Voy a mirar el proyecto sin tocar nada."),
+      toolCall(4, "Bash", { command: "ls" }),
+      assistantText(5, "Listo.\n\n— Auton · terminal9 · prueba de lectura"),
+    ];
+
+    const [running] = buildConversationTurnRenderUnits(rows("running"));
+    const runningSegment = running?.workSegments?.[0];
+    expect(runningSegment?.assistantHistoryDefaultOpen).toBe(true);
+    // La narración anterior y la final van fuera del loop; la tool, dentro.
+    expect(
+      runningSegment?.flowItems
+        .filter((item) => item.kind === "assistantText")
+        .map((item) => item.row.rowId),
+    ).toEqual([3, 5]);
+
+    const [completed] = buildConversationTurnRenderUnits(rows("completedSuccess"));
+    expect(completed?.workSegments?.[0]?.assistantHistoryDefaultOpen).toBe(false);
+  });
+
   it("不按 raw /compact 文本隐藏 CLI 标记为 visible 的 user input", () => {
     const units = buildConversationTurnRenderUnits([
       turnHeader(1),
