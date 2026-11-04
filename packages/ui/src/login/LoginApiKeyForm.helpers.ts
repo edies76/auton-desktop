@@ -7,7 +7,7 @@ import {
 import type { ModelSelectionView } from "@zcode/services";
 import { encodeCustomModelValue } from "@/lib/zcodeCustomModelValue.js";
 
-export type ApiKeyProviderChoice = "zai" | "bigmodel";
+export type ApiKeyProviderChoice = "zai" | "bigmodel" | "meta";
 
 export function resolveLoginApiKeyDefaultProvider(locale: Locale): ApiKeyProviderChoice {
   return locale === "zh-CN" ? "bigmodel" : "zai";
@@ -15,7 +15,10 @@ export function resolveLoginApiKeyDefaultProvider(locale: Locale): ApiKeyProvide
 
 export function resolveLoginApiKeyTemplateId(
   choice: ApiKeyProviderChoice,
-): "zai-api" | "bigmodel-api" {
+): "zai-api" | "bigmodel-api" | "auton-meta" {
+  if (choice === "meta") {
+    return "auton-meta";
+  }
   return choice === "zai"
     ? BUILTIN_PROVIDER_TEMPLATE_IDS.zai
     : BUILTIN_PROVIDER_TEMPLATE_IDS.bigmodel;
@@ -23,12 +26,19 @@ export function resolveLoginApiKeyTemplateId(
 
 export function resolveLoginApiKeyProviderLabel(choice: ApiKeyProviderChoice): string {
   // Welcome Screen API Key 错误提示需要使用 BigModel 品牌固定写法。
+  if (choice === "meta") {
+    return "Meta";
+  }
   return choice === "zai" ? "Z.ai" : "BigModel";
 }
 
 export function resolveLoginApiKeyProviderFamilyDomain(
   choice: ApiKeyProviderChoice,
-): ProviderFamilyDomain {
+): ProviderFamilyDomain | undefined {
+  if (choice === "meta") {
+    // Meta no pertenece a ninguna familia zai/bigmodel.
+    return undefined;
+  }
   return choice;
 }
 
@@ -37,10 +47,12 @@ export function buildLoginApiKeySkipSettings(
   now: number,
 ): Pick<
   AppSettings,
-  "providerFamilyDomain" | "providerFamilyDomainUpdatedAt" | "providerFamilyDomainMigrated"
-> {
+  "providerFamilyDomainUpdatedAt" | "providerFamilyDomainMigrated"
+> &
+  Partial<Pick<AppSettings, "providerFamilyDomain">> {
+  const familyDomain = resolveLoginApiKeyProviderFamilyDomain(choice);
   return {
-    providerFamilyDomain: resolveLoginApiKeyProviderFamilyDomain(choice),
+    ...(familyDomain !== undefined ? { providerFamilyDomain: familyDomain } : {}),
     providerFamilyDomainUpdatedAt: now,
     providerFamilyDomainMigrated: true,
   };
