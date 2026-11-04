@@ -43,9 +43,6 @@ modules:
   - id: server
     roots: [ packages/server/src ]
     managed: false
-  - id: zcode-server-cli
-    roots: [ packages/zcode-server-cli/src ]
-    managed: false
   - id: ui
     roots: [ packages/ui/src ]
     managed: false
@@ -57,9 +54,6 @@ modules:
     managed: false
   - id: formal-proof
     roots: [ packages/formal-proof/src ]
-    managed: false
-  - id: stream-animate
-    roots: [ packages/stream-animate/src ]
     managed: false
   - id: e2e-report
     roots: [ packages/e2e-report/src ]

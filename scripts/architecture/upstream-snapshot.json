@@ -11068,7 +11068,6 @@
     "packages/desktop/test/e2e/ui-shell/marketing-touch-anonymous.test.ts": "100644 b3f36850987bb4021eb1f8cf292263331f97595b",
     "packages/desktop/test/e2e/ui-shell/marketing-touch-delivery.test.ts": "100644 22ad1952113b1a0ba83b43b2f488589bc09639d9",
     "packages/desktop/test/e2e/ui-shell/marketing-touch-entitlement.test.ts": "100644 6e2a8c7af1f02ad9ee027a61c7b0b4280e9345af",
-    "packages/desktop/test/e2e/ui-shell/marketing-touch-rewards.test.ts": "100644 2c0878cd57d1e21921e9dc821cc467c1ab038af8",
     "packages/desktop/test/e2e/ui-shell/side-pane-full-view.test.ts": "100644 70950238ce7f540cd1db79e0783d98b1397e3851",
     "packages/desktop/test/e2e/ui-shell/side-pane-tabs-responsive-interactions.test.ts": "100644 bca13ff8a40543608578f35f4544cd7f051648e7",
     "packages/desktop/test/e2e/usage-stats/usage-stats-app-usage.test.ts": "100644 3181100b74b925d3eab8724668bc3b4da701c8f2",

@@ -20,8 +20,6 @@ export function createE2EStartupCredentialSeed(
       fileName?.startsWith("marketing-touch-delivery") ||
       fileName === "conversation-session-share-popover.test.ts" ||
       fileName === "marketing-touch-entitlement.test.ts" ||
-      // Rewards 专项走本地控制面，需要同时验证 OAuth 与 JWT 注入。
-      fileName === "marketing-touch-rewards.test.ts" ||
       fileName === "jwt-401-auto-logout.test.ts" ||
       isRequestSecuritySpec(fileName) ||
       fileName === "coding-plan-upgrade-webview-refresh-provider.test.ts" ||

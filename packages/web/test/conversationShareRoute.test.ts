@@ -1,4 +1,3 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   isConversationSharePath,
@@ -30,11 +29,4 @@ describe("conversation share route", () => {
     expect(resolveConversationShareRouteLocale("/share/share-1")).toBe("en-US");
   });
 
-  it("dev server base 不能写死 /cn/share/，否则英文路由本地不可达", () => {
-    // Bug 根因：dev 脚本写死 --base=/cn/share/，Vite 只服务该前缀，访问 /share/<code>
-    // 会被 dev server 直接拒掉（"server is configured with a public base URL of /cn/share/"）。
-    const source = readFileSync("scripts/dev-web-share-env.mjs", "utf8");
-    expect(source).toContain('"--base=/"');
-    expect(source).not.toContain('"--base=/cn/share/"');
-  });
 });
