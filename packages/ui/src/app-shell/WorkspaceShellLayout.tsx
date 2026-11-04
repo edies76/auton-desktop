@@ -13,7 +13,7 @@ import { TID_APP_HEADER } from "@zcode/shared/test-ids";
 // 对称下侧 Terminal.tsx 的 openWorkspaceKeys 回收。
 import { sidePaneTerminalSessionRegistry } from "@/terminal/sidePaneTerminalSessionRegistry.js";
 import { resolveCenterView } from "@/auton/project-space/centerView.js";
-import { useAutonHomeStore } from "@/auton/project-space/homeStore.js";
+import { useAutonHomeStore } from "@/auton/index.js";
 import { AutonWorkerSurface } from "@/auton/project-space/WorkerSurface.js";
 import {
   closeWorkerFocusForWorkspace,
@@ -288,6 +288,7 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayout(
 });
 
 const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent({
+  homeVisible: homeVisibleOverride,
   services,
   workspaceReadOnlyReason,
   workspaceMainView,
@@ -480,7 +481,8 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
   const [draftHeaderDropTargetController, setDraftHeaderDropTargetController] =
     useState<ConversationDropTargetController | null>(null);
   const workspaceKey = workspaceIdentity?.trim() || workspaceAbsPath;
-  const homeVisible = useAutonHomeStore((state) => state.homeVisible);
+  const storeHomeVisible = useAutonHomeStore((state) => state.homeVisible);
+  const homeVisible = homeVisibleOverride ?? storeHomeVisible;
   const homeDraftBlocked = homeVisible && activeTaskId === null;
   const fileTreeOpenRequestIdRef = useRef(0);
   const [fileTreeOpenRequest, setFileTreeOpenRequest] = useState<SidebarFileTreeOpenRequest | null>(
