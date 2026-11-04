@@ -53,6 +53,7 @@ const DIRECT_BRANCH_EXPECTED_PROVIDER_TOOL_ORDER = [
   "DeferredToolCall",
   "AutonPlan",
   "AutonRevert",
+  "AutonRecall",
   "SendMessage",
   "ReadSessionContext",
   "ReplyToChannel",
