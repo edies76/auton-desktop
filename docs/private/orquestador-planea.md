@@ -157,11 +157,12 @@ pero el layout no está especificado ni implementado. Para que el chat se sienta
 único y vivo hay que romper ese agrupamiento global y dejar el bloque de trabajo
 por worker, no por turno. Es el siguiente cambio de UI, no un retoque de estilo.
 
-**Implementado**: los turnos con canales `auton-worker` abren la crónica por
-defecto y cada `assistantText` se pinta en su posición, entre las tools y los
-canales; el texto final ya no se dibuja como sección aparte. El loop se abre con
-su contador mientras corre y se colapsa al terminar; la narración y el follow-up
-quedan fuera. El reasoning de planificación/traducción va fuera y el de ejecución
-dentro. Un turno reanudado abre con el evento fuera, trabaja en el loop y traduce
-fuera. El compositor ya no muestra Computer Use. Los turnos de ZCode no cambian.
-Pendiente: mapeo propio de systemEvent/evidence/plan y el estilo Grok.
+**Implementado**: los turnos con canales `auton-worker` —o con la firma
+`— Auton`— abren la crónica por defecto y cada `assistantText` se pinta en su
+posición, entre las tools y los canales; el texto final ya no se dibuja como
+sección aparte. El loop se abre con su contador mientras corre y se colapsa al
+terminar; la narración y el follow-up quedan fuera. El reasoning de
+planificación/traducción va fuera y el de ejecución dentro. Un turno reanudado
+abre con el evento fuera, trabaja en el loop y traduce fuera. El compositor ya no
+muestra Computer Use. Los turnos de ZCode sin firma no cambian. Pendiente: mapeo
+propio de systemEvent/evidence/plan y el estilo Grok.

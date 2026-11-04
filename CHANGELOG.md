@@ -4,6 +4,17 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases públicas.
 
+## [0.12.1] — 2026-11-03
+
+La crónica intercalada también cubre los turnos que usan tools directas.
+
+### Cambiado
+
+- Un turno se reconoce como Auton por sus canales `auton-worker` **o por la firma
+  `— Auton` del cierre**. Así, una lectura hecha con Terminal/Bash también deja la
+  narración y el reasoning fuera del loop, y el loop se abre/colapsa igual.
+- Los turnos de ZCode sin firma conservan su layout.
+
 ## [0.12.0] — 2026-11-03
 
 El loop del orquestador: se abre con su contador mientras trabaja y se colapsa al

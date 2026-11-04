@@ -96,3 +96,13 @@ Verificado con: 106 del hilo, 42 de unidades, 6 del compositor y 8 del prompt; t
 Evidencia en el scratch del goal (`loop-lifecycle.log`, `reasoning-placement.log`, `resume-event.log`,
 `composer.log`, `prompt-assembly.log`, `checks.log`).
 
+## 2026-11-03 — prueba en vivo: el turno Auton con tools directas
+
+Qué: la prueba real en la app mostró que el orquestador puede leer con Terminal/Bash sin lanzar un
+`auton-worker`; ese turno seguía usando el layout viejo. Ahora el turno se reconoce también por la
+firma `— Auton` y la narración/reasoning salen fuera del loop, que se abre y colapsa igual.
+Por qué: el humano quiere la crónica intercalada también cuando el orquestador hace la lectura él.
+Verificado en vivo: sesión "Prueba de solo lectura..." con el loop "Worked for 42s" colapsado,
+narración y thinking fuera, y el compositor sin Computer Use. Capturas en el scratch
+(`e2e-turn-interleaved.png`, `e2e-turn-collapsed.png`). Pruebas: 43 de unidades y 106 del hilo.
+

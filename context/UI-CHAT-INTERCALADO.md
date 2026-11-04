@@ -5,7 +5,9 @@ crónica por defecto y **cada mensaje del orquestador se pinta en su posición**
 entre las tools y los canales; el texto final ya no se dibuja como una sección
 aparte. El bloque de trabajo (loop) se abre con su contador mientras corre y se
 colapsa al terminar; la narración y el follow-up quedan fuera. El reasoning de
-planificación/traducción va fuera y el de ejecución dentro. Los turnos de ZCode
+planificación/traducción va fuera y el de ejecución dentro. El turno se reconoce
+por sus canales `auton-worker` **o por la firma `— Auton`**, así que las lecturas
+hechas con tools directas también se intercalan. Los turnos de ZCode sin firma
 conservan su layout. El compositor de Auton ya no muestra Computer Use. Pendiente:
 el mapeo explícito de `systemEvent`, `evidence` y `plan` como entradas propias, y
 el estilo tipo Grok.
