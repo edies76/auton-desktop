@@ -1,5 +1,6 @@
 /* eslint-disable max-lines -- 设置导航意图集中管理 sessionStorage、事件桥接和解析校验，拆分会让一次性意图消费顺序更难保证。 */
 import { logger } from "@/logger.js";
+import { AUTON_MVP, AUTON_MVP_HIDDEN_SETTINGS_SECTIONS } from "@/lib/autonMvp.js";
 
 export type SettingsSectionId =
   | "general"
@@ -46,6 +47,9 @@ const HIDDEN_SETTINGS_SECTIONS = new Set<SettingsSectionId>([
   // 工作区搜索（.zcodeignore）设置入口先隐藏：规则文件仍生效并可手动编辑，
   // 编辑页代码保留，放开时从这里移除即可。
   "workspaceFileSearch",
+  // Poda Auton: cuentas, remoto, memoria, computer use y automatizaciones no
+  // forman parte de la demo. El código sigue disponible para restaurarlo.
+  ...(AUTON_MVP ? AUTON_MVP_HIDDEN_SETTINGS_SECTIONS : []),
 ]);
 
 export interface SettingsSectionIntentEventDetail {
@@ -128,9 +132,10 @@ export function readLastSettingsSectionPreference(
     const raw = storage.getItem(SETTINGS_LAST_SECTION_STORAGE_KEY);
     // 旧 section id 已并入 plugin；迁移持久化值，避免继续传播历史路由语义。
     if (raw === "plugins") {
-      storage.setItem(SETTINGS_LAST_SECTION_STORAGE_KEY, "plugin");
-      setPendingPluginTab("plugins");
-      return "plugin";
+      const resolved = resolveSettingsSection("plugin", fallbackSection);
+      storage.setItem(SETTINGS_LAST_SECTION_STORAGE_KEY, resolved);
+      if (resolved === "plugin") setPendingPluginTab("plugins");
+      return resolved;
     }
     if (raw === "skills") {
       storage.setItem(SETTINGS_LAST_SECTION_STORAGE_KEY, "skill");

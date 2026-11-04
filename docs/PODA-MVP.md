@@ -68,3 +68,21 @@ emuladores. Cada borrado va con su commit y su prueba de que la app arranca.
 - Procesos al arrancar: bajar de 9 a 5 o menos.
 - RAM de la app: objetivo < 900 MB en desarrollo, < 600 MB empaquetada.
 - Tiempo de arranque en frío: objetivo < 6 s.
+
+## Estado 2026-11-03 — primera mitad de la poda media
+
+Aplicado en la rama `chore/poda/zcode`, detrás de `packages/ui/src/lib/autonMvp.ts`
+(`AUTON_MVP = true`). Todo el código queda para restaurarlo con un cambio de una línea.
+
+- Navegación: fuera Automations y Plugin Marketplace del sidebar.
+- Ajustes: fuera Remote devices, Memory, Usage/billing y Computer use.
+- Cuenta: fuera el resumen de plan/usage y el acceso a Rewards del menú de perfil.
+- Remoto: apagadas las entradas de conexión remota y el web remote control.
+- Marketing/rewards: los providers dejan de montarse, así que no hay llamadas al arrancar.
+- Compartir conversación: se oculta el botón de share en la cabecera.
+- Automations y Plugin Store: sus rutas ya no se abren aunque otro punto de la UI
+  emita la intención.
+- Pruebas ajustadas a la UI podada; `pnpm typecheck` completo en verde.
+
+Pendiente para la segunda mitad: apagar defaults de módulos pesados, telemetría y
+off-peak; borrar los módulos que queden sin uso cuando la app abra y el chat funcione.

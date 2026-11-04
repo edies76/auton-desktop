@@ -19,15 +19,15 @@ afterEach(() => {
 });
 
 describe("settingsNavigation", () => {
-  it("保留 usage、hooks 和 memory 分区", async () => {
+  it("保留 hooks 分区并在 MVP 中关闭 usage、memory、plugin 和 remoto", async () => {
     const navigation = await loadSettingsNavigation("test");
 
-    expect(navigation.isSettingsSectionEnabled("usage")).toBe(true);
-    expect(navigation.resolveSettingsSection("usage", "modelProvider")).toBe("usage");
     expect(navigation.isSettingsSectionEnabled("hooks")).toBe(true);
     expect(navigation.resolveSettingsSection("hooks", "modelProvider")).toBe("hooks");
-    expect(navigation.isSettingsSectionEnabled("memory")).toBe(true);
-    expect(navigation.resolveSettingsSection("memory", "general")).toBe("memory");
+    for (const section of ["usage", "memory", "plugin", "remoteDevices", "computerUse"] as const) {
+      expect(navigation.isSettingsSectionEnabled(section)).toBe(false);
+      expect(navigation.resolveSettingsSection(section, "general")).toBe("general");
+    }
   });
 
   it("通知已打开的设置页切换到新的分区意图", async () => {
@@ -201,7 +201,8 @@ describe("settingsNavigation", () => {
     dispose();
     navigation.setPendingSettingsUsageCodingPlanIntent();
 
-    expect(navigation.consumeInitialSettingsSection("general")).toBe("usage");
+    // El intent existe todavía, pero la sección usage está oculta en el MVP.
+    expect(navigation.consumeInitialSettingsSection("general")).toBe("general");
     expect(navigation.consumePendingSettingsUsageTab()).toBe("codingPlan");
   });
 
@@ -384,7 +385,7 @@ describe("settingsNavigation", () => {
 
     navigation.writeLastSettingsSectionPreference("plugin");
 
-    expect(localStorage.get("zcode-settings-last-section")).toBe("plugin");
+    expect(localStorage.get("zcode-settings-last-section")).toBe("general");
   });
 
   it("保留 hooks 分区的历史偏好", async () => {

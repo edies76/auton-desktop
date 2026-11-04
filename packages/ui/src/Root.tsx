@@ -47,6 +47,7 @@ import { useWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { SSHDialog } from "@/SSHDialog.js";
 import { SettingsPage } from "@/SettingsPage.js";
+import { AUTON_MVP } from "@/lib/autonMvp.js";
 import { setPendingSettingsSectionIntent } from "@/lib/settingsNavigation.js";
 import { CodingPlanUpgradeDialogProvider } from "@/settings/CodingPlanUpgradeDialogProvider.js";
 import { RewardsProvider } from "@/rewards/RewardsProvider.js";
@@ -171,19 +172,27 @@ export function Root(props: RootProps) {
               <TabStoreProvider>
                 <ProjectDirectoryProvider isDesktop={props.isDesktop}>
                   <DiffsWorkerPoolProvider>
-                    <WebRemoteControlFeatureProvider enabled={props.webRemoteControlFeatureEnabled}>
+                    <WebRemoteControlFeatureProvider
+                      enabled={AUTON_MVP ? false : props.webRemoteControlFeatureEnabled}
+                    >
                       <AssistantCodeCommentFeatureProvider
                         enabled={props.assistantCodeCommentCardsEnabled}
                       >
                         <CodingPlanUpgradeDialogProvider>
-                          <RewardsProvider desktop={props.isDesktop === true}>
-                            <RequestSecurityHost />
-                            <MarketingTouchProvider desktop={props.isDesktop === true}>
-                              <RemoteConnectionProgressProvider>
-                                <RootInner {...props} />
-                              </RemoteConnectionProgressProvider>
-                            </MarketingTouchProvider>
-                          </RewardsProvider>
+                          <RequestSecurityHost />
+                          {AUTON_MVP ? (
+                            <RemoteConnectionProgressProvider>
+                              <RootInner {...props} />
+                            </RemoteConnectionProgressProvider>
+                          ) : (
+                            <RewardsProvider desktop={props.isDesktop === true}>
+                              <MarketingTouchProvider desktop={props.isDesktop === true}>
+                                <RemoteConnectionProgressProvider>
+                                  <RootInner {...props} />
+                                </RemoteConnectionProgressProvider>
+                              </MarketingTouchProvider>
+                            </RewardsProvider>
+                          )}
                         </CodingPlanUpgradeDialogProvider>
                       </AssistantCodeCommentFeatureProvider>
                     </WebRemoteControlFeatureProvider>

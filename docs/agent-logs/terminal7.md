@@ -74,3 +74,21 @@ typecheck, vitest, política de arquitectura y scripts raíz `prepare:remote-ass
 Por qué: el servidor remoto/standalone está fuera del MVP; el desktop no depende del paquete.
 Verificado con: `pnpm typecheck` completo; lockfile actualizado; `git diff --check` limpio.
 No se tocó UI ni runtime del desktop.
+
+## 2026-11-03 — primera mitad de la poda media de UI y módulos
+
+Qué: se ocultaron Automations y Plugin Marketplace del sidebar; se sacaron de Ajustes
+Remote devices, Memory, Usage/billing y Computer use; se quitó el plan/usage y Rewards del
+menú de perfil; se apagaron la conexión remota y el web remote control; se ocultó el botón de
+compartir conversación; y los providers de marketing/rewards dejaron de montarse. Las rutas de
+Automations y Plugin Store ya no abren aunque otro punto emita la intención.
+Por qué: es la Fase 1 de `docs/PODA-MVP.md`; reduce superficie visible y llamadas de red sin
+borrar código que todavía no se pudo verificar con la app abierta.
+Cómo: bandera única `AUTON_MVP` en `packages/ui/src/lib/autonMvp.ts`; el resto son guards y
+listas de secciones ocultas.
+Verificado con: `pnpm typecheck` completo; pruebas de `settingsNavigation`, `settingsPageConfig`,
+`workspaceHeaderActionSection`, `workspaceSidebarWebRemoteMobileLayout` y
+`projectSidebarNavigation` ajustadas y en verde. No se tocó el motor de edición, sesiones,
+proveedores, navegador interno, plan ni el trabajo de A.
+Pendiente: la app sigue sin abrir por el error de versión `0.0`; la segunda mitad (defaults de
+módulos pesados, telemetría, off-peak y borrado real) queda para la siguiente orden.

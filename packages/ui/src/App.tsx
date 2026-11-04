@@ -20,6 +20,7 @@ import { isWorkspaceReadOnly, isWorkspaceTab } from "@/store/tabStore.js";
 import type { TaskChatMessage as TestChatMessage } from "@/lib/taskChatMessageTypes.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useIsOfficeMode } from "@/hooks/useInterfaceMode.js";
+import { AUTON_MVP } from "@/lib/autonMvp.js";
 import { getPathLeaf } from "@/lib/path.js";
 import {
   addPluginStoreOpenListener,
@@ -876,11 +877,15 @@ export function App({
     onExitSettings: handleNavigateToTaskMain,
   });
   const handleNavigateToAutomationsMain = useCallback((target: AutomationsNavigationTarget) => {
+    // Auton no programa tareas desde la app; el código queda para restaurar la superficie.
+    if (AUTON_MVP) return;
     setOpenAutomationId(target.automationId ?? null);
     setOpenAutomationTab(target.automationTab ?? null);
     setWorkspaceMainView("automations");
   }, []);
   const handleNavigateToPluginStoreMain = useCallback(() => {
+    // La tienda de plugins no forma parte del MVP.
+    if (AUTON_MVP) return;
     setPluginStoreOpenVersion((version) => version + 1);
     preserveNextSettingsExit();
     setWorkspaceMainView("plugin-store");
@@ -936,6 +941,7 @@ export function App({
   );
   const handleOpenPluginStoreForScope = useCallback(
     (_target: PluginStoreOpenTarget = {}) => {
+      if (AUTON_MVP) return;
       // 管理范围由市场内视图持有，重复打开只重置市场导航。
       if (workspaceMainView === "plugin-store") {
         setPluginStoreOpenVersion((version) => version + 1);
