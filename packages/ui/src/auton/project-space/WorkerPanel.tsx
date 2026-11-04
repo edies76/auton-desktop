@@ -4,6 +4,7 @@ import {
   ChevronDown,
   CircleAlertIcon,
   GitBranch,
+  ListTodo,
   LoaderCircleIcon,
   PauseCircleIcon,
   Square,
@@ -34,6 +35,9 @@ export interface AutonWorkerPanelProps {
   canStop?: boolean;
   /** Dentro del sidebar existente no pinta otra superficie ni borde propio. */
   embedded?: boolean;
+  /** Entrada al tablero del plan; sin ella el panel es solo de workers. */
+  onOpenPlan?: () => void;
+  planActive?: boolean;
 }
 
 function WorkerStatusIcon({ status }: { status: AutonWorkerView["status"] }) {
@@ -200,6 +204,8 @@ export function AutonWorkerPanel({
   onStopWorker,
   canStop = true,
   embedded = false,
+  onOpenPlan,
+  planActive = false,
 }: AutonWorkerPanelProps) {
   const total = groups
     ? groups.reduce((count, group) => count + group.workers.length, 0)
@@ -226,6 +232,24 @@ export function AutonWorkerPanel({
       data-testid="auton-worker-panel"
       aria-label="Workers"
     >
+      {onOpenPlan ? (
+        <nav className="px-1.5 pt-1" aria-label="Plan del proyecto">
+          <button
+            type="button"
+            data-testid="auton-plan-open"
+            aria-pressed={planActive}
+            onClick={onOpenPlan}
+            className={`flex w-full min-w-0 items-center gap-1.5 rounded-md px-1.5 py-1 text-left text-ui-base font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-input-border-focused ${
+              planActive
+                ? "bg-selected text-foreground"
+                : "text-foreground-subtle hover:bg-surface-hover"
+            }`}
+          >
+            <ListTodo className="size-4 shrink-0" aria-hidden="true" />
+            <span className="min-w-0 flex-1 truncate">Plan</span>
+          </button>
+        </nav>
+      ) : null}
       <header className="flex items-center gap-1 px-2 pb-1 pt-1">
         <button
           type="button"
