@@ -4,6 +4,28 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases públicas.
 
+## [0.14.0] — 2026-11-04
+
+La memoria del proyecto deja de depender del hilo: lo que pasó queda escrito y se puede consultar.
+
+### Añadido
+
+- **Registro durable**: cada cambio del plan (objetivo, piezas, límites y reportes) y cada
+  reversión se anota como un evento con identificador, fecha, fuente y referencias. El
+  registro es append-only y repetir la misma acción no duplica la historia.
+- **Memoria consultable**: `AutonRecall` busca en el registro por texto, identificador,
+  referencia o tipo y devuelve como máximo cinco líneas con su fuente. Si no hay memoria,
+  lo dice.
+- **Índice persistente**: una caché derivada del registro acelera la consulta. Si el
+  registro cambia, el índice se descarta y se reconstruye; el registro sigue siendo la
+  fuente de verdad.
+
+### Seguridad
+
+- El registro redacta credenciales y limita el tamaño de títulos, resúmenes y listas.
+- Nunca guarda el contenido anterior o posterior de un archivo: anota ruta, tamaño y
+  huella, no el texto del cambio.
+
 ## [0.13.0] — 2026-11-03
 
 El turno cierra para dejar escribir; el loop sigue vivo y se parte en varios.
