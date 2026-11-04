@@ -22,6 +22,7 @@ import {
 import { isStaleBranchRuntimeTaskEvent } from "../methods/runtime-command-generation.js";
 import { resolveEnabledProjectMemoryRoot } from "./project-memory.js";
 import { sessionHasLoadedSkill } from "../../agent/loaded-skills.js";
+import { shouldRegisterCoordinatorChannel } from "../../auton/worker-mode.js";
 
 const DEFAULT_SUBAGENT_BACKGROUND_BASH_MAX_MS = 3_600_000;
 const EMPTY_RUNTIME_HOOK_CONFIG = {
@@ -52,8 +53,11 @@ function registerRuntimeBuiltInTools(runtime: AgentRuntimeInternal, deps: AgentR
     includeSkill: Boolean(runtime.skillPort),
     includeAgent: Boolean(runtime.subagentPort),
     includeSendMessage: runtime.subagentPort?.sendMessage !== undefined,
-    includeRespondToCoordinator:
-      runtime.config.taskType === "subagent_child" && Boolean(deps.coordinatorResponsePort),
+    // El canal del coordinador depende del puerto, no de la marca de subagente:
+    // un worker como sesión completa también habla con el orquestador.
+    includeRespondToCoordinator: shouldRegisterCoordinatorChannel({
+      hasCoordinatorPort: Boolean(deps.coordinatorResponsePort),
+    }),
     // submit_result 只在注入了 workflowSubmitPort 的 workflow actor 会话注册。以端口存在为门，
     // 与 taskType 无关：workflow actor 是 workflow_child，其 runtimeScope 目前是 "main"。
     includeSubmitResult: Boolean(deps.workflowSubmitPort),
@@ -183,6 +187,8 @@ function createRuntimeToolExecutor(
     nativeSearchEnhancementsEnabled: runtime.config.nativeSearchEnhancementsEnabled,
     skillPort: deps.skillPort,
     subagentPort: runtime.subagentPort,
+    autonSessionWorkerPort: runtime.autonSessionWorkerPort,
+    autonWorkerMode: runtime.autonWorkerMode,
     coordinatorResponsePort: deps.coordinatorResponsePort,
     workflowSubmitPort: deps.workflowSubmitPort,
     workflowEscalatePort: deps.workflowEscalatePort,

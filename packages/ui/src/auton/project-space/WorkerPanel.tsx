@@ -137,7 +137,7 @@ function WorkerRow({
           data-testid="auton-worker-stop"
           onClick={(event) => {
             event.stopPropagation();
-            onStopWorker(worker.id);
+            onStopWorker(worker.agentId ?? worker.id);
           }}
         >
           <Square className="size-3" />

@@ -40,8 +40,13 @@ const SEND_MESSAGE_TOOL_OUTPUT_SCHEMA = {
 
 const sendMessageHandler: ToolHandler = async (input, context) => {
   const parsed = SendMessageInputSchema.parse(input) as SendMessageInput;
+  const sessionPort = context.autonSessionWorkerPort;
+  const sessionTask = await sessionPort?.getTask?.(parsed.to);
+  // El worker de sesión no vive en el puerto de subagentes: se resuelve el
+  // destino por el puerto que lo conoce, para que el canal sea el mismo.
+  const port = sessionTask ? sessionPort : context.subagentPort;
 
-  if (!context.subagentPort?.sendMessage) {
+  if (!port?.sendMessage) {
     throw createCoreError(
       CoreErrorType.ConfigurationError,
       "Subagent port is not configured for SendMessage",
@@ -55,7 +60,7 @@ const sendMessageHandler: ToolHandler = async (input, context) => {
     );
   }
 
-  return context.subagentPort.sendMessage(
+  return port.sendMessage(
     {
       sessionId: context.sessionId,
       turnId: context.turnId,

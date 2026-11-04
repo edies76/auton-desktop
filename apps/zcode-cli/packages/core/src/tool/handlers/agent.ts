@@ -16,6 +16,9 @@ import {
 } from "@zcode/contracts";
 import { TASK_TOOL_NAME } from "../compat.js";
 import { rememberAgentItem } from "../../auton/journal.js";
+import { resolveAutonWorkerMode } from "../../auton/worker-mode.js";
+import { resolveAutonWorkerEngine } from "../../auton/workerEngine.js";
+import { AUTON_WORKER_AGENT_TYPE } from "../../auton/workerPolicy.js";
 import type { ToolEntry, ToolHandler } from "../types.js";
 
 const MAX_AGENT_MODEL_BYTES = 120_000;
@@ -168,8 +171,23 @@ function formatAgentOutputForModel(output: unknown): string {
 const agentHandler: ToolHandler = async (input, context) => {
   const parsed = AgentInputSchema.parse(input) as AgentInput;
   const agentType = parsed.subagent_type ?? AgentType.GeneralPurpose;
+  // Un worker Auton puede correr como subagente (lo de siempre) o como sesión
+  // completa. El interruptor del runtime manda; el despacho puede pedirlo.
+  const workerMode = resolveAutonWorkerMode({
+    requested: parsed.worker_mode,
+    env: context.autonWorkerMode,
+  });
+  const engine = resolveAutonWorkerEngine(parsed.engine);
+  // Muse Code es un motor externo de sesión: no tiene sentido por la ruta de
+  // subagente, así que su elección fuerza el worker de sesión.
+  const wantsSession =
+    agentType === AUTON_WORKER_AGENT_TYPE &&
+    (workerMode === "session" || engine === "muse");
+  const subagentPort = wantsSession
+    ? (context.autonSessionWorkerPort ?? context.subagentPort)
+    : context.subagentPort;
 
-  if (!context.subagentPort) {
+  if (!subagentPort) {
     throw createCoreError(
       CoreErrorType.ConfigurationError,
       "SubagentPort is not configured for Agent tool",
@@ -192,6 +210,8 @@ const agentHandler: ToolHandler = async (input, context) => {
     description: parsed.description,
     effort: parsed.effort,
     thinkingLevel: parsed.thinking_level,
+    mode: parsed.mode,
+    ...(parsed.engine ? { engine: parsed.engine } : {}),
     prompt: parsed.prompt,
     callerCanReadOutputFile: canReadBackgroundOutputFile(context.providerVisibleToolNames),
     workingDirectory: context.workingDirectory,
@@ -204,7 +224,7 @@ const agentHandler: ToolHandler = async (input, context) => {
       turnId: context.turnId,
     } as TraceContext,
   };
-  const output = await context.subagentPort.launch(
+  const output = await subagentPort.launch(
     {
       ...request,
       runInBackground: parsed.run_in_background === true,

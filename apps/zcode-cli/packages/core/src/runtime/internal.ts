@@ -117,6 +117,9 @@ export interface AgentRuntimeInternal
   mcpToolsSignature?: string;
   mcpToolListRevision?: number;
   subagentPort?: SubagentPort;
+  /** Worker como sesión completa; presente solo con el interruptor en `session`. */
+  autonSessionWorkerPort?: SubagentPort;
+  autonWorkerMode?: "subagent" | "session";
   getAgentDefinitions: NonNullable<AgentRuntimeDeps["getAgentDefinitions"]>;
   prepareAgentDefinitions: (input: {
     signal: AbortSignal;

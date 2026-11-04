@@ -49,11 +49,33 @@ El detalle técnico vive en el canal de cada pieza. El hilo conserva la historia
 
 Cada worker puede hablar con el orquestador a mitad del encargo, en texto libre: contar lo que encontró, pedir un dato, proponer otro enfoque, avisar un bloqueo o responder algo que el orquestador le preguntó.
 
+Por defecto cada programador corre como una **sesión completa de ZCode**: tiene su propio espacio de trabajo y su navegador para construir y probar lo suyo, sin pisar a sus compañeros ni el proyecto del orquestador.
+
 Ese mensaje llega al orquestador como una interrupción de alta prioridad, por encima de los avisos de estado y por debajo de lo que escribes tú. El orquestador contesta por el mismo canal: da el dato, corrige el rumbo, pide evidencia o detiene la pieza y la relanza con un encargo mejor.
 
 La conversación se ve en el mismo hilo, dentro del bloque de esa pieza. No hace falta abrir nada ni cambiar de pestaña para seguirla.
 
 Cuando el orquestador necesita una decisión que el worker no puede tomar, marca el mensaje como **decisión requerida**: esa pieza se detiene antes de continuar y contesta. Las demás siguen su curso. Si la decisión es tuya, el orquestador te la trae y deja la pieza esperando mientras adelanta otro frente.
+
+## 4.2. Cada encargo tiene un modo
+
+Además de cuánto esfuerzo pone, un encargo lleva un modo: construir, leer, investigar, depurar o refactorizar. El orquestador lo elige y lo dice.
+
+Un encargo de lectura explora y devuelve contexto con rutas, sin tocar un solo archivo. Uno de investigación compara alternativas y termina en una recomendación con razones, no en una lista de enlaces. Uno de depuración trae el comando que reproduce el fallo y la causa señalada, y deja el arreglo para un encargo de construcción. Uno de refactor cambia la forma manteniendo los tests en verde.
+
+Pedir contexto es barato y no ensucia el proyecto. Por eso el orquestador lee para decidir y manda leer para tener contexto, en vez de explorarlo todo a ciegas.
+
+## 4.3. El motor se elige por encargo
+
+Un encargo puede correr en el motor de casa (ZCode) o en Muse Code. El orquestador lo elige y lo dice. El contrato no cambia: el mismo brief, el mismo modo, la misma exigencia de evidencia y el mismo reporte de cierre.
+
+Muse Code trabaja en su propia carpeta y devuelve su reporte al terminar. Mantiene una sesión viva: el orquestador puede mandarle otro mensaje y el worker sigue con el contexto acumulado, también a mitad de turno como steer. Si no está instalado o autenticado, el despacho lo dice con el motivo exacto y no finge que funcionó.
+
+## 4.4. Puedes seguir hablando con un worker
+
+Un worker no es una caja que se cierra al entregar. Mientras trabaja, el orquestador puede mandarle más instrucciones en la misma sesión, y cuando termina puede reanudarlo en la misma carpeta para una segunda ronda, conservando lo que ya sabía.
+
+En el detalle del worker ves su conversación completa: lo que pidió el orquestador, lo que respondió el worker, las herramientas que usó y cómo cerró. Cada worker queda además en un índice del proyecto, con su motor, su sesión, su carpeta y sus tiempos.
 
 ## 5. Comprueba antes de cerrar
 

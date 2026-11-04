@@ -181,10 +181,13 @@ async function stopLocalAgentBackgroundTask(
   this: AgentRuntimeInternal,
   target: TypedRuntimeBackgroundStopTarget,
 ): Promise<RuntimeBackgroundStopResult> {
-  if (!this.subagentPort?.stopTask) {
+  // Un worker de sesión vive en su propio puerto; el de subagentes no lo conoce.
+  const sessionTask = await this.autonSessionWorkerPort?.getTask?.(target.taskId);
+  const port = sessionTask ? this.autonSessionWorkerPort : this.subagentPort;
+  if (!port?.stopTask) {
     return unsupportedBackgroundStopResult(target);
   }
-  const snapshot = await this.subagentPort.stopTask(target.taskId);
+  const snapshot = await port.stopTask(target.taskId);
   if (!snapshot) {
     return {
       ok: false,

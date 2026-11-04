@@ -19,6 +19,7 @@ import {
   isCoreError,
   traceContextToLogContext,
   type AgentBackgroundedOutput,
+  type AutonWorkerTaskMode,
   type BackgroundResultOriginMeta,
   type AgentCompletedOutput,
   type AgentOutput,
@@ -84,6 +85,8 @@ export interface ExploreSubagentRuntimeRequest {
   effort?: WorkerEffortPolicy;
   /** Nivel de thinking pedido por el orquestador; viaja distinto del esfuerzo. */
   thinkingLevel?: string;
+  /** Clase de trabajo del worker Auton; distinta del esfuerzo. */
+  mode?: AutonWorkerTaskMode;
   sessionId: SessionId;
   description: string;
   maxTurns?: number;
@@ -1190,6 +1193,7 @@ async function runAgentToCompletion(
         return registry.get(lifecycle.agentId)?.isBackgrounded === true;
       },
       disallowedTools: lifecycle.profile.disallowedTools,
+      ...(request.mode === undefined ? {} : { mode: request.mode }),
       sessionId: lifecycle.childSessionId,
       description: request.description,
       maxTurns: lifecycle.profile.maxTurns,
@@ -1207,6 +1211,7 @@ async function runAgentToCompletion(
               brief: request.prompt,
               description: request.description,
               reasoningLevel: request.thinkingLevel,
+              ...(request.mode === undefined ? {} : { mode: request.mode }),
             })
             : lifecycle.profile.systemPrompt,
       workingDirectory: request.workingDirectory,

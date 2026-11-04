@@ -54,6 +54,8 @@ export class ToolExecutorImpl implements ToolExecutor {
       nativeSearchEnhancementsEnabled: options.nativeSearchEnhancementsEnabled,
       skillPort: options.skillPort,
       subagentPort: options.subagentPort,
+      autonSessionWorkerPort: options.autonSessionWorkerPort,
+      autonWorkerMode: options.autonWorkerMode,
       coordinatorResponsePort: options.coordinatorResponsePort,
       workflowSubmitPort: options.workflowSubmitPort,
       workflowEscalatePort: options.workflowEscalatePort,
