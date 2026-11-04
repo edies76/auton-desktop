@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  AutonSprintBoardLive,
   AutonWorkerPanel,
   buildAutonWorkerGroups,
   projectAutonWorkers,
@@ -39,6 +40,16 @@ function AutonWorkersSidebarContents({
   const [workerLease, setWorkerLease] = useState<SessionLease | null>(null);
   const focusedWorkerId = useAutonWorkerFocusStore((state) => state.selectedWorkerId);
   const listWorkerId = useAutonWorkerFocusStore((state) => state.listWorkerId);
+  const [showPlan, setShowPlan] = useState(false);
+  const planProject = useMemo(
+    () => ({
+      id: workspacePath,
+      name: workspacePath.split(/[\\/]/).filter(Boolean).at(-1) ?? workspacePath,
+      path: workspacePath,
+      lastActiveAt: 0,
+    }),
+    [workspacePath],
+  );
   const projection = useConversationProjection(lease);
   const workerProjection = useConversationProjection(workerLease);
   const rows = projection.snapshot?.rows.window ?? [];
@@ -158,15 +169,23 @@ function AutonWorkersSidebarContents({
   return (
     <div className="flex min-h-0 flex-1 flex-col" data-testid="auton-workers-sidebar">
       <div className="min-h-0 flex-1">
-        <AutonWorkerPanel
-          groups={groups}
-          now={now}
-          selectedWorkerId={focusedWorkerId}
-          onOpenWorker={openWorker}
-          onOpenSubagent={openSubagent}
-          onStopWorker={stopWorker}
-          embedded
-        />
+        {showPlan ? (
+          <div className="h-full min-h-0" data-testid="auton-workers-sidebar-plan">
+            <AutonSprintBoardLive project={planProject} onBack={() => setShowPlan(false)} />
+          </div>
+        ) : (
+          <AutonWorkerPanel
+            groups={groups}
+            now={now}
+            selectedWorkerId={focusedWorkerId}
+            onOpenWorker={openWorker}
+            onOpenSubagent={openSubagent}
+            onStopWorker={stopWorker}
+            onOpenPlan={() => setShowPlan(true)}
+            planActive={showPlan}
+            embedded
+          />
+        )}
       </div>
     </div>
   );
