@@ -6,7 +6,7 @@ import {
   ListTodo,
   RotateCcw,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button.js";
 import { AutonEvidenceInspector } from "./EvidenceInspector.js";
 import type { AutonProject } from "./model.js";
@@ -97,6 +97,9 @@ function SprintCard({
   );
 }
 
+/** Hasta este número de tarjetas la columna se queda expandida; al pasarlo se recoge sola. */
+const COLUMN_AUTO_EXPAND_MAX = 5;
+
 function BoardColumn({
   status,
   label,
@@ -111,10 +114,22 @@ function BoardColumn({
   onSelect: (id: string) => void;
 }) {
   const meta = AUTON_SPRINT_STATUS_META[status];
-  // Cada columna se reduce por sí sola: una columna larga (Terminados con
-  // 15+) alarga todo el tablero. Arranca recogida, con nombre y contador
-  // visibles; la persona abre solo la columna que quiere ver.
-  const [open, setOpen] = useState(false);
+  // Regla de tamaño: con 5 o menos tarjetas la columna permanece expandida;
+  // al pasar de 5 se recoge sola, porque una columna larga (Terminados con
+  // 15+) alarga todo el tablero. El cruce del umbral manda una sola vez: si
+  // la persona abre a mano una columna de más de 5, no se le vuelve a cerrar
+  // hasta que el conteo cruce el umbral de nuevo.
+  const [open, setOpen] = useState(items.length <= COLUMN_AUTO_EXPAND_MAX);
+  const previousCountRef = useRef(items.length);
+  useEffect(() => {
+    const previous = previousCountRef.current;
+    previousCountRef.current = items.length;
+    if (previous <= COLUMN_AUTO_EXPAND_MAX && items.length > COLUMN_AUTO_EXPAND_MAX) {
+      setOpen(false);
+    } else if (previous > COLUMN_AUTO_EXPAND_MAX && items.length <= COLUMN_AUTO_EXPAND_MAX) {
+      setOpen(true);
+    }
+  }, [items.length]);
   const bodyId = `auton-col-body-${status}`;
   return (
     <section
@@ -124,7 +139,18 @@ function BoardColumn({
       data-open={open ? "true" : "false"}
       aria-label={label}
     >
-      <header className="flex items-center gap-2 px-3 pt-3 pb-2">
+      {/* Todo el encabezado es el botón: nombre, contador o flecha, cualquier
+          punto expande o reduce la columna. */}
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        aria-expanded={open}
+        aria-controls={bodyId}
+        aria-label={open ? `Reducir ${label}` : `Expandir ${label}`}
+        title={open ? `Reducir ${label}` : `Expandir ${label}`}
+        data-testid={`auton-col-toggle-${status}`}
+        className="flex w-full cursor-pointer items-center gap-2 rounded-t-lg px-3 pt-3 pb-2 text-left transition-colors hover:bg-surface-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-input-border-focused"
+      >
         <span className={`size-1.5 shrink-0 rounded-full ${meta.dotClass}`} aria-hidden="true" />
         <span className="min-w-0 flex-1 truncate text-ui-sm font-medium text-foreground-subtle">
           {label}
@@ -132,24 +158,13 @@ function BoardColumn({
         <span className="shrink-0 text-ui-xs tabular-nums text-foreground-subtlest">
           {items.length}
         </span>
-        <button
-          type="button"
-          onClick={() => setOpen((value) => !value)}
-          aria-expanded={open}
-          aria-controls={bodyId}
-          aria-label={open ? `Reducir ${label}` : `Expandir ${label}`}
-          title={open ? `Reducir ${label}` : `Expandir ${label}`}
-          data-testid={`auton-col-toggle-${status}`}
-          className="-mr-1 shrink-0 rounded p-0.5 text-foreground-subtlest transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-input-border-focused"
-        >
-          <ChevronDown
-            className={`size-3.5 transition-transform duration-500 ease-in-out motion-reduce:transition-none ${
-              open ? "rotate-180" : ""
-            }`}
-            aria-hidden="true"
-          />
-        </button>
-      </header>
+        <ChevronDown
+          className={`size-3.5 shrink-0 text-foreground-subtlest transition-transform duration-500 ease-in-out motion-reduce:transition-none ${
+            open ? "rotate-180" : ""
+          }`}
+          aria-hidden="true"
+        />
+      </button>
       {/* Deslizamiento con grid-rows 0fr→1fr (mismo patrón que
           ModelEditorAdvanced): las tarjetas quedan montadas, así que al
           reabrir no se pierde el sprint elegido; recogida la columna sale
