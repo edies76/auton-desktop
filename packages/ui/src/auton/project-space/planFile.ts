@@ -90,8 +90,8 @@ export const AUTON_SPRINT_STATUS_META: Record<
 > = {
   ready: {
     label: "Pendiente",
-    badgeClass: "bg-secondary text-secondary-foreground",
-    dotClass: "bg-muted-foreground",
+    badgeClass: "bg-secondary text-foreground-subtle",
+    dotClass: "bg-muted-foreground/50",
   },
   running: {
     label: "Activo",
@@ -100,28 +100,28 @@ export const AUTON_SPRINT_STATUS_META: Record<
   },
   waiting: {
     label: "Esperando",
-    badgeClass: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
-    dotClass: "bg-amber-500",
+    badgeClass: "bg-secondary text-foreground-subtle",
+    dotClass: "border border-muted-foreground bg-transparent",
   },
   blocked: {
     label: "Bloqueado",
-    badgeClass: "bg-destructive/10 text-destructive",
-    dotClass: "bg-destructive",
+    badgeClass: "bg-secondary text-foreground",
+    dotClass: "bg-foreground",
   },
   done: {
     label: "Terminado",
-    badgeClass: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
-    dotClass: "bg-emerald-500",
+    badgeClass: "bg-secondary text-foreground-subtle",
+    dotClass: "bg-foreground/60",
   },
   dropped: {
     label: "Descartado",
-    badgeClass: "bg-secondary text-foreground-subtle",
-    dotClass: "bg-muted-foreground",
+    badgeClass: "bg-secondary text-foreground-subtlest",
+    dotClass: "bg-muted-foreground/30",
   },
   not_evaluable: {
     label: "No evaluable",
-    badgeClass: "bg-violet-500/15 text-violet-600 dark:text-violet-300",
-    dotClass: "bg-violet-500",
+    badgeClass: "bg-secondary text-foreground-subtle",
+    dotClass: "border border-foreground-subtle bg-transparent",
   },
 };
 
