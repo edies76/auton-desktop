@@ -6,11 +6,9 @@ import {
   CheckCircle2Icon,
   CircleAlertIcon,
   CircleDashedIcon,
-  LayoutDashboard,
   LoaderCircleIcon,
   PauseCircleIcon,
 } from "lucide-react";
-import { AutonSpaceLive } from "@/auton/index.js";
 import { Button } from "@/components/ui/button.js";
 import { useSessionSubagents } from "@/hooks/useSessionSubagents.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
@@ -149,17 +147,7 @@ const SubagentDirectoryContents = memo(function SubagentDirectoryContents({
   const { intl } = useZCodeIntl();
   const { layer } = useV4Conversation();
   const [lease, setLease] = useState<SessionLease | null>(null);
-  const [showSpace, setShowSpace] = useState(false);
   const projection = useConversationProjection(lease);
-  const project = useMemo(
-    () => ({
-      id: tab.parentSessionId,
-      name: tab.workspacePath.split(/[\\/]/).filter(Boolean).at(-1) ?? "Proyecto",
-      path: tab.workspacePath,
-      lastActiveAt: Date.now(),
-    }),
-    [tab.parentSessionId, tab.workspacePath],
-  );
   const subagents = projection.snapshot?.subagents;
   useEffect(() => {
     const nextLease = layer.acquire(tab.parentSessionId);
@@ -186,30 +174,8 @@ const SubagentDirectoryContents = memo(function SubagentDirectoryContents({
         <h2 className="text-ui-base font-semibold text-foreground">
           {intl.formatMessage({ id: "subagentDirectory.title" })}
         </h2>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          aria-pressed={showSpace}
-          onClick={() => setShowSpace((current) => !current)}
-          data-testid="auton-space-toggle"
-        >
-          <LayoutDashboard className="size-3.5" />
-          {showSpace ? "Workers" : "Espacio"}
-        </Button>
       </div>
-      {showSpace ? (
-        <div className="min-h-0 flex-1">
-          <AutonSpaceLive
-            lease={lease}
-            project={project}
-            onBack={() => setShowSpace(false)}
-            showComposer={false}
-            backLabel="Workers"
-          />
-        </div>
-      ) : (
-        <div className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
+      <div className="min-h-0 flex-1 overflow-y-auto px-2 py-3">
         <section>
           <h3 className="px-3 pb-1.5 text-ui-sm font-medium text-foreground-subtlest">
             {intl.formatMessage({ id: "subagentDirectory.running" })} · {running.length}
@@ -252,8 +218,7 @@ const SubagentDirectoryContents = memo(function SubagentDirectoryContents({
             {intl.formatMessage({ id: "subagentDirectory.loadFailed" })}
           </p>
         ) : null}
-        </div>
-      )}
+      </div>
     </div>
   );
 });

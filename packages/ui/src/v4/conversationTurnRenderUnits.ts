@@ -388,7 +388,11 @@ function normalizeRenderUnitPosition(
   const isLastTurn = index === total - 1;
   const forceOpenHistory = shouldForceOpenAbnormalHistory(unit.header, options.sessionPhase);
   const hasAutonWorker = hasAutonWorkerRows(unit.assistantWorkRows);
-  const autonLoopOpen = hasAutonWorker && unit.isRunning;
+  const autonLoopOpen =
+    hasAutonWorker &&
+    (unit.isRunning ||
+      unit.workStatus?.state === "running" ||
+      unit.workSegments?.at(-1)?.workStatus?.state === "running");
   const assistantHistoryDefaultOpen =
     unit.workSegments && unit.workSegments.length > 0
       ? !unit.timelineOnly &&

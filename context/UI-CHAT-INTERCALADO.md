@@ -82,6 +82,11 @@ regla (`following` / `isAtBottom`): no se reimplementa, se respeta y se prueba.
 - El **loop** es el bloque de trabajo con su contador. Se abre mientras hay
   trabajo y se colapsa cuando termina. El header se ancla al primer bloque de
   trabajo, no al primer texto.
+- **El turno cierra aunque queden workers**: el compositor queda libre y el
+  humano puede escribir y enviar. El loop sigue abierto con su contador mientras
+  el worker vive; el evento del worker abre un turno nuevo.
+- **Varios loops**: cada narración después de un grupo de tools abre un bloque
+  nuevo; el hilo muestra varios loops colapsables intercalados, no uno por turno.
 - **Fuera del loop**: la narración del orquestador, el reasoning con el que
   planea/decide/traduce y el follow-up ("ya lo mandé, ¿qué quieres que haga
   cuando llegue?"). Un turno reanudado abre con el evento ("me llegó…, déjame

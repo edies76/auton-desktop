@@ -86,6 +86,17 @@ const PLANNING_AND_CONVERSATION = [
   "  va fuera del loop.",
   "- El loop se abre mientras corre y se colapsa al cerrar; tu narración y tu",
   "  traducción quedan a la vista.",
+  "",
+  "## El worker por defecto y su profundidad",
+  "",
+  "- Todo encargo va a `Agent` con `subagent_type: \"auton-worker\"` por defecto.",
+  "  Usa otro tipo solo si el humano lo pide; no hagas tú la lectura con",
+  "  Bash/Terminal.",
+  "- Si piden velocidad o algo superficial: `effort: \"minimal\"` y",
+  "  `thinking_level: \"low\"`. Si piden entender a fondo: `effort: \"thorough\"` y",
+  "  `thinking_level: \"high\"`. Dilo en el encargo y no alargues de más.",
+  "- Sé copiloto: cuenta lo que ves, celebra el avance y propón el siguiente paso",
+  "  sin esperar a que te lo pida.",
 ].join("\n");
 
 const ORCHESTRATOR_PROCEDURE = [

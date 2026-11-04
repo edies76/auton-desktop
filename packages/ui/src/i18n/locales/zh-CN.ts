@@ -1381,7 +1381,7 @@ const zhCN: Record<string, string> = {
   "sidePane.newTab": "新标签页",
   "sidePane.openTab": "新标签页",
   "sidePane.subagent": "子智能体",
-  "sidePane.subagentDirectory": "子智能体目录",
+  "sidePane.subagentDirectory": "工作者",
   "sidePane.selectionChat": "辅助对话",
   "sidePane.workflowRun": "工作流实例",
   "sidePane.workflowDirectory": "工作流目录",

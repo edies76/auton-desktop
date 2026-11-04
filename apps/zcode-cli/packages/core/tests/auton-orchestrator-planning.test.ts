@@ -91,6 +91,16 @@ describe("el orquestador que sabe planear y conversar", () => {
     expect(staticSection).toContain("se colapsa al cerrar");
   });
 
+  it("manda al worker de ZCode por defecto y ajusta profundidad y thinking", () => {
+    expect(staticSection).toContain('subagent_type: "auton-worker"');
+    expect(staticSection).toContain("no hagas tú la lectura");
+    expect(staticSection).toContain('effort: "minimal"');
+    expect(staticSection).toContain('thinking_level: "low"');
+    expect(staticSection).toContain('effort: "thorough"');
+    expect(staticSection).toContain('thinking_level: "high"');
+    expect(staticSection).toContain("Sé copiloto");
+  });
+
   it("el escaneo del proyecto entra en la sección y el análisis pendiente se anuncia", () => {
     const root = fixture();
     const section = buildOrchestratorSection({ workingDirectory: root }).content;

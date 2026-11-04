@@ -106,3 +106,13 @@ Verificado en vivo: sesión "Prueba de solo lectura..." con el loop "Worked for 
 narración y thinking fuera, y el compositor sin Computer Use. Capturas en el scratch
 (`e2e-turn-interleaved.png`, `e2e-turn-collapsed.png`). Pruebas: 43 de unidades y 106 del hilo.
 
+## 2026-11-03 — el turno cierra y los loops se multiplican
+
+Qué: el turno termina en cuanto el orquestador acaba de hablar, aunque queden workers; el compositor
+queda libre. El loop sigue abierto con su contador mientras el worker vive y el evento abre un turno
+nuevo. Cada narración entre grupos de tools abre otro loop colapsable. El prompt manda
+`auton-worker` por defecto y ajusta effort/thinking a velocidad o profundidad, con tono copiloto.
+Por qué: el humano quedaba bloqueado con el input en "queue follow-up" mientras esperaba un worker.
+Verificado con: core 110 (turno cierra y el evento despierta; dispatch real), hilo 106, unidades 44.
+Pendiente: picker de proyectos vacíos, Grok, límites de workers.
+
