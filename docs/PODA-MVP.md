@@ -18,7 +18,7 @@ Tres niveles de poda, del más barato al más caro:
 | **Web remote control** | Relay, device id, ajustes, servidor propio | Apagar | Deja de anunciarse y de abrir conexiones |
 | **Remote project entries** | Tablas, diálogos, estados offline | Ocultar | Ya no hay entrada para añadir remotos |
 | **Source servers / connection profiles** | Ajustes avanzados | Ocultar | Solo aparece si vienes de ZCode |
-| **Conversation share / web-share** | Paquete entero, rutas públicas, permisos | Apagar | Compartir un chat no es el producto |
+| **Conversation share / web-share** | Paquete entero, rutas públicas, permisos | Borrar (hecho) | Compartir un chat no es el producto; paquete `web-share` retirado |
 | **Automations** | Vistas, cron, ejecuciones, tabla propia | Ocultar → apagar | Ya fuera de la navegación; el motor sigue dormido |
 | **Off-peak tasks** | Programación diferida | Apagar | Nadie programa trabajo a las 3 AM en una demo |
 | **Plugin marketplace** | Catálogo, permisos, actualizaciones, caché | Ocultar → apagar | Ya fuera de la navegación; la caché sigue en disco |

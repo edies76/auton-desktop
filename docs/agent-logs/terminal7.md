@@ -38,3 +38,12 @@ Por qué: remoto/móvil está fuera del MVP; no es UI compartida, ni motor, ni s
 Verificado con: 0 referencias a `packages/android` desde código/configuración que se queda;
 `git diff --cached --check` limpio; solo se tocó `packages/android` y este log.
 No se tocó runtime del desktop ni se borró código de la app.
+
+## 2026-11-03 — poda pequeña de conversation share
+
+Qué: se retiraron los paquetes `packages/web-share` y `packages/share-ui`, el script
+`scripts/dev-web-share-env.mjs` y el doc `docs/conversation-share-v1.md`. También se quitó el caso
+de test que dependía del script retirado y los scripts raíz `dev:web-share:*` / `build:web-share`.
+Por qué: compartir un chat no es parte del MVP; era la superficie de publicación pública de share.
+Verificado con: 0 importaciones de `@zcode/web-share`/`@zcode/share-ui` desde el código que se
+queda; lockfile actualizado; `git diff --check` limpio. No se tocó runtime del desktop ni UI.
