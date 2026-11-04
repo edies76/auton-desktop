@@ -277,6 +277,9 @@ export function createAutonSessionWorkerPort(
           transcript,
         );
         if (alreadyTerminal()) return result;
+        // El worker deja de estar activo antes de publicar el cierre: un
+        // SendMessage concurrente debe reanudarlo, no intentar un steer.
+        if (!handle.keepAlive) active.delete(agentId);
         const engineSessionId = handle.getEngineSessionId?.() ?? sessionId;
         options.registry.update(agentId, (task) => ({
           ...task,
@@ -319,6 +322,7 @@ export function createAutonSessionWorkerPort(
         return result;
       } catch (error) {
         if (alreadyTerminal()) throw error;
+        if (!handle.keepAlive) active.delete(agentId);
         const message = error instanceof Error ? error.message : String(error);
         options.registry.update(agentId, (task) => ({
           ...task,

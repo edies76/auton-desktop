@@ -94,8 +94,7 @@ describe("worker como sesión completa", () => {
     const h = harness();
     const output = (await h.port.launch(request())) as { agentId: string };
     await vi.waitFor(() => expect(h.registry.get(output.agentId)?.status).toBe("completed"));
-
-    expect(h.notifications).toHaveLength(1);
+    await vi.waitFor(() => expect(h.notifications).toHaveLength(1));
     expect(h.notifications[0]).toContain("terminó");
   });
 
