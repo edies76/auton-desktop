@@ -164,5 +164,9 @@ sección aparte. El loop se abre con su contador mientras corre y se colapsa al
 terminar; la narración y el follow-up quedan fuera. El reasoning de
 planificación/traducción va fuera y el de ejecución dentro. Un turno reanudado
 abre con el evento fuera, trabaja en el loop y traduce fuera. El compositor ya no
-muestra Computer Use. Los turnos de ZCode sin firma no cambian. Pendiente: mapeo
-propio de systemEvent/evidence/plan y el estilo Grok.
+muestra Computer Use. Los turnos de ZCode sin firma no cambian. El turno cierra
+aunque queden workers: el loop sigue abierto con su contador y el evento del
+worker abre un turno nuevo; varios grupos de tools producen varios loops
+intercalados. El prompt manda `auton-worker` por defecto y ajusta effort/thinking
+a la velocidad o profundidad pedida. Pendiente: mapeo propio de
+systemEvent/evidence/plan, picker de proyectos vacíos y estilo Grok.

@@ -14,7 +14,11 @@ intercalan con su narración y con el trabajo de los workers.
   avanza mientras trabaja. Si trabajan dos, ves dos filas, cada una con su reloj.
 - **El loop**: el bloque de trabajo se abre con su contador mientras el worker
   corre y se colapsa al terminar. La narración del orquestador y lo que te dice
-  después quedan fuera del bloque.
+  después quedan fuera del bloque. Si hay varias narraciones con trabajo entre
+  ellas, ves **varios loops** intercalados.
+- **Puedes escribir siempre**: el turno del orquestador cierra en cuanto termina
+  de hablar, aunque un worker siga trabajando. El loop se queda abierto con su
+  contador y tú puedes mandar otro mensaje sin esperar ni inyectarlo.
 - **El aviso del worker**: cuando un worker necesita algo del orquestador, su
   mensaje aparece como una fila más del trabajo. El orquestador decide si lo
   responde él o te lo pregunta; si la decisión es tuya, usa el bloque nativo de
