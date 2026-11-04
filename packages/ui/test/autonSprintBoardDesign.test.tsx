@@ -107,6 +107,25 @@ describe("tablero de sprints — diseño minimalista", () => {
     expect(doneColumn.innerHTML).not.toContain("bg-primary");
   });
 
+  it("el detalle del objetivo empieza plegado y se abre con el botón", () => {
+    renderUi(<AutonSprintBoard project={PROJECT} plan={PLAN} onBack={() => undefined} />);
+
+    expect(screen.queryByTestId("auton-sprint-goal-detail")).toBeNull();
+    fireEvent.click(screen.getByTestId("auton-sprint-goal-toggle"));
+    expect(screen.getByTestId("auton-sprint-goal-detail").textContent).toContain(
+      "Que estudiar sea menos fricción.",
+    );
+  });
+
+  it("el inspector va debajo de las columnas, no al lado", () => {
+    renderUi(<AutonSprintBoard project={PROJECT} plan={PLAN} onBack={() => undefined} />);
+
+    const columns = screen.getByTestId("auton-sprint-columns");
+    const below = screen.getByTestId("auton-sprint-inspector-below");
+    expect(columns.parentElement?.contains(below)).toBe(true);
+    expect(below.querySelector('[data-testid="auton-evidence-inspector"]')).toBeTruthy();
+  });
+
   it("muestra las 7 columnas del plan", () => {
     renderUi(<AutonSprintBoard project={PROJECT} plan={PLAN} onBack={() => undefined} />);
 
@@ -114,7 +133,7 @@ describe("tablero de sprints — diseño minimalista", () => {
     const columns = screen.getByTestId("auton-sprint-columns");
     expect(columns.children).toHaveLength(7);
     // Sin barra horizontal: las columnas envuelven hacia abajo (auto-fill).
-    expect(columns.className).toContain("repeat(auto-fill,minmax(216px,1fr))");
+    expect(columns.className).toContain("repeat(auto-fill,minmax(180px,1fr))");
     expect(columns.className).not.toContain("overflow-x-auto");
     for (const column of AUTON_SPRINT_COLUMNS) {
       expect(screen.getByTestId(`auton-sprint-column-${column.status}`)).toBeTruthy();

@@ -71,7 +71,9 @@ function SprintCard({
           {item.title}
         </p>
         {facts.length > 0 ? (
-          <p className="mt-1 truncate text-ui-xs text-foreground-subtlest">{facts.join(" · ")}</p>
+          <p className="mt-1 text-ui-xs leading-relaxed break-words text-foreground-subtlest">
+            {facts.join(" · ")}
+          </p>
         ) : null}
         <div className="mt-2 flex items-center gap-3 text-ui-xs tabular-nums text-foreground-subtlest">
           <span className="flex items-center gap-1" title="Evidencia declarada">
@@ -157,6 +159,7 @@ export function AutonSprintBoard({
   onBack,
 }: AutonSprintBoardProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [goalDetailOpen, setGoalDetailOpen] = useState(false);
   const selected = useMemo(
     () => plan?.items.find((item) => item.id === selectedId) ?? null,
     [plan, selectedId],
@@ -218,22 +221,41 @@ export function AutonSprintBoard({
             <p className="mt-1 text-ui-base font-medium text-foreground">
               {plan.goalTitle ?? "Sin título de objetivo"}
             </p>
-            {plan.statement ? (
-              <p className="mt-1 max-w-3xl text-ui-sm leading-relaxed text-foreground-subtle">
-                {plan.statement}
-              </p>
-            ) : null}
-            {plan.done.length > 0 ? (
-              <p className="mt-2 text-ui-xs leading-relaxed text-foreground-subtle">
-                <span className="text-foreground-subtlest">Se sabrá terminado por: </span>
-                {plan.done.join(" · ")}
-              </p>
-            ) : null}
-            {plan.constraints.length > 0 ? (
-              <p className="mt-1 text-ui-xs leading-relaxed text-foreground-subtle">
-                <span className="text-foreground-subtlest">Restricciones: </span>
-                {plan.constraints.join(" · ")}
-              </p>
+            {plan.statement || plan.done.length > 0 || plan.constraints.length > 0 ? (
+              <>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="mt-1.5 -ml-2"
+                  onClick={() => setGoalDetailOpen((open) => !open)}
+                  aria-expanded={goalDetailOpen}
+                  data-testid="auton-sprint-goal-toggle"
+                >
+                  {goalDetailOpen ? "Ocultar detalle" : "Ver detalle del objetivo"}
+                </Button>
+                {goalDetailOpen ? (
+                  <div data-testid="auton-sprint-goal-detail">
+                    {plan.statement ? (
+                      <p className="mt-1 max-w-3xl text-ui-sm leading-relaxed text-foreground-subtle">
+                        {plan.statement}
+                      </p>
+                    ) : null}
+                    {plan.done.length > 0 ? (
+                      <p className="mt-2 text-ui-xs leading-relaxed text-foreground-subtle">
+                        <span className="text-foreground-subtlest">Se sabrá terminado por: </span>
+                        {plan.done.join(" · ")}
+                      </p>
+                    ) : null}
+                    {plan.constraints.length > 0 ? (
+                      <p className="mt-1 text-ui-xs leading-relaxed text-foreground-subtle">
+                        <span className="text-foreground-subtlest">Restricciones: </span>
+                        {plan.constraints.join(" · ")}
+                      </p>
+                    ) : null}
+                  </div>
+                ) : null}
+              </>
             ) : null}
             {summary ? (
               <div
@@ -253,11 +275,12 @@ export function AutonSprintBoard({
             ) : null}
           </section>
 
-          <div className="grid min-h-0 grid-cols-1 gap-4 px-4 py-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-            {/* Sin scroll horizontal: las columnas que no caben pasan a la
-                fila de abajo (auto-fill) y el tablero crece hacia abajo. */}
+          <div className="flex min-h-0 flex-col gap-4 px-4 py-4">
+            {/* Sin scroll horizontal ni inspector lateral que robe ancho:
+                las 7 columnas usan todo el ancho y el inspector va debajo,
+                a lo ancho, solo cuando se elige un sprint. */}
             <div
-              className="grid grid-cols-[repeat(auto-fill,minmax(216px,1fr))] items-start gap-3 pb-2"
+              className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] items-start gap-3 pb-2"
               data-testid="auton-sprint-columns"
             >
               {columns.map((column) => (
@@ -271,7 +294,7 @@ export function AutonSprintBoard({
                 />
               ))}
             </div>
-            <div className="min-h-[320px] xl:min-h-0">
+            <div data-testid="auton-sprint-inspector-below">
               <AutonEvidenceInspector item={selected} />
             </div>
           </div>
