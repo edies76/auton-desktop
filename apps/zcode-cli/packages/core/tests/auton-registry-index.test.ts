@@ -16,6 +16,7 @@ import {
   readRegistryLog,
   registryLogPath,
 } from "../src/auton/registry-store.js";
+import { readAutonRegistry } from "../src/auton/registry.js";
 import {
   readRegistryIndex,
   readRegistryLogCached,
@@ -93,6 +94,43 @@ describe("índice persistente del registro durable (Nivel 1C)", () => {
 
     const cached = readRegistryLogCached(root);
     expect(cached.records[0]?.summary).toBe("resumen desde el índice");
+  });
+
+  it("la ruta del lector (readAutonRegistry) usa el índice y cae al log si falta", async () => {
+    const root = await workspace();
+    seed(root, { id: "evt:real", title: "Evento real en el log" });
+
+    const decoy = {
+      version: 1,
+      id: "evt:senuelo",
+      at: FIXED_AT,
+      kind: "decision",
+      title: "Evento señuelo",
+      summary: "Solo existe en el índice",
+      refs: [],
+      source: "test:index",
+    };
+    await writeFile(
+      registryIndexPath(root),
+      `${JSON.stringify({
+        version: 1,
+        generatedAt: FIXED_AT,
+        sourceBytes: statSync(registryLogPath(root)).size,
+        records: [decoy],
+        warnings: [],
+      })}\n`,
+      "utf8",
+    );
+
+    const fromIndex = readAutonRegistry(root);
+    expect(fromIndex.records.some((record) => record.id === "evt:senuelo")).toBe(true);
+    expect(fromIndex.records.some((record) => record.id === "evt:real")).toBe(false);
+
+    // Sin índice, el lector vuelve al log real y el señuelo desaparece.
+    await rm(registryIndexPath(root), { force: true });
+    const fromLog = readAutonRegistry(root);
+    expect(fromLog.records.some((record) => record.id === "evt:real")).toBe(true);
+    expect(fromLog.records.some((record) => record.id === "evt:senuelo")).toBe(false);
   });
 
   it("una línea corrupta cambia el tamaño, invalida el índice y la lectura cae al log", async () => {

@@ -23,7 +23,7 @@ import {
   type ChangeRecord,
   type RevertAuditEntry,
 } from "./journal.js";
-import { readRegistryLog } from "./registry-store.js";
+import { readRegistryLogCached } from "./registry-index.js";
 
 export const AUTON_REGISTRY_READ_VERSION = 1;
 
@@ -446,7 +446,9 @@ export function readAutonRegistry(workspaceRoot: string, now = new Date()): Auto
   // El log durable completa el registro derivado. Un evento con el mismo id
   // que una ficha derivada la reemplaza: lo durable es la última palabra y no
   // se duplica. Un id repetido dentro del log conserva la primera aparición.
-  const log = readRegistryLog(workspaceRoot, now);
+  // El lector usa el índice como caché: si está viejo o inválido, cae al log,
+  // que sigue siendo la fuente de verdad.
+  const log = readRegistryLogCached(workspaceRoot, now);
   warnings.push(...log.warnings);
   const durableById = new Map<string, AutonRegistryRecord>();
   for (const event of log.records) {

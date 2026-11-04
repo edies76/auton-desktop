@@ -268,6 +268,10 @@ Contrato en `contracts/src/auton/registry-index.ts`, implementación en
   temporal en el mismo directorio y `renameSync` encima, sin dejar `.tmp`.
 - `readRegistryLogCached` usa el índice solo si es fresco; si no, lee el log,
   reconstruye el índice como mejor esfuerzo y devuelve el log.
+- `readAutonRegistry` (la ruta que usa `AutonRecall`) lee el log durable con
+  `readRegistryLogCached`: usa el índice si es fresco y cae al log cuando está
+  viejo, inválido o falta. El log sigue siendo la fuente de verdad; el índice
+  solo acelera la lectura.
 - Un fallo al escribir el índice no invalida un evento ya anexado: el log manda.
 
 Cada `appendRegistryRecord` refresca el índice después de `appendFileSync`,
@@ -296,7 +300,8 @@ resultado. `revert-executor.ts` devuelve además `audit` de forma aditiva.
 
 `core/tests/auton-registry-index.test.ts` cubre la frescura por tamaño, el
 esquema inválido, la caída al log con una línea corrupta, la reconstrucción sin
-registros viejos, la ausencia de `.tmp` y de `before`/`after`.
+registros viejos, la ausencia de `.tmp` y de `before`/`after`, y que
+`readAutonRegistry` usa de verdad el índice y vuelve al log si falta.
 `core/tests/auton-registry-hooks.test.ts` cubre los cuatro tipos de evento del
 plan, la idempotencia, la conservación de eventos anteriores, la reversión, la
 integración con `AutonPlan`/`AutonRevert`, los ids deterministas y el índice con
