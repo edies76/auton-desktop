@@ -102,6 +102,66 @@ hayan pasado por el diario.
 - [x] No expone el contenido de los cambios.
 - [x] No escribe ni integra hooks.
 
+## Nivel 1A — contrato y almacén append-only
+
+Esta capa formaliza el evento durable y su escritura. Todavía **no** incluye
+hooks, índice persistente ni UI: solo el contrato y el almacén.
+
+### Contrato
+
+En `contracts/src/auton/registry.ts`, exportado desde `@zcode/contracts`:
+
+- `AUTON_REGISTRY_FILE_VERSION = 1` y `AUTON_REGISTRY_FILE_NAME = "registry.jsonl"`.
+- `AUTON_REGISTRY_KINDS`: `goal`, `sprint`, `dispatch`, `report`, `decision`,
+  `artifact`, `change`, `revert`.
+- `AutonRegistryEventSchema` (estricto): `version`, `id`, `at`, `kind`, `title`,
+  `summary`, `refs`, `source`, y opcionales `status`, `agentId`, `itemId`,
+  `paths`, `dedupeKey`. Una clave fuera del contrato —por ejemplo `before` o
+  `after`— invalida la línea.
+- `AutonRegistryAppendInputSchema`: misma forma con `version`, `id` y `at`
+  opcionales. A propósito **no** impone los topes de `title`, `summary`, `refs`
+  ni `paths`: el almacén los redacta y trunca después de validar la forma.
+- `AutonRegistryAppendResultSchema`: `{ appended, record?, reason? }`, con
+  `reason` en `duplicate_id` o `duplicate_dedupe_key`.
+- `AutonRegistryLogSchema`: `{ version, generatedAt, records, warnings }`; cada
+  advertencia es `malformed_line`, `invalid_record` o `duplicate_id`.
+
+### Almacén
+
+En `core/src/auton/registry-store.ts`, sobre `<workspace>/.auton/registry.jsonl`:
+
+1. Valida la entrada y completa `at` (ISO) e `id` cuando faltan.
+2. El id autogenerado es `evt:<at>:<sha256 corto>` sobre
+   `kind|source|title|summary|dedupeKey`; el mismo contenido produce el mismo id.
+3. Redacta secretos antes de medir: `Bearer …`, `sk-…`, `ghp_…`,
+   `github_pat_…`, `xoxb-…`, `AKIA…`, pares `password=`, `token=`, `api_key=`,
+   `secret=` y bloques `-----BEGIN … PRIVATE KEY-----`.
+4. Aplica topes: título 200, resumen 800, 20 referencias de 300, 50 rutas de
+   500. Lo que excede se corta con `…`.
+5. Es idempotente: si el `id` ya existe devuelve el registro previo con
+   `duplicate_id`; si el `dedupeKey` ya existe, con `duplicate_dedupe_key`. En
+   ambos casos no escribe.
+6. Crea `.auton` si falta y hace `appendFileSync`; nunca reescribe el archivo.
+7. La lectura (`readRegistryLog`) salta líneas corruptas o fuera de contrato y
+   las reporta como advertencia. `verifyRegistryLog` reutiliza esas
+   advertencias para decir si el log es sano.
+
+El registro no guarda el contenido de los archivos ni el par `before`/`after`.
+La lectura tampoco lo expone.
+
+### Pruebas del nivel
+
+`core/tests/auton-registry-store.test.ts` cubre: append y lectura; append que no
+reescribe la primera línea; idempotencia por `id` y por `dedupeKey`; redacción de
+secretos (el texto original no queda en el archivo); truncado de los cuatro
+campos; línea corrupta tolerada con advertencia; id determinista; y que el
+archivo solo contiene claves del contrato, sin `before`/`after`.
+
+### Lo que falta para cerrar el Nivel 1
+
+El índice persistente (para buscar sin releer el JSONL) y los dos hooks mínimos
+en plan-handler y revert-handler. Este bloque no los toca.
+
 ## Siguiente nivel (no incluido aquí)
 
 El Nivel 1 agrega contrato versionado, escritura append-only, idempotencia,

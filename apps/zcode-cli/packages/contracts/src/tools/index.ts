@@ -17,6 +17,7 @@ export * from "./webfetch.js";
 export * from "./agent.js";
 export * from "./skill.js";
 export * from "./todo.js";
+export * from "../auton/registry.js";
 export * from "../auton/plan.js";
 export * from "../auton/task-mode.js";
 export * from "../auton/engine.js";
