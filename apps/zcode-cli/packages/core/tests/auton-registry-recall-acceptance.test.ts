@@ -7,6 +7,7 @@
 // changes.jsonl y .auton/registry.jsonl.
 
 import { appendFile, mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
@@ -337,6 +338,52 @@ describe("registro durable Nivel 1B — aceptación", () => {
 
     // El esquema público de entrada para el modelo también existe.
     expect(AutonRecallInputJsonSchema).toBeTruthy();
+  });
+
+  it("el JSON Schema visible al modelo también exige al menos un selector", () => {
+    const schema = AutonRecallInputJsonSchema as Record<string, unknown>;
+    const selectors = ["query", "id", "ref", "kind"];
+
+    // La unión debe ser anyOf (los selectores se combinan), no oneOf.
+    expect(Array.isArray(schema.anyOf)).toBe(true);
+    expect(schema.oneOf).toBeUndefined();
+
+    const branches = schema.anyOf as Array<Record<string, unknown>>;
+    expect(branches).toHaveLength(4);
+    for (const selector of selectors) {
+      expect(
+        branches.some((branch) =>
+          ((branch.required as string[] | undefined) ?? []).includes(selector),
+        ),
+      ).toBe(true);
+    }
+    // Cada variante exige exactamente un selector, nunca cero.
+    expect(
+      branches.every((branch) => {
+        const required = (branch.required as string[] | undefined) ?? [];
+        return required.filter((key) => selectors.includes(key)).length === 1;
+      }),
+    ).toBe(true);
+
+    // Validación real contra el JSON Schema (sin `$schema` para Ajv 6).
+    const require = createRequire(import.meta.url);
+    const Ajv = require("ajv") as new (options?: Record<string, unknown>) => {
+      compile(input: unknown): (data: unknown) => boolean;
+    };
+    const ajv = new Ajv({ allErrors: true });
+    const { $schema: _ignored, ...validationSchema } = schema;
+    const validate = ajv.compile(validationSchema);
+
+    expect(validate({})).toBe(false);
+    expect(validate({ limit: 5 })).toBe(false);
+    expect(validate({ limit: 20 })).toBe(false);
+    expect(validate({ query: "algo" })).toBe(true);
+    expect(validate({ id: "item:s1" })).toBe(true);
+    expect(validate({ ref: "item:s1" })).toBe(true);
+    expect(validate({ kind: "dispatch" })).toBe(true);
+    // Combinar selectores sigue siendo válido (anyOf, no oneOf).
+    expect(validate({ query: "algo", kind: "dispatch" })).toBe(true);
+    expect(validate({ query: "algo", limit: 50 })).toBe(false);
   });
 
   it("un workspace vacío devuelve texto de sin recuerdos, matches [] y total 0", async () => {
