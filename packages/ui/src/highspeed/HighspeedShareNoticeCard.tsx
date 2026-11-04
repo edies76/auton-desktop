@@ -7,7 +7,7 @@ import shareDialogNoiseUrl from "@/assets/highspeed/share-dialog-noise.png";
 import shareDialogNoiseLightUrl from "@/assets/highspeed/share-dialog-noise-light.png";
 import zaiLogoUrl from "@/assets/highspeed/zai-logo.png";
 import { Button } from "@/components/ui/button.js";
-import { AutonLogo } from "@/components/ui/AutonLogo.js";
+import { AutonLogo } from "@/components/ui/ZCodeAboutLogo.js";
 import {
   Dialog,
   DialogClose,
