@@ -15,6 +15,9 @@ export const AUTON_PLAN_TOOL_NAME = "AutonPlan";
 
 export const AUTON_PLAN_FILE_VERSION = 1;
 
+/** El registro de reportes es acotado: los más viejos se descartan. */
+export const AUTON_MAX_LIMIT_REPORTS = 100;
+
 export const AutonPlanItemStatus = {
   Ready: "ready",
   Running: "running",

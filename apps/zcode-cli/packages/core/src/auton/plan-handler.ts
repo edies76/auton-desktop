@@ -9,6 +9,7 @@ import { dirname, join } from "node:path";
 import {
   AUTON_PLAN_FILE_VERSION,
   AUTON_PLAN_TOOL_NAME,
+  AUTON_MAX_LIMIT_REPORTS,
   AutonPlanInputJsonSchema,
   AutonPlanInputSchema,
   AutonPlanOutputJsonSchema,
@@ -186,7 +187,9 @@ export const autonPlanHandler: ToolHandler = async (input, context) => {
   const previous = await readPlanFile(path);
   const limits = parsed.limits ?? previous.limits;
   const limitHistory = parsed.limitHistory ?? previous.limitHistory;
-  const limitReports = parsed.limitReports ?? previous.limitReports;
+  const limitReports = (parsed.limitReports ?? previous.limitReports).slice(
+    -AUTON_MAX_LIMIT_REPORTS,
+  );
 
   // Un programador puede reportar que un límite está mal calibrado, nunca
   // cambiarlo: los límites son el contrato que el orquestador acuerda con el humano.

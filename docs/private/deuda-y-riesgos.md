@@ -16,8 +16,8 @@
 2. **Aprobaciones declarativas por item.** El orquestador debe escribir `needsApproval`; no se infiere del comando ni de la ruta.
 3. **`unknownHandling` se aplica al escribir.** No hay vigilante que detecte por tiempo o telemetría que un item debería haber escalado.
 4. **Reportes sin canal propio.** El worker los cuenta en su REPORTE y el orquestador los transcribe; si se olvida, se pierden.
-5. **`limitReports` sin tope.** Puede crecer sin límite dentro del plan.
-6. **Sin UI dedicada de decisiones.** `not_evaluable` se ve en la tarjeta del plan; la bandeja de decisiones sigue pendiente.
+5. **`limitReports` acotado.** El plan conserva los 100 reportes más recientes; los anteriores se descartan al escribir.
+6. **Bandeja de decisiones en el hilo.** Los items en `waiting` o `not_evaluable` muestran su pregunta y preparan la respuesta en el compositor; falta convertirlo en formulario de opciones cerradas.
 7. **Pruebas de integración ausentes.** No se ejecutó el bucle vivo con un despacho real bajo límites.
 8. **`formatAutonPlanForModel` sin consumidor.** Se mantiene como formato canónico, pero hoy nadie lo llama.
 
@@ -32,7 +32,7 @@
 
 ## Próximos pasos sugeridos
 
-1. Conectar `not_evaluable` con la bandeja de decisiones del humano.
+1. Convertir la bandeja de decisiones en un formulario de opciones cerradas que escriba la respuesta y actualice el item.
 2. Añadir límites de tiempo y costo por item.
 3. Herramienta de reporte para workers, para no depender de la transcripción.
 4. Prueba de integración con un despacho real y su reintento.

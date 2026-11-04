@@ -22,6 +22,25 @@ afterEach(async () => {
 });
 
 describe("AutonPlan tool", () => {
+  it("caps limitReports and keeps the newest", async () => {
+    const dir = await makeWorkspace();
+    const reports = Array.from({ length: 105 }, (_, index) => ({
+      at: `2026-11-04T00:00:${String(index % 60).padStart(2, "0")}.000Z`,
+      field: "maxAttempts",
+      observed: String(index),
+      by: "worker",
+    }));
+
+    const output = (await autonPlanToolEntry.handler(
+      { action: "write", items: [], limitReports: reports },
+      context(dir),
+    )) as { plan: { limitReports: { observed: string }[] } };
+
+    expect(output.plan.limitReports).toHaveLength(100);
+    expect(output.plan.limitReports[0]?.observed).toBe("5");
+    expect(output.plan.limitReports.at(-1)?.observed).toBe("104");
+  });
+
   it("reads an empty plan when the project has none", async () => {
     const dir = await makeWorkspace();
     const output = (await autonPlanToolEntry.handler(
