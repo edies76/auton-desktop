@@ -77,7 +77,14 @@ export function sampleConversationRows(): ConversationRow[] {
         goal: { title: "Lunar móvil" },
         items: [
           { id: "s1", title: "Revisar el diseño del chat", status: "running", owner: "programmer" },
-          { id: "s2", title: "Diagnosticar el inicio de sesión", status: "waiting", owner: "programmer" },
+          {
+            id: "s2",
+            title: "Diagnosticar el inicio de sesión",
+            status: "waiting",
+            owner: "programmer",
+            detail: "La sesión no se restaura bien entre reinicios.",
+            questions: ["¿Restauramos la sesión guardada o pedimos login otra vez?"],
+          },
           { id: "s3", title: "Cerrar con evidencia", status: "ready", owner: "orchestrator" },
         ],
       },

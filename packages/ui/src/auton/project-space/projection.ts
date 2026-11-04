@@ -242,7 +242,18 @@ function planItems(record: Record<string, unknown>): AutonPlanItemView[] {
     const status = stringField(item, "status");
     if (!id || !title || !status) continue;
     const owner = stringField(item, "owner");
-    items.push({ id, title, status, ...(owner ? { owner } : {}) });
+    const detail = stringField(item, "detail");
+    const questions = Array.isArray(item.questions)
+      ? item.questions.filter((question): question is string => typeof question === "string")
+      : [];
+    items.push({
+      id,
+      title,
+      status,
+      ...(detail ? { detail } : {}),
+      ...(owner ? { owner } : {}),
+      ...(questions.length > 0 ? { questions } : {}),
+    });
   }
   return items;
 }

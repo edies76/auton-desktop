@@ -80,8 +80,10 @@ export interface AutonThreadMessage {
 export interface AutonPlanItemView {
   id: string;
   title: string;
+  detail?: string;
   status: string;
   owner?: string;
+  questions?: string[];
 }
 
 export interface AutonPlanView {

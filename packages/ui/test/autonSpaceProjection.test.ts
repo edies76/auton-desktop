@@ -64,6 +64,9 @@ describe("proyección del espacio desde filas reales", () => {
       "Diagnosticar el inicio de sesión",
       "Cerrar con evidencia",
     ]);
+    expect(data.plan?.items.find((item) => item.id === "s2")?.questions).toEqual([
+      "¿Restauramos la sesión guardada o pedimos login otra vez?",
+    ]);
 
     expect(data.evidence?.command).toBe("pnpm --filter @zcode/ui test");
     expect(data.evidence?.output).toContain("3 passed");

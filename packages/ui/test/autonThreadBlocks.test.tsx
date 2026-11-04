@@ -173,6 +173,40 @@ describe("hilo del orquestador", () => {
     );
   });
 
+  it("muestra las decisiones pendientes y prepara la respuesta en el compositor", () => {
+    renderUi(
+      <AutonThreadView
+        project={PROJECT}
+        data={{
+          ...DATA,
+          plan: {
+            goalTitle: "Lunar móvil",
+            items: [
+              {
+                id: "s2",
+                title: "Diagnosticar login",
+                status: "waiting",
+                questions: ["¿Restauramos la sesión guardada o pedimos login otra vez?"],
+              },
+            ],
+          },
+        }}
+        now={NOW}
+        onBack={vi.fn()}
+        onStopWorker={vi.fn()}
+        onSend={vi.fn()}
+      />,
+    );
+
+    const inbox = screen.getByTestId("auton-decision-inbox");
+    expect(inbox.textContent).toContain("Diagnosticar login");
+    expect(inbox.textContent).toContain("¿Restauramos la sesión guardada");
+    fireEvent.click(screen.getByTestId("auton-decision-reply"));
+    expect((screen.getByTestId("auton-composer") as HTMLTextAreaElement).value).toBe(
+      "Sobre «Diagnosticar login»: ",
+    );
+  });
+
   it("el compositor es el único campo y envía al orquestador", () => {
     const onSend = vi.fn();
     const { container } = renderUi(

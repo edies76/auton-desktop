@@ -84,6 +84,10 @@ Cada proyecto tiene una sola conversación. Si ya existe, la app no crea otra: e
 
 Lo que pasa queda escrito en el proyecto, no solo en la conversación. Cada cambio del plan y cada reversión se anotan en un registro durable con identificador, fecha y fuente. Cuando el orquestador duda de una decisión vieja, consulta ese registro y responde con punteros: qué se decidió, cuándo y de dónde salió. Si no está, lo dice; no lo inventa. La consulta devuelve unas pocas líneas, no el contenido de tus archivos.
 
+## 4.7. Las decisiones pendientes están a la vista
+
+Cuando el plan deja un item esperando una decisión humana, el hilo muestra una bandeja con el título y la pregunta exacta. El botón “Responder” prepara la respuesta en el compositor del orquestador; no tienes que buscar el plan ni abrir otra pantalla. El plan completo sigue debajo, con el estado de cada item.
+
 ## 5. Comprueba antes de cerrar
 
 Una pieza terminada pasa por una revisión independiente. Se comprueba el criterio de hecho, no la seguridad con la que el modelo cuenta que lo hizo.

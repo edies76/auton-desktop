@@ -1,12 +1,18 @@
 import { ArrowLeft, Send, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button.js";
 import { Textarea } from "@/components/ui/textarea.js";
 import { cn } from "@/components/lib/utils.js";
+import { AutonDecisionInbox } from "./DecisionInbox.js";
 import { AutonEvidenceBlock } from "./EvidenceBlock.js";
 import { AutonPlanBlock } from "./PlanBlock.js";
 import { AutonWorkBlock } from "./WorkBlock.js";
-import { formatClock, type AutonProject, type AutonProjectSpaceData } from "./model.js";
+import {
+  formatClock,
+  type AutonPlanItemView,
+  type AutonProject,
+  type AutonProjectSpaceData,
+} from "./model.js";
 
 export interface AutonThreadViewProps {
   project: AutonProject;
@@ -35,12 +41,18 @@ export function AutonThreadView({
   backLabel = "Proyectos",
 }: AutonThreadViewProps) {
   const [draft, setDraft] = useState("");
+  const composerRef = useRef<HTMLTextAreaElement>(null);
 
   const submit = () => {
     const text = draft.trim();
     if (!text) return;
     onSend?.(text);
     setDraft("");
+  };
+
+  const replyToDecision = (item: AutonPlanItemView) => {
+    setDraft(`Sobre «${item.title}»: `);
+    composerRef.current?.focus();
   };
 
   return (
@@ -117,6 +129,15 @@ export function AutonThreadView({
 
           {data.plan ? (
             <li>
+              <AutonDecisionInbox
+                plan={data.plan}
+                {...(onSend ? { onReply: replyToDecision } : {})}
+              />
+            </li>
+          ) : null}
+
+          {data.plan ? (
+            <li>
               <AutonPlanBlock plan={data.plan} />
             </li>
           ) : null}
@@ -133,6 +154,7 @@ export function AutonThreadView({
         <div className="border-border border-t px-4 py-3">
           <div className="mx-auto flex max-w-3xl items-end gap-2">
             <Textarea
+              ref={composerRef}
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
               onKeyDown={(event) => {

@@ -334,6 +334,11 @@ ayer.
 - **Cómo se prueba**: crea un proyecto y su primera sesión, intenta crear otra en el mismo proyecto e intenta mover una sesión de otro proyecto a ese.
 - **Qué tiene que verse**: el segundo intento se rechaza con un aviso; la reserva en el almacén falla con `project.session-exists` aunque la creación venga de otra ruta; una sesión borrada deja libre el lugar.
 
+### 27. Las decisiones pendientes se ven y se responden **[auto]**
+- **Qué prometemos**: si el plan deja un item en `waiting` o `not_evaluable`, el humano ve la decisión en el hilo y puede responder sin buscar el plan.
+- **Cómo se prueba**: abre un proyecto cuyo plan tenga un item en `waiting` con `questions`, pulsa “Responder” y revisa el compositor.
+- **Qué tiene que verse**: la bandeja de decisiones con el título y la pregunta; el botón prepara la respuesta en el compositor del orquestador; el plan sigue visible debajo.
+
 ---
 
 ## Lo que estas pruebas protegen
