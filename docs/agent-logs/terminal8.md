@@ -10,3 +10,11 @@ Por qué: la suite de contratos es el canario; 2 espejos estaban stale tras `2a5
 Verificado con: `vitest run tests/tool-contracts.test.ts` (39/40, solo anyOf); lint 0 errors; arch 0 violations.
 
 — Jarvis Ken · terminal8 · espejos
+
+## 2026-11-04 — anyOf resuelto con allowlist documentada
+
+Qué: `PROVIDER_INTERNAL_KEY_ALLOWLIST = { AutonRecall: ["anyOf"] }` + test pin que garantiza que no traga otros keys/tools. Suite 41/41. Decisión tomada sin Edi por orden explícita: no tocar el schema (su test de aceptación lo exige), no relajar la regla global.
+Por qué: el canario quedaba en rojo por un diseño intencional, no por un bug; bloquear el merge por eso era peor que documentar la excepción reversible en una línea.
+Verificado con: `vitest run tests/tool-contracts.test.ts` (41/41); vecinos + recall acceptance en verde; lint/typecheck/arch limpios.
+
+— Jarvis Ken · terminal8 · anyof
