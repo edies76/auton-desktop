@@ -1,8 +1,8 @@
 {
   "name": "@zcode/desktop",
-  "version": "0.16.2",
+  "version": "0.17.0",
   "private": true,
-  "description": "ZCode Desktop App",
+  "description": "Auton Desktop App",
   "author": "ZCode",
   "type": "module",
   "main": "out/main/index.js",
