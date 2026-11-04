@@ -4,6 +4,37 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases públicas.
 
+## [0.13.0] — 2026-11-03
+
+El turno cierra para dejar escribir; el loop sigue vivo y se parte en varios.
+
+### Cambiado
+
+- **El turno termina aunque queden workers**: el compositor queda libre y el
+  humano puede enviar otro mensaje sin inyectarlo. El evento del worker abre un
+  turno nuevo por la cola de comandos.
+- **El loop sigue abierto con su contador** mientras haya un worker o una tool
+  corriendo, aunque el turno haya cerrado.
+- **Varios loops colapsables intercalados**: cada narración después de un grupo
+  de tools abre un bloque nuevo, en vez de un único bloque por turno.
+
+### Añadido
+
+- **Worker de ZCode por defecto**: `Agent` con `subagent_type: "auton-worker"`;
+  otro tipo solo si el humano lo pide. Se prohíbe hacer la lectura con
+  Bash/Terminal.
+- **Profundidad ajustable**: velocidad pide `effort: "minimal"` y
+  `thinking_level: "low"`; entender a fondo pide `thorough` y `high`.
+- **Tono copiloto**: cuenta lo que ve, celebra el avance y propone el siguiente
+  paso.
+
+### Conocido
+
+- El picker de proyectos vacíos sigue volviendo al proyecto anterior (UI de
+  proyectos de otra sesión).
+- El estilo Grok (mensajes separados, menos botones) y los límites de los
+  workers quedan pendientes.
+
 ## [0.12.1] — 2026-11-03
 
 La crónica intercalada también cubre los turnos que usan tools directas.

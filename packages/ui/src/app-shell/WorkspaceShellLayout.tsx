@@ -13,7 +13,7 @@ import { TID_APP_HEADER } from "@zcode/shared/test-ids";
 // 对称下侧 Terminal.tsx 的 openWorkspaceKeys 回收。
 import { sidePaneTerminalSessionRegistry } from "@/terminal/sidePaneTerminalSessionRegistry.js";
 import { resolveCenterView } from "@/auton/project-space/centerView.js";
-import { useAutonHomeStore } from "@/auton/project-space/homeStore.js";
+import { useAutonHomeStore } from "@/auton/index.js";
 import { AutonWorkerSurface } from "@/auton/project-space/WorkerSurface.js";
 import {
   closeWorkerFocusForWorkspace,
@@ -53,7 +53,11 @@ import {
   useRemotePaneSessionLookup,
 } from "@/v4/usePaneSessionPersistence.js";
 import { requestV4ComposerDraftWorkspaceTransfer } from "@/v4/composer/composerDraftWorkspaceTransfer.js";
-import { ProjectComposerMenu, ProjectDirectoryProvider } from "@/project-sidebar/index.js";
+import {
+  ProjectComposerMenu,
+  ProjectDirectoryProvider,
+  ProjectHomeOverview,
+} from "@/project-sidebar/index.js";
 import { DesktopTopOverlay } from "@/DesktopTopOverlay.js";
 import { DesktopWindowFrame } from "@/DesktopWindowFrame.js";
 import { WorkspacePluginPreview } from "@/workspace-plugin-preview/index.js";
@@ -284,6 +288,7 @@ export const WorkspaceShellLayout = memo(function WorkspaceShellLayout(
 });
 
 const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent({
+  homeVisible: homeVisibleOverride,
   services,
   workspaceReadOnlyReason,
   workspaceMainView,
@@ -476,7 +481,8 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
   const [draftHeaderDropTargetController, setDraftHeaderDropTargetController] =
     useState<ConversationDropTargetController | null>(null);
   const workspaceKey = workspaceIdentity?.trim() || workspaceAbsPath;
-  const homeVisible = useAutonHomeStore((state) => state.homeVisible);
+  const storeHomeVisible = useAutonHomeStore((state) => state.homeVisible);
+  const homeVisible = homeVisibleOverride ?? storeHomeVisible;
   const homeDraftBlocked = homeVisible && activeTaskId === null;
   const fileTreeOpenRequestIdRef = useRef(0);
   const [fileTreeOpenRequest, setFileTreeOpenRequest] = useState<SidebarFileTreeOpenRequest | null>(
@@ -2232,6 +2238,10 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                 </div>
               </AutomationsMainBreadcrumbFrame>
             </main>
+          ) : homeVisible ? (
+            <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col">
+              <ProjectHomeOverview />
+            </div>
           ) : (
             <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col">
               {/* Bugfix: 手机远控聊天页中间层必须继续提供 flex 高度链。
@@ -2682,7 +2692,9 @@ const WorkspaceShellLayoutContent = memo(function WorkspaceShellLayoutComponent(
                         ) : (
                           <main className="relative flex h-full min-h-0 flex-1 flex-col overflow-hidden">
                             {renderChatFindDialog()}
-                            {centerView.kind !== "orchestrator" ? (
+                            {homeVisible ? (
+                              <ProjectHomeOverview />
+                            ) : centerView.kind !== "orchestrator" ? (
                               <AutonWorkerSurface
                                 view={centerView}
                                 activeTaskTitle={activeTaskTitle}

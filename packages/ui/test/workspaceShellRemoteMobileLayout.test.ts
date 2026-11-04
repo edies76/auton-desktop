@@ -1,7 +1,8 @@
 import { createElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { V4ChatPaneProps } from "@/v4/V4ChatPane.js";
+import { useAutonHomeStore } from "@/auton/index.js";
 import { V4_PRIMARY_PANE_ID } from "@/v4/paneLayoutStore.js";
 import { useWorkbenchGroupStore } from "@/v4/workbenchGroupStore.js";
 
@@ -328,6 +329,7 @@ function createWorkspaceShellProps() {
     onWorkspaceMainViewChange: vi.fn(),
     openAutomationId: null,
     workspaceMainView: "chat" as const,
+    homeVisible: false,
     headerGitChangeSummary: null,
     isBrowserOpen: false,
     isDesktop: false,
@@ -416,6 +418,10 @@ async function renderWorkspaceShell(
   );
 }
 
+beforeEach(() => {
+  useAutonHomeStore.setState({ homeVisible: false });
+});
+
 describe("WorkspaceShellLayout Web remote control mobile layout", () => {
   it.each([
     { mobile: false, sidePaneOpen: false, workspaceVisible: true, expected: true },
@@ -428,6 +434,7 @@ describe("WorkspaceShellLayout Web remote control mobile layout", () => {
     "limits default Esc stop to the visible main chat without a side pane: %j",
     async (scenario) => {
       capturedChatPaneProps.length = 0;
+      expect(useAutonHomeStore.getState().homeVisible).toBe(false);
       vi.stubGlobal("window", {
         innerHeight: 800,
         matchMedia: vi.fn(() => ({
@@ -440,7 +447,7 @@ describe("WorkspaceShellLayout Web remote control mobile layout", () => {
         sessionStorage: { getItem: vi.fn(() => null), removeItem: vi.fn(), setItem: vi.fn() },
       });
       try {
-        await renderWorkspaceShell({
+        const html = await renderWorkspaceShell({
           isSidePaneOpen: scenario.sidePaneOpen,
           isWorkspaceVisible: scenario.workspaceVisible,
           webRemoteControlWorkspaceSwitcher: scenario.mobile
@@ -450,6 +457,7 @@ describe("WorkspaceShellLayout Web remote control mobile layout", () => {
               }
             : undefined,
         });
+        expect(html).not.toContain("auton-home-project-row");
         expect(capturedChatPaneProps).toHaveLength(1);
         expect(capturedChatPaneProps[0]?.allowEscapeStopOutsidePane).toBe(scenario.expected);
       } finally {

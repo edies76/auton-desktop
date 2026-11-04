@@ -30,13 +30,19 @@ describe("enganche del latido en el runner de subagentes", () => {
     expect(runnerSource).toMatch(/enqueue\?\.\(\{[\s\S]{0,300}backgroundSource: "subagent"/);
   });
 
-  it("el turno espera al trabajo vivo antes de cerrar, con espera acotada", () => {
+  it("el turno cierra y el evento del worker lo despierta por la cola", () => {
     const turnLoop = readFileSync(
       resolve(here, "../src/runtime/methods/turn-loop.ts"),
       "utf8",
     );
-    expect(turnLoop).toMatch(/if \(result === "break"\)[\s\S]{0,500}waitForAutonIdle\(/);
-    expect(turnLoop).toContain("timeoutMs: 30 * 60_000");
-    expect(turnLoop).toContain("signal: state.turnAbortSignal");
+    // El turno no se queda esperando: cierra para que el humano pueda escribir.
+    expect(turnLoop).not.toContain("waitForAutonIdle(");
+    // La notificación del worker entra por la cola de comandos del runtime,
+    // que abre un turno nuevo.
+    const backgroundNotifications = readFileSync(
+      resolve(here, "../src/runtime/methods/background-notifications.ts"),
+      "utf8",
+    );
+    expect(backgroundNotifications).toContain("enqueueRuntimeCommand(");
   });
 });

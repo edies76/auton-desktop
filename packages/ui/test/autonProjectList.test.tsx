@@ -6,6 +6,8 @@ import { ZCodeIntlProvider } from "@/i18n/IntlProvider.js";
 import { AutonProjectsScreen } from "../src/auton/project-space/ProjectListScreen.js";
 import { AutonWorkspaceApp } from "../src/auton/project-space/AutonWorkspaceApp.js";
 import { AutonProjectList } from "../src/project-sidebar/AutonProjectList.js";
+import { ProjectHomeOverview } from "../src/project-sidebar/ProjectHomeOverview.js";
+import { useAutonHomeStore } from "../src/auton/project-space/homeStore.js";
 import type { AutonProject } from "../src/auton/project-space/model.js";
 
 const projectTreeMock = vi.hoisted(() => ({
@@ -87,6 +89,18 @@ describe("lista real de proyectos", () => {
 });
 
 describe("lista de proyectos", () => {
+  it("el resumen central muestra el último trabajo y pide abrir el proyecto", () => {
+    useAutonHomeStore.setState({ requestedProjectId: null });
+    renderUi(<ProjectHomeOverview />);
+
+    const rows = screen.getAllByTestId("auton-home-project-row");
+    expect(rows[0]!.textContent).toContain("Reciente");
+    expect(rows[0]!.textContent).toContain("Última sesión: Nueva");
+
+    fireEvent.click(rows[0]!);
+    expect(useAutonHomeStore.getState().requestedProjectId).toBe("recent");
+  });
+
   it("ordena por actividad reciente y muestra nombre y ruta", () => {
     const onOpen = vi.fn();
     renderUi(      <AutonProjectsScreen

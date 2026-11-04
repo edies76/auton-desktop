@@ -115,11 +115,13 @@ describe("turno vivo y canal rápido sobre una sesión real", () => {
       settled = true;
     });
 
-    // 1) El turno sigue abierto mientras el worker vive.
+    // 1) El worker arranca y el turno cierra: el humano puede escribir.
     const startedDeadline = Date.now() + 5_000;
     while (!workerStarted && Date.now() < startedDeadline) await wait(50);
     expect(workerStarted).toBe(true);
-    expect(settled).toBe(false);
+    const settledDeadline = Date.now() + 2_000;
+    while (!settled && Date.now() < settledDeadline) await wait(25);
+    expect(settled).toBe(true);
 
     const running = Object.values(runtimeTaskRegistry.all()).find(
       (task) => task.status === "running" && task.agentType === "auton-worker",
@@ -144,11 +146,13 @@ describe("turno vivo y canal rápido sobre una sesión real", () => {
     // 3) El latido sale a su umbral (250 ms en esta prueba) como evento de sistema.
     await wait(600);
     expect(notifications.some((text) => text.includes("[Auton]"))).toBe(true);
-    expect(settled).toBe(false);
+    expect(settled).toBe(true);
 
     // 4) Al cerrar el último canal, el turno se libera.
     await turn;
     expect(settled).toBe(true);
+    const finishedDeadline = Date.now() + 3_000;
+    while (!workerFinished && Date.now() < finishedDeadline) await wait(25);
     expect(workerFinished).toBe(true);
     const idleDeadline = Date.now() + 3_000;
     while (

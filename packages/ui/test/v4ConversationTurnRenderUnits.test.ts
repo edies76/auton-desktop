@@ -563,13 +563,33 @@ describe("buildConversationTurnRenderUnits", () => {
     expect(runningSegment?.assistantHistoryDefaultOpen).toBe(true);
     // La narración anterior y la final van fuera del loop; la tool, dentro.
     expect(
-      runningSegment?.flowItems
+      (running?.workSegments ?? [])
+        .flatMap((segment) => segment.flowItems)
         .filter((item) => item.kind === "assistantText")
         .map((item) => item.row.rowId),
     ).toEqual([3, 5]);
 
     const [completed] = buildConversationTurnRenderUnits(rows("completedSuccess"));
     expect(completed?.workSegments?.[0]?.assistantHistoryDefaultOpen).toBe(false);
+  });
+
+  it("parte el turno Auton en varios loops intercalados", () => {
+    const [unit] = buildConversationTurnRenderUnits([
+      turnHeader(1, { state: "running" }),
+      userInput(2, "haz dos cosas"),
+      assistantText(3, "Primero miro el estado."),
+      toolCall(4, "Bash", { command: "ls" }),
+      assistantText(5, "Ahora reviso el README."),
+      toolCall(6, "Bash", { command: "cat README.md" }),
+      assistantText(7, "Listo.\n\n— Auton · terminal9 · dos loops"),
+    ]);
+
+    // Tres tramos: dos con tool y su loop, y el cierre de narración.
+    expect(unit?.workSegments?.length).toBe(3);
+    for (const segment of unit?.workSegments?.slice(0, 2) ?? []) {
+      expect(segment.flowItems.some((item) => item.kind === "assistantHistory")).toBe(true);
+      expect(segment.flowItems.some((item) => item.kind === "assistantText")).toBe(true);
+    }
   });
 
   it("不按 raw /compact 文本隐藏 CLI 标记为 visible 的 user input", () => {
