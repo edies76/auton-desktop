@@ -18,6 +18,7 @@ export * from "./agent.js";
 export * from "./skill.js";
 export * from "./todo.js";
 export * from "../auton/registry.js";
+export * from "../auton/registry-index.js";
 export * from "../auton/recall.js";
 export * from "../auton/plan.js";
 export * from "../auton/task-mode.js";

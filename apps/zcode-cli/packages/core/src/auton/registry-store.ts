@@ -24,6 +24,7 @@ import {
   type AutonRegistryLogWarning,
 } from "@zcode/contracts";
 import { AUTON_DIR_NAME } from "./journal.js";
+import { refreshRegistryIndex } from "./registry-index.js";
 
 const MAX_TITLE_LENGTH = 200;
 const MAX_SUMMARY_LENGTH = 800;
@@ -227,6 +228,14 @@ export function appendRegistryRecord(
   const path = registryLogPath(workspaceRoot);
   mkdirSync(join(workspaceRoot, AUTON_DIR_NAME), { recursive: true });
   appendFileSync(path, `${JSON.stringify(record)}\n`, "utf8");
+
+  // El índice es una caché derivada del log: si falla, el evento ya escrito
+  // sigue siendo la fuente de verdad.
+  try {
+    refreshRegistryIndex(workspaceRoot, options.now);
+  } catch {
+    // Un fallo del índice no invalida el append.
+  }
 
   return { appended: true, record };
 }
