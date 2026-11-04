@@ -924,16 +924,44 @@ describe("tool contract declarations", () => {
     expect(explorePrompt).not.toContain("Assistant knowledge cutoff");
   });
 
+  // Excepción documentada y reversible: AutonRecall necesita anyOf
+  // ("al menos uno de query|id|kind|ref", no "exactamente uno").
+  // Ver contracts/src/auton/recall.ts:97-101 y el test de aceptación
+  // "el JSON Schema visible al modelo también exige al menos un selector",
+  // que EXIGE este anyOf. Para revertir: borrar esta entrada (NO tocar el schema).
+  const PROVIDER_INTERNAL_KEY_ALLOWLIST: Record<string, readonly string[]> = {
+    AutonRecall: ["anyOf"],
+  };
+
   it("keeps built-in tool input JSON schemas provider-compatible", () => {
     for (const entry of builtInTools) {
       // Provider 只接收输入声明；输出 union 由本地 executor 校验，不能套用输入限制。
       const schemaIssues = findProviderSchemaIssues(
         entry.inputSchema,
         `${entry.metadata.name}.inputSchema`,
+      ).filter(
+        (issue) =>
+          !(PROVIDER_INTERNAL_KEY_ALLOWLIST[entry.metadata.name] ?? []).some((key) =>
+            issue.includes(key),
+          ),
       );
 
       expect(schemaIssues, entry.metadata.name).toEqual([]);
     }
+  });
+
+  it("el allowlist del anyOf solo cubre a AutonRecall", () => {
+    const otroConAnyOf = findProviderSchemaIssues(
+      { anyOf: [], type: "object", properties: {} },
+      "Otro.inputSchema",
+    );
+    expect(otroConAnyOf).toHaveLength(1);
+
+    const autonRecallOtraKey = findProviderSchemaIssues(
+      { $ref: "#/x", type: "object", properties: {} },
+      "AutonRecall.inputSchema",
+    );
+    expect(autonRecallOtraKey).toHaveLength(1);
   });
 
   it("only exposes Agent when a subagent port is configured", () => {
