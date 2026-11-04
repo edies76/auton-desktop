@@ -116,6 +116,8 @@ const SOURCE_DERIVED_SEND_MESSAGE_DESCRIPTION = [
   "```",
   "",
   "Your plain text output is NOT visible to other agents — to communicate, you MUST call this tool. Messages from agents are delivered automatically; you don't check an inbox. Refer to local agents by the `agentId` returned in the Agent spawn result. To resume a completed agent, use its `agentId`; it resumes in the background and you'll be notified when it finishes.",
+  "",
+  "Set `requires_answer: true` only when that front cannot advance without the answer: the worker is told to reply with RespondToCoordinator before continuing, and the task records that it is waiting for you. Leave it off for guidance, data, corrections and redirects.",
 ].join("\n");
 
 function getSchemaPath(schema: unknown, path: readonly string[]): unknown {
