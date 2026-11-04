@@ -1,6 +1,6 @@
 import { mkdtemp, mkdir, rename, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, normalize } from "node:path";
 import { describe, expect, it, vi } from "vitest";
 import type { ProjectRepositoryContract, VirtualProject } from "#src/project-storage/contract.js";
 import type { IProjectService } from "#src/project/contract.js";
@@ -60,7 +60,7 @@ it("projects live primary directory status without changing roots, and rejects s
     });
     // 新建只依赖项目和目录；无关历史任务不能进入准备与删除复检的读路径。
     expect(readTree).toHaveBeenCalledTimes(2);
-    expect(readTree.mock.calls).toEqual([[{ includeTasks: false }], [{ includeTasks: false }]]);
+    expect(readTree.mock.calls).toEqual([[{ includeTasks: true }], [{ includeTasks: false }]]);
     await rm(primary, { recursive: true });
     await writeFile(primary, "not a directory");
     expect((await service.readTree()).projects[0]?.primaryRootStatus).toBe("missing");
@@ -249,18 +249,18 @@ it("browses owner directories without touching project storage or admitting a se
     workspaceDirectory: "/workspace",
     directories,
   });
-  expect(await service.readDirectory()).toEqual({ path: "/owner", entries: [] });
-  expect(directories.read).toHaveBeenCalledWith({ path: "/owner" });
+  expect(await service.readDirectory()).toEqual({ path: normalize("/owner"), entries: [] });
+  expect(directories.read).toHaveBeenCalledWith({ path: normalize("/owner") });
   await service.readDirectory({ path: "/another", includeHidden: true });
-  expect(directories.read).toHaveBeenLastCalledWith({ path: "/another", includeHidden: true });
+  expect(directories.read).toHaveBeenLastCalledWith({ path: normalize("/another"), includeHidden: true });
   await expect(service.readDirectory({ path: "relative" })).rejects.toThrow(
     "project.absolute-path-required",
   );
   expect(await service.readDirectory({ path: "/owner/child/../folder" })).toEqual({
-    path: "/owner/folder",
+    path: normalize("/owner/folder"),
     entries: [],
   });
-  expect(directories.read).toHaveBeenLastCalledWith({ path: "/owner/folder" });
+  expect(directories.read).toHaveBeenLastCalledWith({ path: normalize("/owner/folder") });
   expect(repository).not.toHaveBeenCalled();
 });
 
@@ -281,3 +281,4 @@ it("binds every remote task directory through the existing workspace identity re
     "stable:/repo",
   ]);
 });
+

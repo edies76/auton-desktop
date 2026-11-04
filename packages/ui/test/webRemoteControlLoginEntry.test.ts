@@ -59,8 +59,6 @@ vi.mock("@/components/ui/dialog.js", () => {
   };
 });
 vi.mock("@/components/ui/toast.js", () => ({ toast }));
-vi.mock("@/BotsDialog.js", () => ({ BotsDialog: () => null }));
-vi.mock("@/BotsDialog/shared.js", () => ({ ProviderIcon: () => null }));
 vi.mock("@/components/ui/ZCodeAboutLogo.js", () => ({ ZCodeAboutLogo: () => null }));
 vi.mock("@/login/LoginApiKeyForm.js", () => ({ LoginApiKeyForm: () => null }));
 vi.mock("@/openWorkspacePageThemeHero.js", () => ({ ThemeHeroVisual: () => null }));

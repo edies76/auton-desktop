@@ -1,16 +1,19 @@
 import type { ZCodeEnv } from "@zcode/shared";
+import { AUTON_MVP } from "@/lib/autonMvp.js";
 
 export function shouldShowRemoteConnectionEntry(params: {
   env: ZCodeEnv;
   isIntranet: boolean;
 }): boolean {
   void params;
-  return true;
+  // Auton no presenta conexión a equipos remotos; dejarlo apagado también
+  // evita restaurar pestañas remotas que ya no tienen entrada en la UI.
+  return !AUTON_MVP;
 }
 
 export function useRemoteConnectionEntryVisibility(): boolean {
   // SSH 入口之前复用了 internal-only gate，生产态外网环境会被一并隐藏。
   // 但 SSH 是否可用取决于目标机器、网络链路和凭据，不应该依赖“当前客户端是否在内网”。
   // 远程连接是通用 SSH 能力，不应被已退役产品的内网策略门禁。
-  return true;
+  return !AUTON_MVP;
 }

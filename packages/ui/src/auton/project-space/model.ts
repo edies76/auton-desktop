@@ -44,6 +44,8 @@ export interface AutonWorkerView {
   engine?: AutonWorkerEngine;
   /** Subagentes creados por este worker, cuando la sesión los expone. */
   subagentCount?: number;
+  /** Identificador con el que se detiene al worker; el panel lo usa para el botón. */
+  agentId?: string;
 }
 
 export interface AutonWorkerGroup {

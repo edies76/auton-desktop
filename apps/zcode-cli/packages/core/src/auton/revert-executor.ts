@@ -26,6 +26,8 @@ export interface RevertExecution {
   conflicts: number;
   blocked: number;
   auditPath: string;
+  /** Entrada exacta que quedó en reverts.jsonl; el hook durable la refleja. */
+  audit: RevertAuditEntry;
 }
 
 function insideWorkspace(workspaceRoot: string, relativePath: string): string | null {
@@ -180,6 +182,7 @@ export function executeRevert(input: {
     conflicts: count("conflict"),
     blocked: count("blocked"),
     auditPath,
+    audit: entry,
   };
 }
 

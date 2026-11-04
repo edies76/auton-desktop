@@ -113,9 +113,6 @@ vi.mock("@/hooks/usePlatform.js", () => ({
 vi.mock("@/settings/CodingPlanUpgradeDialogProvider.js", () => ({
   useCodingPlanUpgradeDialog: () => ({ openCodingPlanUpgrade: fixture.openUpgrade }),
 }));
-vi.mock("@/components/manual-claim-plan/ManualClaimPlanBanner.js", () => ({
-  ManualClaimPlanBanner: () => null,
-}));
 vi.mock("@/WorkspaceSidebarFooter.js", () => ({
   WorkspaceSidebarFooter: () => createElement("footer", {}, "Footer"),
 }));
@@ -205,21 +202,19 @@ describe("virtual-project sidebar on desktop and mobile", () => {
     await waitFor(() => expect(screen.queryByText("common.loading")).toBeNull());
     expect(fixture.sourceManagement).not.toHaveBeenCalled();
   });
-  it("keeps plugin navigation immediately after automations and calls the selected destination", () => {
-    const onOpenPluginStore = vi.fn();
+  it("keeps automations and plugin marketplace out of the Auton MVP navigation", () => {
     render(
       createElement(
         Sidebar,
-        props({ isDesktop: true, onOpenAutomations: vi.fn(), onOpenPluginStore }),
+        props({
+          isDesktop: true,
+          onOpenAutomations: vi.fn(),
+          onOpenPluginStore: vi.fn(),
+        }),
       ),
     );
-    const scheduled = screen.getByText("workspace.openScheduledSettings");
-    const plugins = screen.getByText("workspace.openPluginsSettings");
-    expect(
-      scheduled.compareDocumentPosition(plugins) & Node.DOCUMENT_POSITION_FOLLOWING,
-    ).toBeTruthy();
-    fireEvent.click(plugins);
-    expect(onOpenPluginStore).toHaveBeenCalledOnce();
+    expect(screen.queryByText("workspace.openScheduledSettings")).toBeNull();
+    expect(screen.queryByText("workspace.openPluginsSettings")).toBeNull();
   });
   // El árbol de proyectos con menús de Host se reemplazó por el picker de la
   // pantalla de entrada. Estos casos cubrían ProjectNode/ProjectSections, que

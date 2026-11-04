@@ -428,7 +428,12 @@ export function useRootWorkspaceActions({
         if (!isCurrent()) return;
         logger.error("[Root] 准备新任务失败", error);
         if (typeof request === "object") request.onError?.(error);
-        setWorkspaceActionError(error instanceof Error ? error.message : String(error));
+        const message = error instanceof Error ? error.message : String(error);
+        setWorkspaceActionError(
+          message === "project.session-exists"
+            ? "Este proyecto ya tiene una sesión. Abre esa sesión para seguir trabajando."
+            : message,
+        );
       }
     },
     [

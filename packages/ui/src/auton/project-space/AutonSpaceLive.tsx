@@ -6,6 +6,8 @@ import { useAutonClock } from "./clock.js";
 import { AutonProjectSpace } from "./ProjectSpaceScreen.js";
 import { projectAutonSpace } from "./projection.js";
 import { agentTramo, projectAgentWorkers } from "./agentProjection.js";
+import { mergeSessionWorkers } from "./sessionWorker.js";
+import { useSessionWorkerConversations } from "./sessionWorkerConversations.js";
 import type { AutonProject } from "./model.js";
 
 export interface AutonSpaceLiveProps {
@@ -39,6 +41,7 @@ export function AutonSpaceLive({
   const rows = projection.snapshot?.rows.window ?? [];
   const now = useAutonClock(injectedNow);
   const agents = useWorkspaceSessionsIndexItems([{ workspacePath: project.path }]);
+  const sessionWorkers = useSessionWorkerConversations(project.path);
   const data = useMemo(() => {
     const base = projectAutonSpace({ rows, now });
     // Transición: los agentes completos son los workers; los subagentes se
@@ -53,12 +56,15 @@ export function AutonSpaceLive({
       ...base.workers.filter((worker) => !agentIds.has(worker.id)),
     ];
     const tramo = agentTramo(agentWorkers);
-    return {
-      ...base,
-      workers,
-      tramos: tramo ? [tramo, ...base.tramos] : base.tramos,
-    };
-  }, [agents.items, now, rows]);
+    return mergeSessionWorkers(
+      {
+        ...base,
+        workers,
+        tramos: tramo ? [tramo, ...base.tramos] : base.tramos,
+      },
+      sessionWorkers,
+    );
+  }, [agents.items, now, rows, sessionWorkers]);
 
   return (
     <AutonProjectSpace

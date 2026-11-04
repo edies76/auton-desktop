@@ -242,3 +242,103 @@ No son para la demo: son para **no engañarnos**. El día que se cambie el promp
 pruebas dicen si mejoró o si solo cambió. Y el día de la demo, son la respuesta a la pregunta
 incómoda del jurado: **"¿y cómo sé que eso es cierto?"** — porque hay una prueba por promesa, y se corrió
 ayer.
+
+### 1. El orquestador parte el trabajo en proporción **[auto]**
+- **Qué prometemos**: no infla lo pequeño ni aplana lo grande.
+- **Cómo se prueba**: dos encargos. Uno de una línea (cambiar un texto) y uno grande (un proyecto con
+  varios frentes).
+- **Qué tiene que verse**: 1 o 2 sprints en el pequeño; entre 8 y 20 en el grande. Y en el pequeño,
+  **cero** exploración del repo antes de despachar.
+
+
+### 4. El canal rápido, en los dos sentidos **[auto]**
+- **Qué prometemos**: los workers hablan con el orquestador mientras trabajan, y él les responde.
+- **Cómo se prueba**: un encargo deliberadamente ambiguo, para que el worker necesite preguntar.
+- **Qué tiene que verse**: la pregunta del worker, la respuesta del orquestador, y **el worker
+  siguiendo** sin haber cerrado su turno.
+
+
+### 6. Revisión en dos etapas, sobre el mismo directorio **[auto]**
+- **Qué prometemos**: nadie se aprueba a sí mismo.
+- **Cómo se prueba**: un sprint de trabajo real.
+- **Qué tiene que verse**: primero una revisión de contrato (¿cumple el criterio de hecho?) y después una
+  de calidad, hechas **por otro**, y trabajando sobre **el mismo directorio** donde se escribió el código.
+  Y si el revisor encuentra problemas, el sprint **no** se cierra.
+
+
+### 8. Los límites se escriben, se versionan y no se aflojan **[auto]**
+- **Qué prometemos**: la autonomía está gobernada.
+- **Cómo se prueba**: cambia un límite del contrato; y aparte, intenta que un worker lo cambie.
+- **Qué tiene que verse**: el cambio queda **registrado con versión, quién y cuándo**; y el intento del
+  worker se rechaza, pero **su reporte** de que está mal calibrado sí se acepta.
+
+
+### 14. Deshacer devuelve los archivos idénticos **[auto]**
+- **Qué prometemos**: el trabajo malo se revierte sin daño.
+- **Cómo se prueba**: revierte un sprint con archivos creados, modificados y con finales de línea mixtos.
+- **Qué tiene que verse**: los modificados vuelven **byte a byte**, los creados desde cero
+  **desaparecen**, un archivo tocado después **no se pisa** (conflicto), repetir la orden no hace nada
+  (idempotente), y todo queda anotado en el registro.
+
+
+### 15. La métrica no se puede maquillar **[auto]**
+- **Qué prometemos**: la cifra dice la verdad.
+- **Cómo se prueba**: una corrida que **falla** el criterio de hecho.
+- **Qué tiene que verse**: entra como **fallo**, no como "menos intervenciones"; y la cifra se reporta
+  sobre **todos** los intentos, no solo los exitosos.
+
+
+### 18. El worker real: sesión completa, con navegador y canal **[auto]**
+- **Qué prometemos**: un programador puede construir su trabajo y probarlo él mismo, y contarlo por el canal.
+- **Cómo se prueba**: un cambio de interfaz despachado en modo sesión (`worker_mode: "session"`), con la instrucción de abrirlo y revisarlo en su navegador.
+- **Qué tiene que verse**: el worker con **su propia carpeta** y **su propio navegador**; un mensaje suyo por el canal con lo que vio; la fila del worker en el espacio del proyecto con su reloj, su estado y su transcripción; y poder **detenerlo a mano**. Con el interruptor apagado, el mismo encargo vuelve a comportarse como un subagente.
+
+### 19. read: contexto con rutas y ni un archivo tocado **[auto]**
+- **Qué prometemos**: el modo `read` consigue contexto para decidir sin poder modificar el proyecto.
+- **Cómo se prueba**: pide "lee cómo está montado X y dime dónde tocar Y" con `mode: "read"`.
+- **Qué tiene que verse**: un resumen **con rutas** de archivo; **ninguna entrada nueva** en `.auton/changes.jsonl` (el diario no registra un solo archivo); y el worker sin herramientas de escritura en su juego.
+
+### 20. research: recomendación con razones, no una lista de enlaces **[auto]**
+- **Qué prometemos**: el modo `research` ayuda a decidir entre alternativas externas sin tocar código.
+- **Cómo se prueba**: pide comparar dos alternativas externas con `mode: "research"`.
+- **Qué tiene que verse**: una **recomendación con razones** y fuentes citadas; **no** una entrega en forma de lista de enlaces; y el diario **sin entradas** de archivos.
+
+### 21. debug: el comando que reproduce el fallo **[auto]**
+- **Qué prometemos**: el modo `debug` señala la causa y deja reproducir el fallo, sin arreglarlo.
+- **Cómo se prueba**: un fallo reproducible con `mode: "debug"`.
+- **Qué tiene que verse**: **el comando exacto** que reproduce el fallo y la **causa raíz** señalada; ningún arreglo aplicado: el diario no registra ediciones de código y el arreglo queda para un `build`.
+
+### 22. refactor: cambia la forma, los tests siguen verdes **[auto]**
+- **Qué prometemos**: el modo `refactor` cambia la forma sin cambiar el comportamiento.
+- **Cómo se prueba**: un refactor acotado con `mode: "refactor"`.
+- **Qué tiene que verse**: **la suite previa sigue en verde**, el comportamiento observable no cambió y el reporte dice qué se movió y qué no.
+
+### 23. Muse Code como motor del worker **[auto]**
+- **Qué prometemos**: un sprint puede correr en Muse Code con el mismo brief, modo, evidencia y REPORTE que en el motor de casa.
+- **Cómo se prueba**: despacha con `engine: "muse"` un encargo mínimo en una carpeta propia y pide que cierre con REPORTE.
+- **Qué tiene que verse**: la sonda de versión, el worker corriendo en **su carpeta**, su salida/progreso, el **REPORTE con uno de los cuatro estados** y la parada. Si Muse no está instalado o autenticado, el despacho **falla explícito** y no cae a ZCode. En `read` y `research` no puede escribir (el adaptador apaga escritura y shell).
+- **Transporte**: el camino conversacional usa `muse serve` (MSP) y permite más entradas en la misma sesión; `exec` queda como alternativa de una pasada (`AUTON_MUSE_TRANSPORT=exec`).
+
+### 24. El worker sigue hablando en la misma sesión **[auto]**
+- **Qué prometemos**: el orquestador puede mandar más de una entrada al mismo worker, y las respuestas llegan en orden sobre la misma sesión y la misma carpeta.
+- **Cómo se prueba**: en ZCode, espera a que el worker termine y mándale dos mensajes seguidos; en Muse, mándale un segundo mensaje mientras corre.
+- **Qué tiene que verse**: la primera respuesta, la segunda y la tercera, **el mismo id de sesión y la misma carpeta**; en Muse, la segunda entrada entra como steer y la sesión sigue viva; en ZCode, la reanudación conserva el contexto. La conversación completa queda en el detalle del worker.
+
+### 25. La conversación y las sesiones de los workers se pueden ver **[auto]**
+- **Qué prometemos**: cada worker deja su conversación completa y su sesión indexada por motor, en orden de inicio.
+- **Cómo se prueba**: abre el detalle de un worker ZCode y de uno Muse, y revisa el índice de workers del proyecto.
+- **Qué tiene que verse**: mensajes del orquestador y del worker, filas de herramienta y cierre; y en el índice, motor, id de sesión del motor, carpeta, estado y tiempos, con el filtro por motor. La superficie lee el índice y la transcripción del workspace; no usa datos de demostración.
+
+### 26. Un proyecto tiene una sola sesión **[auto]**
+- **Qué prometemos**: no se puede crear una segunda conversación dentro del mismo proyecto.
+- **Cómo se prueba**: crea un proyecto y su primera sesión, intenta crear otra en el mismo proyecto e intenta mover una sesión de otro proyecto a ese.
+- **Qué tiene que verse**: el segundo intento se rechaza con un aviso; la reserva en el almacén falla con `project.session-exists` aunque la creación venga de otra ruta; una sesión borrada deja libre el lugar.
+
+---
+
+## Lo que estas pruebas protegen
+
+No son para la demo: son para **no engañarnos**. El día que se cambie el prompt del orquestador, estas
+dieciséis pruebas dicen si mejoró o si solo cambió. Y el día de la demo, son la respuesta a la pregunta
+incómoda del jurado: **"¿y cómo sé que eso es cierto?"** — porque hay una prueba por promesa, y se corrió
+ayer.

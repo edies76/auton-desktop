@@ -3,6 +3,8 @@
 // ============================================================
 
 import type { AgentBackgroundedOutput, AgentOutput } from "../tools/agent.js";
+import type { AutonWorkerTaskMode } from "../auton/task-mode.js";
+import type { AutonWorkerEngine } from "../auton/engine.js";
 import type { Model, ModelSelection } from "../model/index.js";
 import type { ModelRequestDependencies } from "../model/invocation-context.js";
 import type { SessionId, ToolCallId, TurnId } from "./shared.js";
@@ -18,6 +20,10 @@ export interface SubagentRunRequest {
   effort?: "minimal" | "standard" | "thorough";
   /** Nivel de thinking pedido por el orquestador; viaja distinto del esfuerzo. */
   thinkingLevel?: string;
+  /** Clase de trabajo del worker Auton; distinta del esfuerzo. */
+  mode?: AutonWorkerTaskMode;
+  /** Motor que ejecuta al worker; ausente equivale a `zcode`. */
+  engine?: AutonWorkerEngine;
   prompt: string;
   callerCanReadOutputFile?: boolean;
   workingDirectory: string;

@@ -111,7 +111,7 @@ function appendChildControlTool(
     return allowlist;
   }
 
-  if (config.taskType === "subagent_child") {
+  if (config.taskType === "subagent_child" || config.taskType === "auton_worker_session") {
     if (allowlist.includes(RESPOND_TO_COORDINATOR_TOOL_NAME)) {
       return allowlist;
     }

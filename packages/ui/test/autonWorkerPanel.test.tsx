@@ -12,6 +12,8 @@ import type {
   AutonWorkerStatus,
   AutonWorkerView,
 } from "../src/auton/project-space/model.js";
+import { projectSessionWorkerView } from "../src/auton/project-space/sessionWorker.js";
+import { transcriptFromMuseTurns } from "../../../apps/zcode-cli/packages/core/src/auton/workerTranscript.js";
 
 const NOW = Date.UTC(2026, 10, 2, 12, 0, 0);
 
@@ -178,6 +180,29 @@ describe("panel de workers", () => {
     expect(onOpenWorker).not.toHaveBeenCalled();
   });
 
+  it("el control de parada usa el identificador del worker, no el de la sesión", () => {
+    const onStopWorker = vi.fn();
+    const sessionWorker = projectSessionWorkerView({
+      agentId: "agent_1",
+      description: "landing",
+      status: "running",
+      startedAt: NOW - 30_000,
+      childSessionId: "sess_auton_agent_1",
+    });
+
+    renderUi(
+      <AutonWorkerPanel
+        workers={[sessionWorker]}
+        now={NOW}
+        onOpenWorker={vi.fn()}
+        onStopWorker={onStopWorker}
+      />,
+    );
+
+    fireEvent.click(screen.getByTestId("auton-worker-stop"));
+    expect(onStopWorker).toHaveBeenCalledWith("agent_1");
+  });
+
   it("la fila abre el detalle y el detalle no tiene campo de texto", () => {
     const onOpenWorker = vi.fn();
     renderUi(
@@ -245,5 +270,59 @@ describe("espacio del proyecto", () => {
 
     fireEvent.click(screen.getByTestId("auton-worker-back"));
     expect(screen.getByTestId("auton-composer")).toBeTruthy();
+  });
+
+  it("el detalle muestra la conversación completa del motor", () => {
+    const transcript = transcriptFromMuseTurns(
+      [
+        {
+          turnId: "turn-1",
+          userText: "primer encargo",
+          assistantText: "listo, revisé todo",
+          items: [
+            {
+              itemId: "u1",
+              kind: "userMessage",
+              status: "completed",
+              text: "primer encargo",
+            },
+            {
+              itemId: "tool-1",
+              kind: "toolCall",
+              status: "completed",
+              summary: "leyendo el proyecto",
+            },
+            {
+              itemId: "a1",
+              kind: "agentMessage",
+              status: "completed",
+              text: "listo, revisé todo",
+            },
+          ],
+          terminal: "completed",
+        },
+      ],
+      NOW - 20_000,
+    );
+    const sessionWorker = projectSessionWorkerView({
+      agentId: "agent_muse",
+      description: "muse",
+      status: "completed",
+      startedAt: NOW - 20_000,
+      completedAt: NOW,
+      childSessionId: "sess_auton_agent_muse",
+      transcript,
+    });
+
+    renderUi(<AutonWorkerDetail worker={sessionWorker} now={NOW} onBack={vi.fn()} />);
+
+    const visible = screen.getByTestId("auton-worker-transcript").textContent ?? "";
+    expect(visible).toContain("Orquestador: primer encargo");
+    expect(visible).toContain("leyendo el proyecto");
+    expect(visible).toContain("listo, revisé todo");
+    expect(visible).toContain("Turno completado.");
+    expect(
+      screen.getByTestId("auton-worker-transcript").querySelector('[data-event-kind="close"]'),
+    ).toBeTruthy();
   });
 });

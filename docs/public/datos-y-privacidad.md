@@ -6,6 +6,7 @@ Auton trabaja sobre tu proyecto y tu máquina. Esta página explica dónde vive 
 
 - **Tu código** permanece en tu proyecto, en la carpeta que abres con la aplicación.
 - **El plan y su historia** se guardan junto al proyecto, en una carpeta propia de Auton dentro de él. Viajan con el repositorio si tú decides versionarlos.
+- **El registro de lo que pasó** (objetivo, despachos, decisiones, reportes y reversiones) también vive junto al proyecto. Cuando Auton consulta ese registro devuelve pocas líneas con identificadores y fuentes; nunca devuelve el contenido de tus archivos.
 - **La conversación y la crónica** forman parte de la sesión de trabajo de la aplicación.
 
 Auton no necesita mover tu proyecto a un servicio externo para dirigirlo.
@@ -20,8 +21,9 @@ Las credenciales de los proveedores se configuran en el entorno de la aplicació
 
 Auton distingue entre lo que constituye la historia del trabajo y lo que es telemetría de una corrida:
 
-- **Se guarda**: objetivo, plan, piezas, decisiones, evidencia y cambios de límites.
+- **Se guarda**: objetivo, plan, piezas, decisiones, evidencia, cambios de límites y el registro durable de eventos.
 - **No se guarda como historia**: el detalle efímero de una pieza que ya terminó, cuando pertenece a una ejecución que no se puede reanudar.
+- **No se guarda en el registro**: el contenido anterior o posterior de tus archivos. El registro anota qué cambió, dónde y con qué huella, no el texto del cambio.
 
 Al reabrir un proyecto, el sistema prefiere decir "esto quedó a medias" antes que fingir que una pieza terminó.
 

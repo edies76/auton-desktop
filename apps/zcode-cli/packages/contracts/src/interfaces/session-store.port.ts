@@ -39,6 +39,8 @@ export const SESSION_TASK_TYPES = [
   "workflow_child",
   "subagent_child",
   "nested_workflow_child",
+  /** Worker Auton como sesión completa: herramientas y navegador propios. */
+  "auton_worker_session",
 ] as const;
 export type SessionTaskType = (typeof SESSION_TASK_TYPES)[number];
 

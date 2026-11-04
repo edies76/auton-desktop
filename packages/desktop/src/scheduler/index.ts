@@ -36,6 +36,12 @@ const POLL_INTERVAL_MS = 20_000;
  * 取值需明显大于一次正常轮询延迟（避免把正常到点误判成 misfire），又能覆盖短暂卡顿。
  */
 const MISFIRE_GRACE_MS = 5 * 60_000;
+/**
+ * Auton MVP: el trabajo diferido a horas valle queda apagado por defecto. El scheduler
+ * sigue vivo para cron y el resto del motor; para recuperar off-peak, arrancar con
+ * `AUTON_OFF_PEAK=1`.
+ */
+const OFF_PEAK_ENABLED = process.env.AUTON_OFF_PEAK === "1";
 
 const { parentPort } = process;
 
@@ -100,12 +106,14 @@ async function tick(): Promise<void> {
         for (const manualRun of manualRuns) {
           await handleClaimedManual(manualRun.automation, manualRun.run);
         }
-        const offPeakClaimed = await offPeakRepo.claimDue(now);
-        for (const task of offPeakClaimed) {
-          await handleOffPeakClaimed(task, now);
+        if (OFF_PEAK_ENABLED) {
+          const offPeakClaimed = await offPeakRepo.claimDue(now);
+          for (const task of offPeakClaimed) {
+            await handleOffPeakClaimed(task, now);
+          }
+          // keep-awake：上报执行中计数，main 据此 + 设置决定 powerSaveBlocker。
+          await reportOffPeakActiveCount();
         }
-        // keep-awake：上报执行中计数，main 据此 + 设置决定 powerSaveBlocker。
-        await reportOffPeakActiveCount();
       } catch (error) {
         log("error", `tick failed: ${error instanceof Error ? error.message : String(error)}`);
       }

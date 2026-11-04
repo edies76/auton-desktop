@@ -18,7 +18,7 @@ Tres niveles de poda, del más barato al más caro:
 | **Web remote control** | Relay, device id, ajustes, servidor propio | Apagar | Deja de anunciarse y de abrir conexiones |
 | **Remote project entries** | Tablas, diálogos, estados offline | Ocultar | Ya no hay entrada para añadir remotos |
 | **Source servers / connection profiles** | Ajustes avanzados | Ocultar | Solo aparece si vienes de ZCode |
-| **Conversation share / web-share** | Paquete entero, rutas públicas, permisos | Apagar | Compartir un chat no es el producto |
+| **Conversation share / web-share** | Paquete entero, rutas públicas, permisos | Borrar (hecho) | Compartir un chat no es el producto; paquete `web-share` retirado |
 | **Automations** | Vistas, cron, ejecuciones, tabla propia | Ocultar → apagar | Ya fuera de la navegación; el motor sigue dormido |
 | **Off-peak tasks** | Programación diferida | Apagar | Nadie programa trabajo a las 3 AM en una demo |
 | **Plugin marketplace** | Catálogo, permisos, actualizaciones, caché | Ocultar → apagar | Ya fuera de la navegación; la caché sigue en disco |
@@ -68,3 +68,65 @@ emuladores. Cada borrado va con su commit y su prueba de que la app arranca.
 - Procesos al arrancar: bajar de 9 a 5 o menos.
 - RAM de la app: objetivo < 900 MB en desarrollo, < 600 MB empaquetada.
 - Tiempo de arranque en frío: objetivo < 6 s.
+
+## Estado 2026-11-03 — primera mitad de la poda media
+
+Aplicado en la rama `chore/poda/zcode`, detrás de `packages/ui/src/lib/autonMvp.ts`
+(`AUTON_MVP = true`). Todo el código queda para restaurarlo con un cambio de una línea.
+
+- Navegación: fuera Automations y Plugin Marketplace del sidebar.
+- Ajustes: fuera Remote devices, Memory, Usage/billing y Computer use.
+- Cuenta: fuera el resumen de plan/usage y el acceso a Rewards del menú de perfil.
+- Remoto: apagadas las entradas de conexión remota y el web remote control.
+- Marketing/rewards: los providers dejan de montarse, así que no hay llamadas al arrancar.
+- Compartir conversación: se oculta el botón de share en la cabecera.
+- Automations y Plugin Store: sus rutas ya no se abren aunque otro punto de la UI
+  emita la intención.
+- Pruebas ajustadas a la UI podada; `pnpm typecheck` completo en verde.
+
+Pendiente para la segunda mitad: apagar defaults de módulos pesados, telemetría y
+off-peak; borrar los módulos que queden sin uso cuando la app abra y el chat funcione.
+
+## Estado 2026-11-03 — segunda mitad de la poda media
+
+- Se integró `auton-desktop` (`7815c2a3`, con el chat único/vivo de Edi) en la rama de poda.
+- Se borró el módulo de Rewards de la UI: `RewardsProvider`, `RewardsWebview`, su prueba
+  unitaria, su E2E, el doc `docs/rewards-embedded.md` y las referencias de arranque.
+- Off-peak queda apagado por defecto en el scheduler; cron y el resto del motor siguen
+  vivos. Para recuperarlo: `AUTON_OFF_PEAK=1`.
+- Telemetría: sin `config/private/build-defaults.json`, los endpoints de ARMS y reporte
+  ya quedan vacíos y no se envían eventos. No se tocó el código de diagnóstico local.
+- Los defaults pesados ya estaban apagados en el código: emuladores Android/iOS, CUA y
+  los cuatro plugins de ofimática. No se volvieron a tocar.
+- Verificado con `pnpm typecheck` y las pruebas de scheduler, marketing y credenciales E2E.
+
+No se borró nada del motor de edición, sesiones, proveedores ni del trabajo de A. La app
+sigue sin abrir por el error de versión `0.0`, así que no se borraron rutas de UI que
+dependan de una verificación visual.
+
+## Estado 2026-11-03 — poda final de UI muerta
+
+- Se borró la UI de Bots: diálogo completo, tarjetas de configuración, helper de presentación
+  y el panel de canales dentro del control remoto. El motor de Bots queda intacto; solo
+  desaparece la superficie que ya no tenía producto detrás.
+- Se borraron los E2E de interfaz de Bots (`feishu-bound-groups-ui`,
+  `feishu-runtime-error-ui`) y sus fixtures de UI.
+- Se borraron restos muertos que Knip marcaba sin uso: link de compartir conversación,
+  helpers de plan manual, prompts sugeridos de ofimática, entrada CUA del compositor,
+  paridad E2E de telemetría y utilidades de conexión remota.
+- No se tocó el chat único/vivo, el espacio de proyecto, el motor de edición, sesiones,
+  proveedores, navegador interno, terminal ni el trabajo de A.
+- Verificado con `pnpm typecheck`, las pruebas de web remote/UI y `pnpm test:architecture`.
+
+## Estado 2026-11-03 — poda mediana de marketing
+
+- Se borró la capa de marketing de la UI: banner de campañas, popups, dialogs de fallo,
+  controlador/poller, recursos, navegación de campañas y su contrato de módulo.
+- Se quitaron sus enganches en `Root`, `App`, `SettingsPage`, `ModelProviderSection`,
+  `PluginStorePage` y el slot inferior del sidebar.
+- Se borraron sus pruebas unitarias y los E2E de UI (`marketing-touch-anonymous`,
+  `marketing-touch-delivery`, `marketing-touch-entitlement` y el caso de manual review).
+- Se dejó intacto el servicio de marketing del backend y el mock de coding plan que lo usa
+  para pruebas; solo desaparece la superficie visible y la navegación por campañas.
+- Verificado con `pnpm typecheck`, pruebas de sidebar/root/credenciales/mock de plan y
+  `pnpm test:architecture`.

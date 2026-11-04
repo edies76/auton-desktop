@@ -71,6 +71,7 @@ describe("turno vivo y canal rápido sobre una sesión real", () => {
                     description: "landing",
                     prompt: "escribe index.html",
                     subagent_type: "auton-worker",
+                    worker_mode: "subagent",
                     run_in_background: true,
                     effort: "minimal",
                   },

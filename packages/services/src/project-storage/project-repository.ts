@@ -353,6 +353,12 @@ export class ProjectRepository implements ProjectRepositoryContract {
       if (!task) throw new Error("project.task-not-found");
       if (project.hostId !== (this.ownerHostId ?? "local") || task.host_id !== project.hostId)
         throw new Error("project.cross-host-move");
+      const conflict = this.db
+        .prepare(
+          "SELECT 1 FROM tasks WHERE project_id=? AND deleted=0 AND NOT (workspace_key=? AND task_id=?) LIMIT 1",
+        )
+        .get(project.id, resolveWorkspaceKey(input.task), input.task.taskId);
+      if (conflict) throw new Error("project.session-exists");
       assertRemoteTaskDirectories(this.ownerHostId, project, String(task.root_path));
       if (!project.roots.some((root) => root.rootPath === task.root_path)) {
         if (!input.addMissingRoot) throw new Error("project.root-confirmation-required");
@@ -416,6 +422,12 @@ export class ProjectRepository implements ProjectRepositoryContract {
             !project.roots.some((root) => root.rootPath === input.task.workspacePath)
           )
             throw new Error("project.cwd-not-in-roots");
+          if (
+            this.db
+              .prepare("SELECT 1 FROM tasks WHERE project_id=? AND deleted=0 LIMIT 1")
+              .get(input.projectId)
+          )
+            throw new Error("project.session-exists");
         }
         // 创建归属必须先于 CLI 首发；空事实不是假会话，列表只读取已有 CLI 事实的行。
         this.db

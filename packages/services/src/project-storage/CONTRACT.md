@@ -32,3 +32,5 @@ Host 项目组织态的持久化升级。调用者持有 app SQLite 连接，CLI
 本地仍允许 0..n roots；可信 ownerHostId 非 local 的持库宿主只允许恰好一个固定 root。远程创建必须有项目，prepareSession、reserveCreatedTask 与 moveTask 不得产生无归属或附加目录；根路径更新和缺 root 拖动在写事务中拒绝。客户端 hostId 不能改变持库身份。历史迁移数据不被裁剪，失败不得部分写入。
 
 启动入口复用 session 模块公开的旧 Repo 与迁移适配器：先 SQL 迁移并提交，再逐一 ensureReady/close，最后标记 prepared。Worker 必须注入旧 settings 以完成首次项目导入；进度复制迁移事实，失败不撤回已提交计数。storage-startup 子路径保持不变。
+
+- Un proyecto admite una sola sesion: prepareSession y reserveCreatedTask rechazan la segunda con project.session-exists; moveTask no puede meter otra sesion en un proyecto ya ocupado.

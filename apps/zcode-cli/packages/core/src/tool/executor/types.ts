@@ -101,6 +101,10 @@ export interface ToolExecutorOptions {
   nativeSearchEnhancementsEnabled?: boolean;
   skillPort?: SkillPort;
   subagentPort?: SubagentPort;
+  /** Worker Auton como sesión completa; presente solo con el interruptor encendido. */
+  autonSessionWorkerPort?: SubagentPort;
+  /** Modo resuelto para el despacho de workers Auton. */
+  autonWorkerMode?: "subagent" | "session";
   coordinatorResponsePort?: CoordinatorResponsePort;
   workflowSubmitPort?: WorkflowSubmitPort;
   /** actor 的升级端口；存在即为该会话注册 escalate。 */
@@ -216,6 +220,10 @@ export interface ToolExecutorDeps {
   nativeSearchEnhancementsEnabled?: boolean;
   skillPort?: SkillPort;
   subagentPort?: SubagentPort;
+  /** Worker Auton como sesión completa; presente solo con el interruptor encendido. */
+  autonSessionWorkerPort?: SubagentPort;
+  /** Modo resuelto para el despacho de workers Auton. */
+  autonWorkerMode?: "subagent" | "session";
   coordinatorResponsePort?: CoordinatorResponsePort;
   workflowSubmitPort?: WorkflowSubmitPort;
   /** actor 的升级端口；存在即为该会话注册 escalate。 */

@@ -149,7 +149,7 @@ describe("WorkspaceHeaderActionSection", () => {
     expect(html).toContain("sidePane.expand");
   });
 
-  it("只在 Desktop local/SSH/WSL/Docker 已有任务显示分享入口", async () => {
+  it("分享入口在 MVP 中始终隐藏", async () => {
     const { WorkspaceHeaderActionSection } =
       await import("@/WorkspaceHeaderSections/WorkspaceHeaderActionSection.js");
     const renderSection = (extra: Record<string, unknown>) =>
@@ -167,8 +167,10 @@ describe("WorkspaceHeaderActionSection", () => {
         }),
       );
 
-    expect(renderSection({})).toContain("conversationShare.trigger");
-    expect(renderSection({ remoteTarget: { kind: "ssh" } })).toContain("conversationShare.trigger");
+    expect(renderSection({})).not.toContain("conversationShare.trigger");
+    expect(renderSection({ remoteTarget: { kind: "ssh" } })).not.toContain(
+      "conversationShare.trigger",
+    );
     expect(renderSection({ isWebRemoteControl: true })).not.toContain("conversationShare.trigger");
     expect(renderSection({ isDesktop: false })).not.toContain("conversationShare.trigger");
     expect(renderSection({ remoteTarget: { kind: "server" } })).not.toContain(

@@ -1,5 +1,9 @@
 import { configureOffPeakRuntime, controlOffPeakRuntime } from "./off-peak/runtime.js";
 import {
+  AUTON_WORKER_MODE_ENV,
+  resolveAutonWorkerMode,
+} from "../auton/worker-mode.js";
+import {
   createTurnAgentDefinitions,
   createAgentDefinitionsReader,
   type GetAgentDefinitions,
@@ -207,6 +211,10 @@ export class AgentRuntime {
   private mcpToolsSignature?: string;
   private mcpToolListRevision?: number;
   private subagentPort?: SubagentPort;
+  /** Puerto del worker como sesión completa; ausente cuando el interruptor está apagado. */
+  private autonSessionWorkerPort?: SubagentPort;
+  /** Modo resuelto al crear el runtime; no cambia a mitad de sesión. */
+  private autonWorkerMode: import("../auton/worker-mode.js").AutonWorkerMode = "subagent";
   private readonly getAgentDefinitions: GetAgentDefinitions;
   private readonly prepareAgentDefinitions: ReturnType<
     typeof createTurnAgentDefinitions
@@ -347,6 +355,16 @@ export class AgentRuntime {
     this.imageProcessorPort = deps.imageProcessorPort;
     this.pdfDocumentPort = deps.pdfDocumentPort;
     this.subagentPort = deps.subagentPort ?? runtime.createDefaultSubagentPort(deps);
+    this.autonWorkerMode = resolveAutonWorkerMode({
+      env: process.env[AUTON_WORKER_MODE_ENV],
+      fallback: config.autonWorkerMode,
+    });
+    // Con el interruptor apagado no se construye nada nuevo: la ruta de hoy
+    // queda intacta y volver atrás no exige tocar más código.
+    this.autonSessionWorkerPort =
+      this.autonWorkerMode === "session"
+        ? (deps.autonSessionWorkerPort ?? runtime.createDefaultAutonSessionWorkerPort(deps))
+        : undefined;
     this.dynamicWorkflowRunPort = deps.dynamicWorkflowRunPort;
     // GUI「配置」解析子代理模型用的目录（与工具上下文拿的是同一个端口）。
     this.modelCatalogPort = deps.modelCatalogPort;

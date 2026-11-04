@@ -3,6 +3,7 @@ import { TID_AUTOMATIONS_OPEN } from "@zcode/shared/test-ids";
 import type { ProjectSidebarProps } from "@/project-sidebar/contract.js";
 import { Button } from "@/components/ui/button.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
+import { AUTON_MVP } from "@/lib/autonMvp.js";
 import { WebRemoteControlDeviceHeader } from "@/web-remote-control/WebRemoteControlDeviceHeader.js";
 
 /** 顶部导航只展示 Shell 的选中状态，路由仍由 Shell 唯一持有。 */
@@ -61,7 +62,7 @@ export function ProjectSidebarNavigation({
               Nuevo proyecto
             </Button>
           ) : null}
-          {props.onOpenAutomations ? (
+          {!AUTON_MVP && props.onOpenAutomations ? (
             <Button
               variant="ghost"
               size="lg"
@@ -75,17 +76,19 @@ export function ProjectSidebarNavigation({
               {intl.formatMessage({ id: "workspace.openScheduledSettings" })}
             </Button>
           ) : null}
-          <Button
-            variant="ghost"
-            size="lg"
-            className={`w-full justify-start gap-2 ${props.pluginStoreActive ? "bg-selected text-foreground" : ""}`}
-            aria-pressed={props.pluginStoreActive ?? false}
-            data-testid="plugin-store-sidebar-open"
-            onClick={() => props.onOpenPluginStore?.()}
-          >
-            <Blocks className="size-4" />
-            {intl.formatMessage({ id: "workspace.openPluginsSettings" })}
-          </Button>
+          {!AUTON_MVP ? (
+            <Button
+              variant="ghost"
+              size="lg"
+              className={`w-full justify-start gap-2 ${props.pluginStoreActive ? "bg-selected text-foreground" : ""}`}
+              aria-pressed={props.pluginStoreActive ?? false}
+              data-testid="plugin-store-sidebar-open"
+              onClick={() => props.onOpenPluginStore?.()}
+            >
+              <Blocks className="size-4" />
+              {intl.formatMessage({ id: "workspace.openPluginsSettings" })}
+            </Button>
+          ) : null}
         </>
       )}
     </div>

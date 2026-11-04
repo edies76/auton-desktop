@@ -166,30 +166,6 @@ function runBootstrapE2eReportBuild() {
   });
 }
 
-function runBootstrapStreamAnimateBuild() {
-  const streamAnimateDir = resolve(rootDir, "packages/stream-animate");
-  // Bugfix: bootstrap:with-remote 串行最终构建时，继续通过 pnpm 执行 stream-animate 的 tsc
-  // 仍可能命中 shim 被 SIGKILL；这里仅在 bootstrap runner 中直接执行等价入口。
-  runCommand(
-    process.execPath,
-    [resolve(rootDir, "node_modules/typescript/bin/tsc"), "-p", "tsconfig.server.json"],
-    {
-      cwd: streamAnimateDir,
-      env: {
-        ...process.env,
-        ...bootstrapWithRemoteEnv,
-      },
-    },
-  );
-  runCommand(process.execPath, [resolve(rootDir, "node_modules/vite/bin/vite.js"), "build"], {
-    cwd: streamAnimateDir,
-    env: {
-      ...process.env,
-      ...bootstrapWithRemoteEnv,
-    },
-  });
-}
-
 function runBootstrapDesktopBuild() {
   const desktopDir = resolve(rootDir, "packages/desktop");
   // bootstrap:with-remote 的目标是完成远程资源和本地 runtime 初始化。
@@ -212,7 +188,6 @@ function runBootstrapWithRemoteBuild() {
     runPnpm(["--filter", filter, "build"]);
   }
   runBootstrapE2eReportBuild();
-  runBootstrapStreamAnimateBuild();
   runBootstrapServerBuild();
   runBootstrapDesktopBuild();
 }
@@ -236,10 +211,6 @@ runPnpm(["prepare:desktop-runtime"]);
 
 if (withRemoteAssets) {
   runBootstrapWithRemoteBuild();
-  // Bug 原因：R3 首装只消费 Source Server archive，旧 bootstrap 只生成 legacy
-  // manifest/components，导致开发态继续命中 gitignore 中的历史 dist-release。
-  // 放在最终 workspace build 之后，确保 archive 收集的是本轮最新编译产物。
-  runPnpm(["--filter", "@zcode/server-cli", "stage:remote-assets"]);
 } else {
   runPnpm(["run", "build:bootstrap"]);
 }

@@ -43,9 +43,6 @@ modules:
   - id: server
     roots: [ packages/server/src ]
     managed: false
-  - id: zcode-server-cli
-    roots: [ packages/zcode-server-cli/src ]
-    managed: false
   - id: ui
     roots: [ packages/ui/src ]
     managed: false
@@ -57,9 +54,6 @@ modules:
     managed: false
   - id: formal-proof
     roots: [ packages/formal-proof/src ]
-    managed: false
-  - id: stream-animate
-    roots: [ packages/stream-animate/src ]
     managed: false
   - id: e2e-report
     roots: [ packages/e2e-report/src ]
@@ -703,22 +697,6 @@ modules:
     layers:
       adapters: .
     owner: desktop
-  # marketing-touch-controller：由 architecture:adopt 登记
-  - id: marketing-touch-controller
-    roots:
-      - packages/ui/src/marketing-touch-contract
-      - packages/ui/src/components/marketing-touch/marketingTouchController.ts
-    managed: true
-    requires:
-      - services
-      - shared
-      - ui
-    publicEntrypoints:
-      - packages/ui/src/components/marketing-touch/marketingTouchController.ts
-      - packages/ui/src/marketing-touch-contract/contract.ts
-    layers:
-      app: .
-    owner: desktop
   # side-pane-full-view：由 architecture:adopt 登记
   - id: side-pane-full-view
     roots:
@@ -799,6 +777,19 @@ global:
   acceptedUpstreamSnapshot: scripts/architecture/upstream-snapshot.json
 
 exceptions:
+  - id: sidebar-bottom-activity-poda-unmanaged
+    rule: unmanaged-new-file
+    paths: [ packages/ui/src/sidebar-activity/SidebarBottomActivity.tsx ]
+    reason: La poda de marketing deja el indicador de actividad del sidebar en el modulo ui sin gestion; moverlo excede este cambio.
+  - id: auton-mvp-flag-unmanaged
+    rule: unmanaged-new-file
+    paths: [ packages/ui/src/lib/autonMvp.ts ]
+    reason: Bandera temporal de la poda del MVP; se retira cuando la poda deje de ser reversible.
+  - id: auton-session-worker-runtime-method
+    rule: unmanaged-new-file
+    paths:
+      - apps/zcode-cli/packages/core/src/runtime/methods/autonSessionWorker.ts
+    reason: El metodo de runtime conecta el puerto del worker Auton con el runtime de ZCode; adoptarlo como modulo propio exige mover la fabrica completa y queda fuera de este cambio.
   - id: side-pane-full-view-shortcut-command-edit
     rule: unmanaged-new-file
     paths: [ packages/shared/src/shortcutCommands.ts ]

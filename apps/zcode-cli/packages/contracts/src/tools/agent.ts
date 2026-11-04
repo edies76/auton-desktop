@@ -7,6 +7,11 @@ import { z } from "zod";
 import type { ToolCallId, TraceId } from "../interfaces/shared.js";
 import type { ModelUsage } from "../model/index.js";
 import { toToolJsonSchema } from "./json-schema.js";
+import {
+  AutonWorkerTaskModeSchema,
+  DEFAULT_AUTON_WORKER_TASK_MODE,
+} from "../auton/task-mode.js";
+import { AutonWorkerEngineSchema } from "../auton/engine.js";
 
 export const AgentType = {
   GeneralPurpose: "general-purpose",
@@ -32,6 +37,17 @@ export const AgentInputSchema = z.object({
       "This travels apart from effort: effort sets how much adjacent work is allowed, " +
       "thinking_level sets how hard the worker reasons before acting.",
   ),
+  mode: AutonWorkerTaskModeSchema.catch(DEFAULT_AUTON_WORKER_TASK_MODE)
+    .optional()
+    .describe(
+      "Class of work for subagent_type=auton-worker, separate from effort. " +
+        "build (default) writes the code; read explores and reports with file paths, never writing; " +
+        "research compares outside options and closes with a recommendation with reasons, never a link list; " +
+        "debug reproduces the failure and names the root cause, without fixing it; " +
+        "refactor changes the shape while the tests stay green and behavior stays the same. " +
+        "read and research cannot modify the workspace: their write tools are removed. " +
+        "An unknown value falls back to build.",
+    ),
   item_id: z
     .string()
     .optional()
@@ -53,6 +69,24 @@ export const AgentInputSchema = z.object({
       "The type of specialized agent to use for this task. Use 'auton-worker' for Auton programmers " +
         "dispatched by the orchestrator: they answer to the orchestrator, not to the human, and close " +
         "with a REPORTE block (STATUS/HICE/PROBE/ARCHIVOS/DUDAS).",
+    ),
+  engine: AutonWorkerEngineSchema.optional().describe(
+    "Engine that runs subagent_type=auton-worker. zcode (default) uses the in-process ZCode " +
+      "session. muse runs Muse Code in the worker's own workspace with the same brief, " +
+      "mode, effort and REPORTE contract, and keeps its session alive: the orchestrator " +
+      "can send another message, and a message during a turn is delivered as steer. " +
+      "Use muse when the sprint should run on the Meta engine. An unknown or " +
+      "unavailable engine fails explicitly; it never falls back to another engine.",
+  ),
+  worker_mode: z
+    .enum(["subagent", "session"])
+    .optional()
+    .describe(
+      "Only for subagent_type=auton-worker. 'session' (default) opens a complete ZCode session for the " +
+        "worker: full toolset, its own isolated workspace and its own browser to test its work. " +
+        "'subagent' is the fallback: the worker runs with the narrowed subagent tool policy and shares " +
+        "the orchestrator's workspace. Use 'subagent' only for a small, file-bounded change or as the " +
+        "escape hatch if the session path fails.",
     ),
   // subagent 模型由 Settings / Markdown profile 统一决定；若把调用级
   // model 暴露给父模型，历史 tool call 会持续生成旧 override 并覆盖当前配置。

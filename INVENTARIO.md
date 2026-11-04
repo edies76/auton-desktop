@@ -7,9 +7,8 @@ Fecha: 2026-10-27. Rama: `auton-desktop`. No se borró ni una línea.
 - `packages/desktop` — shell Electron (main `out/main/index.js`, renderer Vite,
   build `tsup`, `scripts/bundle.mjs`, e2e wdio con sharding Windows,
   `test:installer-nsh-smoke`). Es lo más caro de reconstruir: se queda.
-- `packages/rpc`, `packages/shared`, `packages/share-ui`, `packages/ui`,
-  `packages/stream-animate` — infra y primitivos de UI. El cerebro hablará por
-  `rpc` donde calce.
+- `packages/rpc`, `packages/shared`, `packages/ui` — infra y primitivos de UI.
+  El cerebro hablará por `rpc` donde calce.
 - `packages/services/src/fs/atomicFileUtils.ts` — escritura atómica de
   archivos (verificado que existe; cuerpo por leer en F2/F3 antes de adoptar).
 - `packages/services/src/git/` (`gitCheckpointRepo.ts`, `gitCliRepo.ts`,

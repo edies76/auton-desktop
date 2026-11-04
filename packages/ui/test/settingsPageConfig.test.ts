@@ -37,36 +37,25 @@ describe("settingsPageConfig", () => {
     ).toEqual([
       {
         id: "basics",
-        sections: [
-          "general",
-          "appearance",
-          "modelProvider",
-          "browser",
-          "remoteDevices",
-          "shortcuts",
-        ],
+        sections: ["general", "appearance", "modelProvider", "browser", "shortcuts"],
       },
       {
         id: "agentCapabilities",
-        sections: ["memory", "subagents", "plugin", "mcp", "skill", "commands", "hooks"],
+        sections: ["subagents", "mcp", "skill", "commands", "hooks"],
       },
-      { id: "dataAndStats", sections: ["usage", "archives"] },
+      { id: "dataAndStats", sections: ["archives"] },
     ]);
     expect(settingsSections.map((section) => section.id)).toEqual([
       "general",
       "appearance",
       "modelProvider",
-      "memory",
       "subagents",
-      "plugin",
       "mcp",
       "skill",
       "commands",
       "hooks",
       "browser",
-      "remoteDevices",
       "shortcuts",
-      "usage",
       "archives",
     ]);
   });
@@ -82,14 +71,14 @@ describe("settingsPageConfig", () => {
     ["Windows", { isWindowsDesktop: true }, true],
     ["Linux 桌面", { isDesktop: true }, true],
     ["Web", {}, false],
-  ] as const)("%s 的电脑控制入口符合桌面平台边界", async (_name, options, expected) => {
+  ] as const)("%s 的电脑控制入口在 MVP 中保持关闭", async (_name, options) => {
     const { createSettingsPageConfig } = await loadSettingsPageConfig("test");
     const { settingsSections } = createSettingsPageConfig(options);
 
-    expect(settingsSections.some((section) => section.id === "computerUse")).toBe(expected);
+    expect(settingsSections.some((section) => section.id === "computerUse")).toBe(false);
   });
 
-  it("桌面平台的电脑控制排在基础设置的浏览器之后", async () => {
+  it("桌面平台的基础设置不再包含远程设备或电脑控制", async () => {
     const { createSettingsPageConfig } = await loadSettingsPageConfig("test");
     const { settingsSectionGroups } = createSettingsPageConfig({ isMacDesktop: true });
     const basics = settingsSectionGroups.find((group) => group.id === "basics");
@@ -99,8 +88,6 @@ describe("settingsPageConfig", () => {
       "appearance",
       "modelProvider",
       "browser",
-      "remoteDevices",
-      "computerUse",
       "shortcuts",
     ]);
     expect(

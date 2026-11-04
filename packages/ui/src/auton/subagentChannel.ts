@@ -50,6 +50,15 @@ export function channelClock(row: SubagentRow, now: number): string | null {
   return elapsed === null ? null : formatElapsed(elapsed);
 }
 
+/**
+ * Señales opcionales que el orquestador adjunta a la fila del subagente. Viven
+ * en la fila de tool call del protocolo; el canal las consume si están.
+ */
+type ChannelSubagentRow = SubagentRow & {
+  lastActivityAt?: number | string | null;
+  waitingForAnswer?: boolean;
+};
+
 /** Umbral del latido en el hilo; el mismo que usa el runtime (90 s). */
 export const CHANNEL_HEARTBEAT_MS = 90_000;
 
@@ -59,7 +68,7 @@ export const CHANNEL_HEARTBEAT_MS = 90_000;
  * señal.
  */
 export function heartbeatEventForSubagent(
-  row: SubagentRow,
+  row: ChannelSubagentRow,
   now: number,
   thresholdMs: number = CHANNEL_HEARTBEAT_MS,
 ): WakeEventRowProps | null {
@@ -87,7 +96,7 @@ function tail(text: string | undefined, max = 80): string | undefined {
  * cierre. Una pregunta pendiente manda sobre el latido.
  */
 export function deriveWakeEvents(
-  row: SubagentRow,
+  row: ChannelSubagentRow,
   now: number,
   title: string,
   heartbeatMs: number = CHANNEL_HEARTBEAT_MS,

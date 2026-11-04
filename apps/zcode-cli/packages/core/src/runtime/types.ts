@@ -212,6 +212,12 @@ export interface AgentRuntimeConfig {
   parentSessionId?: SessionId;
   taskType?: SessionTaskType;
   /**
+   * Interruptor del worker Auton. `subagent` (por defecto) usa el port de
+   * subagentes de siempre; `session` abre una sesión completa de ZCode con
+   * herramientas, espacio y navegador propios. Apagarlo devuelve todo atrás.
+   */
+  autonWorkerMode?: "subagent" | "session";
+  /**
    * 动态工作流灰度门（docs/dynamic-workflow/launch.md「Gray release」）：Host 判定后经
    * ZCode Protocol 下发，runtime 只消费。**缺席即开启**（进程内嵌入方靠这个极性）；
    * 独立 CLI 的 TUI 与 headless 按 --workflow-mode 显式传 true/false（缺省 disabled，DWG-04），
@@ -358,6 +364,8 @@ export interface AgentRuntimeDeps {
   skillPort?: SkillPort;
   mcpPort?: McpPort;
   subagentPort?: SubagentPort;
+  /** Puerto del worker como sesión completa; solo se usa con el interruptor en `session`. */
+  autonSessionWorkerPort?: SubagentPort;
   coordinatorResponsePort?: CoordinatorResponsePort;
   /** 工作流 actor 提交终态结果的端口；存在即作为 submit_result 工具的注册门。 */
   workflowSubmitPort?: WorkflowSubmitPort;
