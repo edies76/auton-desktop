@@ -4,6 +4,27 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases públicas.
 
+## [0.14.0] — 2026-11-03
+
+El chat queda seguido: tools colapsadas, sin barra de acciones y un orquestador
+que delega más.
+
+### Cambiado
+
+- **El loop queda cerrado por defecto** aunque el worker esté corriendo: se ve el
+  header con su contador y las tools solo si el humano abre el detalle.
+- **Sin barra de acciones** en los mensajes Auton (copiar, reaccionar, fork): la
+  conversación se lee seguida.
+- **Los eventos despertadores** (pregunta, cierre, latido) se pintan fuera del
+  loop, no dentro del historial.
+
+### Añadido
+
+- **Prompt de delegación**: el orquestador dirige y habla poco (una o dos líneas
+  por mensaje); delega en `auton-worker`, configura effort/thinking según
+  velocidad o profundidad, pide estado con frecuencia por el canal y verifica lo
+  básico antes de cerrar.
+
 ## [0.13.0] — 2026-11-03
 
 El turno cierra para dejar escribir; el loop sigue vivo y se parte en varios.
