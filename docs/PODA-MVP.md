@@ -86,3 +86,20 @@ Aplicado en la rama `chore/poda/zcode`, detrás de `packages/ui/src/lib/autonMvp
 
 Pendiente para la segunda mitad: apagar defaults de módulos pesados, telemetría y
 off-peak; borrar los módulos que queden sin uso cuando la app abra y el chat funcione.
+
+## Estado 2026-11-03 — segunda mitad de la poda media
+
+- Se integró `auton-desktop` (`7815c2a3`, con el chat único/vivo de Edi) en la rama de poda.
+- Se borró el módulo de Rewards de la UI: `RewardsProvider`, `RewardsWebview`, su prueba
+  unitaria, su E2E, el doc `docs/rewards-embedded.md` y las referencias de arranque.
+- Off-peak queda apagado por defecto en el scheduler; cron y el resto del motor siguen
+  vivos. Para recuperarlo: `AUTON_OFF_PEAK=1`.
+- Telemetría: sin `config/private/build-defaults.json`, los endpoints de ARMS y reporte
+  ya quedan vacíos y no se envían eventos. No se tocó el código de diagnóstico local.
+- Los defaults pesados ya estaban apagados en el código: emuladores Android/iOS, CUA y
+  los cuatro plugins de ofimática. No se volvieron a tocar.
+- Verificado con `pnpm typecheck` y las pruebas de scheduler, marketing y credenciales E2E.
+
+No se borró nada del motor de edición, sesiones, proveedores ni del trabajo de A. La app
+sigue sin abrir por el error de versión `0.0`, así que no se borraron rutas de UI que
+dependan de una verificación visual.

@@ -92,3 +92,20 @@ Verificado con: `pnpm typecheck` completo; pruebas de `settingsNavigation`, `set
 proveedores, navegador interno, plan ni el trabajo de A.
 Pendiente: la app sigue sin abrir por el error de versión `0.0`; la segunda mitad (defaults de
 módulos pesados, telemetría, off-peak y borrado real) queda para la siguiente orden.
+
+## 2026-11-03 — segunda mitad de la poda media
+
+Qué: se integró `origin/auton-desktop` (`7815c2a3`, con el chat único/vivo de Edi) en la rama de
+poda. Se borró el módulo de Rewards de la UI completo (`RewardsProvider`, `RewardsWebview`), su
+prueba unitaria, su E2E, el doc `docs/rewards-embedded.md` y las referencias de credenciales,
+wdio y snapshot de arquitectura. Off-peak quedó apagado por defecto en el scheduler; cron sigue
+vivo y se puede recuperar con `AUTON_OFF_PEAK=1`.
+Por qué: cierra la segunda mitad sin tocar el motor ni el trabajo de A. Rewards era una superficie
+aislada; off-peak no aporta a la demo. La telemetría ya estaba apagada por defecto sin
+`config/private/build-defaults.json`, y los defaults pesados (emuladores, CUA, ofimática) ya
+estaban en `false`.
+Verificado con: `pnpm typecheck` completo; pruebas de `desktopCronScheduler`,
+`offPeakHostDispatch`, `marketingTouchProvider` y `e2eStartupCredentials` en verde.
+No se tocó el motor de edición, sesiones, proveedores, navegador interno, plan ni el trabajo de A.
+La app sigue sin abrir por el error de versión `0.0`; no se borraron rutas que dependan de
+verificación visual.

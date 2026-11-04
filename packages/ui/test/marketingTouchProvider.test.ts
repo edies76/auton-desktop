@@ -22,7 +22,6 @@ const h = vi.hoisted(() => {
     store: { user: { id: "fixture" }, isRestoringOAuthSession: false, requestLoginEntry: vi.fn() },
     intl: { formatMessage: ({ id }: { id: string }) => id },
     upgrade: vi.fn(),
-    rewards: vi.fn().mockResolvedValue(undefined),
   };
 });
 vi.mock("@/hooks/useProviderSettingsView.js", () => ({
@@ -64,7 +63,6 @@ vi.mock("@/WorkspaceSidebarFooterUsageSummary.js", () => ({
 vi.mock("@/settings/CodingPlanUpgradeDialogProvider.js", () => ({
   useCodingPlanUpgradeDialog: () => ({ openCodingPlanUpgrade: h.upgrade }),
 }));
-vi.mock("@/rewards/RewardsProvider.js", () => ({ useOpenRewards: () => h.rewards }));
 vi.mock("@/i18n/IntlProvider.js", () => ({
   useZCodeIntl: () => ({ intl: h.intl, locale: "en-US" }),
 }));
@@ -125,39 +123,4 @@ it.each([true, false])("任务完成请求复用窗口 poller（desktop=%s）", 
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
-});
-
-it("rewards 导航委托窗口 Provider，保留一次 confirm 上报且不领取", async () => {
-  h.services.marketingTouchService.query.mockResolvedValue({
-    scope: "fixture-scope",
-    deliveries: [
-      {
-        campaign_id: "fixture-rewards",
-        resource_position: "banner",
-        banner: {
-          background: { type: "image" },
-          buttons: [
-            {
-              text: { format: "plaintext", content: "Open rewards" },
-              action: { type: "navigate", args: { page: "rewards" } },
-            },
-          ],
-        },
-      },
-    ],
-  });
-  render(
-    createElement(MarketingTouchProvider, {
-      desktop: true,
-      children: createElement(MarketingBanner),
-    }),
-  );
-  fireEvent.click(await screen.findByText("Claim"));
-  await waitFor(() => expect(h.rewards).toHaveBeenCalledTimes(1));
-  await waitFor(() =>
-    expect(h.services.marketingTouchService.report).toHaveBeenCalledExactlyOnceWith(
-      expect.objectContaining({ campaignId: "fixture-rewards", actionType: "confirm" }),
-    ),
-  );
-  expect(h.services.codingPlanSubscriptionService.claimManualPlan).not.toHaveBeenCalled();
 });
