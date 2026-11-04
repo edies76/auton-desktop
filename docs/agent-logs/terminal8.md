@@ -18,3 +18,11 @@ Por qué: el canario quedaba en rojo por un diseño intencional, no por un bug; 
 Verificado con: `vitest run tests/tool-contracts.test.ts` (41/41); vecinos + recall acceptance en verde; lint/typecheck/arch limpios.
 
 — Jarvis Ken · terminal8 · anyof
+
+## 2026-11-04 — Botón Meta con login API key
+
+Qué: opción Meta en el login usando el template builtin `auton-meta` existente (baseUrl https://api.meta.ai/v1, modelos Muse). Sin OAuth: Meta no tiene ese flujo aquí, su vía documentada es la API key. Sin tocar backend.
+Por qué: el usuario pedía el botón de Meta y el template ya existía sin UI que lo expusiera.
+Verificado con: `vitest run test/loginApiKeyForm*.test.ts` (10 passed); oxlint 0 errores; tsc sin errores nuevos (3 preexistentes ajenos).
+
+— Jarvis Ken · terminal8 · meta-login
