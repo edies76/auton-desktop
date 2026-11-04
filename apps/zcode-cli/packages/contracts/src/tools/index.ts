@@ -21,6 +21,7 @@ export * from "../auton/registry.js";
 export * from "../auton/registry-index.js";
 export * from "../auton/recall.js";
 export * from "../auton/plan.js";
+export * from "../auton/report.js";
 export * from "../auton/task-mode.js";
 export * from "../auton/engine.js";
 export * from "../auton/limits.js";

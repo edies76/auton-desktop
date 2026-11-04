@@ -15,7 +15,7 @@
 1. **Cobertura de límites incompleta.** Solo `maxAttempts` y las cinco banderas de aprobación. Faltan tiempo, costo, concurrencia, red y sistema de archivos (Visión §48).
 2. **Aprobaciones declarativas por item.** El orquestador debe escribir `needsApproval`; no se infiere del comando ni de la ruta.
 3. **`unknownHandling` se aplica al escribir.** No hay vigilante que detecte por tiempo o telemetría que un item debería haber escalado.
-4. **Reportes sin canal propio.** El worker los cuenta en su REPORTE y el orquestador los transcribe; si se olvida, se pierden.
+4. **Reportes con canal propio.** `AutonReport` deja el reporte en el plan sin cambiar los límites; el prompt del worker lo indica.
 5. **`limitReports` acotado.** El plan conserva los 100 reportes más recientes; los anteriores se descartan al escribir.
 6. **Bandeja de decisiones en el hilo.** Los items en `waiting` o `not_evaluable` muestran su pregunta y preparan la respuesta en el compositor; falta convertirlo en formulario de opciones cerradas.
 7. **Pruebas de integración ausentes.** No se ejecutó el bucle vivo con un despacho real bajo límites.

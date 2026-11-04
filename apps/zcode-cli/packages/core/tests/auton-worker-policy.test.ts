@@ -39,6 +39,7 @@ describe("auton worker system prompt", () => {
     const prompt = buildAutonWorkerSystemPrompt("standard");
     expect(prompt).toMatch(/orquestador/i);
     expect(prompt).toMatch(/REPORTE/);
+    expect(prompt).toContain("AutonReport");
     expect(prompt).toMatch(/DONE_WITH_CONCERNS|NEEDS_CONTEXT|BLOCKED/);
     expect(prompt).toMatch(/reintent|retry|no pares|hasta terminar/i);
   });

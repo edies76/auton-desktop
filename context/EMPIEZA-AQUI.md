@@ -68,18 +68,17 @@ límite es el usuario; en Auton esa disciplina es el producto*.
 **Del producto:** aislamiento de datos en su carpeta propia, el plugin que importaba sesiones de ZCode
 eliminado, y el modo Auton dentro del agente (identidad + procedimiento).
 
-## Lo que sigue, en orden
+## Lo que sigue, en orden (actualizado 2026-11-04)
 
-1. **Límites escritos y versionados**: cuándo escala al humano, y el caso **"no sé decidir → pregunto"**.
-   Es lo más nuevo que tenemos y lo que falta después del esfuerzo.
-2. **Canal rápido orquestador ↔ worker** con reporte de estado.
-3. **Registro durable en disco** (contexto por etapas: registrar ya, recuperar después).
-4. **Bucle vivo** con narración por sprints y **canales anidados** (la escena del bloque de trabajo).
-5. **Los tres relojes.**
-6. **Preguntas con opciones** y el caso "el humano escribe mientras pregunto".
-7. **El programador como sesión completa**, con navegador propio para probar.
-8. **Motor por sprint** (Muse Code como un adaptador más).
-9. **Tablero e inspector de evidencia.**
+Ya están hechos: esfuerzo, doctrina del reparto, reversión, límites base, canal rápido, registro durable, bucle vivo, worker como sesión completa, Muse por MSP, una sola sesión por proyecto y la bandeja de decisiones pendientes en el hilo.
+
+1. **Bandeja de decisiones con opciones cerradas**: hoy muestra la pregunta y prepara la respuesta; falta que la respuesta actualice el item sin pasar por el orquestador.
+2. **Aprobación del plan con estado `proposed`**: la aprobación sigue siendo conversacional; falta el estado y el gate de despacho.
+3. **Límites completos**: tiempo, costo, concurrencia, red y sistema de archivos, más el vigilante que detecta cuándo un item debió escalar.
+4. **Tres relojes**: por worker, por sprint y total, con los solapamientos contados una sola vez.
+5. **Crónica visual restante**: mapeo propio de `systemEvent`/evidencia/plan, picker de proyectos vacíos y estilo Grok Bot.
+6. **Prueba de elección real de herramientas**: que un modelo real decida usar `AutonPlan`, `AutonReport`, `AutonRevert` o `Agent`, no solo que las tools existan.
+7. **Sincronizar la documentación de estado**: este archivo y `docs/private/deuda-y-riesgos.md` son la fuente; `PLAN-MODO-AUTON.md` queda como historia.
 
 ## Lo que hay que traer del prototipo (`auton cat jam zcode`)
 

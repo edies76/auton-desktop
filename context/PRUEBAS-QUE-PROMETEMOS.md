@@ -339,6 +339,11 @@ ayer.
 - **Cómo se prueba**: abre un proyecto cuyo plan tenga un item en `waiting` con `questions`, pulsa “Responder” y revisa el compositor.
 - **Qué tiene que verse**: la bandeja de decisiones con el título y la pregunta; el botón prepara la respuesta en el compositor del orquestador; el plan sigue visible debajo.
 
+### 28. El worker reporta un límite sin cambiarlo **[auto]**
+- **Qué prometemos**: un worker puede avisar que un límite está mal calibrado sin tocar el plan ni los límites.
+- **Cómo se prueba**: escribe un plan, llama `AutonReport` desde una sesión de worker y vuelve a leer el plan.
+- **Qué tiene que verse**: el reporte nuevo en `limitReports`, con campo, observado, esperado y autor; los items y los límites intactos; el plan conserva solo los 100 reportes más recientes.
+
 ---
 
 ## Lo que estas pruebas protegen
