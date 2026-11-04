@@ -69,6 +69,14 @@ export interface AutonSessionWorkerFactoryInput {
   placement: AutonWorkerPlacement;
   agentId: string;
   sessionId: SessionId;
+  /**
+   * Modelo activo del orquestador al despachar y override explícito del
+   * despacho: el worker corre con la misma selección que el orquestador,
+   * igual que un subagente. Antes el puerto los descartaba y la fábrica
+   * solo miraba la selección guardada de la sesión padre.
+   */
+  model?: SubagentRunOptions["model"];
+  modelOverride?: SubagentRunOptions["modelOverride"];
   /** Recrear la sesión existente en vez de crear una nueva. */
   resume?: boolean;
   reportActivity?: () => void;
@@ -203,6 +211,8 @@ export function createAutonSessionWorkerPort(
       placement,
       agentId,
       sessionId,
+      ...(runOptions?.model ? { model: runOptions.model } : {}),
+      ...(runOptions?.modelOverride ? { modelOverride: runOptions.modelOverride } : {}),
       onEvent: async (event) => {
         await options.emitParentEvent(event, request.trace);
       },

@@ -5,7 +5,8 @@ import {
   type AutonSessionWorkerFactoryInput,
   type AutonSessionWorkerHandle,
 } from "../src/auton/session-worker.js";
-import type { SubagentLaunchRequest } from "@zcode/contracts";
+import type { Model, ModelSelection, SubagentLaunchRequest } from "@zcode/contracts";
+import { resolveAutonWorkerChildSelection } from "../src/runtime/methods/autonSessionWorker.js";
 
 const TRACE = { traceId: "trace-1", sessionId: "sess_orchestrator" } as never;
 
@@ -190,5 +191,56 @@ describe("worker como sesión completa", () => {
 
     expect(output.status).toBe("completed");
     expect(output.content[0]?.text).toContain("landing creada");
+  });
+
+  it("entrega a la fábrica el modelo y el override del despacho", async () => {
+    const h = harness();
+    const model = { providerId: "prov-a", modelId: "modelo-a", options: {} } as unknown as Model;
+    const overrideSelection: ModelSelection = { providerId: "prov-b", modelId: "modelo-b" };
+    await h.port.launch(request(), {
+      model,
+      modelOverride: { selection: overrideSelection, background: "allow" },
+    });
+
+    expect(h.seen[0]?.model).toBe(model);
+    expect(h.seen[0]?.modelOverride?.selection).toBe(overrideSelection);
+    h.settle();
+  });
+});
+
+describe("selección del worker = selección del orquestador", () => {
+  const parentSelection: ModelSelection = { providerId: "prov-padre", modelId: "modelo-padre" };
+
+  it("sin override ni modelo activo hereda la selección de la sesión orquestadora", () => {
+    expect(resolveAutonWorkerChildSelection({ parentSelection })).toEqual(parentSelection);
+  });
+
+  it("el modelo activo del turno que despacha manda sobre la guardada", () => {
+    const model = {
+      providerId: "prov-activo",
+      modelId: "modelo-activo",
+      options: { reasoningLevel: "high" },
+    } as unknown as Model;
+    expect(resolveAutonWorkerChildSelection({ parentSelection, model })).toEqual({
+      providerId: "prov-activo",
+      modelId: "modelo-activo",
+      options: { reasoningLevel: "high" },
+    });
+  });
+
+  it("el override explícito del despacho manda sobre las dos anteriores", () => {
+    const model = { providerId: "prov-activo", modelId: "modelo-activo", options: {} } as unknown as Model;
+    const selection: ModelSelection = { providerId: "prov-override", modelId: "modelo-override" };
+    expect(
+      resolveAutonWorkerChildSelection({
+        parentSelection,
+        model,
+        modelOverride: { selection, background: "allow" },
+      }),
+    ).toEqual(selection);
+  });
+
+  it("sin ninguna selección el despacho falla en vez de inventar un proveedor", () => {
+    expect(() => resolveAutonWorkerChildSelection({})).toThrow(/No model selected/);
   });
 });
