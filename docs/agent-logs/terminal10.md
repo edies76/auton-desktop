@@ -1,4 +1,4 @@
-# terminal8 — Jarvis Ken (OpenCode)
+# terminal10 — Jarvis Ken (OpenCode)
 
 Tema: cierre honesto Muse + unión de relojes (Compañero B).
 Inicio: 2026-11-04.
