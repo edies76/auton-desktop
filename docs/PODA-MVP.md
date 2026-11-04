@@ -103,3 +103,17 @@ off-peak; borrar los módulos que queden sin uso cuando la app abra y el chat fu
 No se borró nada del motor de edición, sesiones, proveedores ni del trabajo de A. La app
 sigue sin abrir por el error de versión `0.0`, así que no se borraron rutas de UI que
 dependan de una verificación visual.
+
+## Estado 2026-11-03 — poda final de UI muerta
+
+- Se borró la UI de Bots: diálogo completo, tarjetas de configuración, helper de presentación
+  y el panel de canales dentro del control remoto. El motor de Bots queda intacto; solo
+  desaparece la superficie que ya no tenía producto detrás.
+- Se borraron los E2E de interfaz de Bots (`feishu-bound-groups-ui`,
+  `feishu-runtime-error-ui`) y sus fixtures de UI.
+- Se borraron restos muertos que Knip marcaba sin uso: link de compartir conversación,
+  helpers de plan manual, prompts sugeridos de ofimática, entrada CUA del compositor,
+  paridad E2E de telemetría y utilidades de conexión remota.
+- No se tocó el chat único/vivo, el espacio de proyecto, el motor de edición, sesiones,
+  proveedores, navegador interno, terminal ni el trabajo de A.
+- Verificado con `pnpm typecheck`, las pruebas de web remote/UI y `pnpm test:architecture`.

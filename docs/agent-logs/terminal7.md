@@ -109,3 +109,19 @@ Verificado con: `pnpm typecheck` completo; pruebas de `desktopCronScheduler`,
 No se tocó el motor de edición, sesiones, proveedores, navegador interno, plan ni el trabajo de A.
 La app sigue sin abrir por el error de versión `0.0`; no se borraron rutas que dependan de
 verificación visual.
+
+## 2026-11-03 — poda final de UI muerta
+
+Qué: se borró la UI de Bots completa (`BotsDialog`, tarjetas, `botsUi`) y su panel de canales
+dentro del control remoto; también sus dos E2E de interfaz. Se borraron restos sin uso:
+`ConversationShareLinkRow`, helpers de plan manual, `officeSuggestedPrompts`,
+`V4ComposerCuaEntry`, la paridad E2E de telemetría y utilidades de conexión remota.
+Por qué: Bots era la última superficie grande que el plan marcaba como muerta y todavía tenía
+UI compilada. Los demás archivos ya no tenían importadores; quitarlos reduce ruido sin tocar
+el motor.
+Cómo: se eliminó el panel de Bots del diálogo remoto y se ajustaron sus pruebas; se limpiaron
+mocks y el snapshot de arquitectura.
+Verificado con: `pnpm typecheck`, 7 archivos de pruebas de UI/remoto (75 en verde) y
+`pnpm test:architecture` (36 en verde).
+No se tocó el chat único/vivo, el espacio de proyecto, el motor de edición, sesiones,
+proveedores, navegador interno, terminal ni el trabajo de A.
