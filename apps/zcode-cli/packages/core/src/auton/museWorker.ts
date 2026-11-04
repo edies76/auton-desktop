@@ -21,6 +21,7 @@ import type {
 import {
   buildMuseExecArgs,
   buildMuseSpawnSpec,
+  closeMuseWithoutTerminal,
   museCommand,
   parseMuseEventLine,
   probeMuseEngine,
@@ -151,15 +152,14 @@ export function createMuseWorkerHandle(
 
     if (spawnError) throw spawnError;
     if (stopped) throw new Error("Muse Code detenido por el orquestador.");
-    if (!terminal) {
-      throw new Error(
-        `Muse Code terminó sin reporte (exit ${running.exitCode ?? "?"}). ${stderr.trim().slice(0, 500)}`,
-      );
-    }
-    if (terminal.terminal !== "completed") {
-      throw new Error(
-        `Muse Code terminó ${terminal.terminal}${terminal.reason ? `: ${terminal.reason}` : ""}. ${terminal.text.slice(0, 500)}`,
-      );
+    // Cierre honesto: sin terminal o con terminal no-completado, manda el
+    // REPORTE si el crudo lo trae; si no, NEEDS_CONTEXT con motivo en vez
+    // de un failed. Solo infra (spawn) y cancelación siguen lanzando.
+    const progressPath = join(workspace, ".auton", "muse-progress.jsonl");
+    if (!terminal || terminal.terminal !== "completed") {
+      const raw = rawLines.join("\n");
+      const honest = closeMuseWithoutTerminal(raw, [progressPath], stderr);
+      return { response: honest ? honest.response : raw, events: [] };
     }
     return { response: terminal.text, events: [] };
   };

@@ -53,6 +53,7 @@ const DIRECT_BRANCH_EXPECTED_PROVIDER_TOOL_ORDER = [
   "DeferredToolCall",
   "AutonPlan",
   "AutonRevert",
+  "AutonRecall",
   "SendMessage",
   "ReadSessionContext",
   "ReplyToChannel",
@@ -115,6 +116,8 @@ const SOURCE_DERIVED_SEND_MESSAGE_DESCRIPTION = [
   "```",
   "",
   "Your plain text output is NOT visible to other agents — to communicate, you MUST call this tool. Messages from agents are delivered automatically; you don't check an inbox. Refer to local agents by the `agentId` returned in the Agent spawn result. To resume a completed agent, use its `agentId`; it resumes in the background and you'll be notified when it finishes.",
+  "",
+  "Set `requires_answer: true` only when that front cannot advance without the answer: the worker is told to reply with RespondToCoordinator before continuing, and the task records that it is waiting for you. Leave it off for guidance, data, corrections and redirects.",
 ].join("\n");
 
 function getSchemaPath(schema: unknown, path: readonly string[]): unknown {
@@ -921,16 +924,44 @@ describe("tool contract declarations", () => {
     expect(explorePrompt).not.toContain("Assistant knowledge cutoff");
   });
 
+  // Excepción documentada y reversible: AutonRecall necesita anyOf
+  // ("al menos uno de query|id|kind|ref", no "exactamente uno").
+  // Ver contracts/src/auton/recall.ts:97-101 y el test de aceptación
+  // "el JSON Schema visible al modelo también exige al menos un selector",
+  // que EXIGE este anyOf. Para revertir: borrar esta entrada (NO tocar el schema).
+  const PROVIDER_INTERNAL_KEY_ALLOWLIST: Record<string, readonly string[]> = {
+    AutonRecall: ["anyOf"],
+  };
+
   it("keeps built-in tool input JSON schemas provider-compatible", () => {
     for (const entry of builtInTools) {
       // Provider 只接收输入声明；输出 union 由本地 executor 校验，不能套用输入限制。
       const schemaIssues = findProviderSchemaIssues(
         entry.inputSchema,
         `${entry.metadata.name}.inputSchema`,
+      ).filter(
+        (issue) =>
+          !(PROVIDER_INTERNAL_KEY_ALLOWLIST[entry.metadata.name] ?? []).some((key) =>
+            issue.includes(key),
+          ),
       );
 
       expect(schemaIssues, entry.metadata.name).toEqual([]);
     }
+  });
+
+  it("el allowlist del anyOf solo cubre a AutonRecall", () => {
+    const otroConAnyOf = findProviderSchemaIssues(
+      { anyOf: [], type: "object", properties: {} },
+      "Otro.inputSchema",
+    );
+    expect(otroConAnyOf).toHaveLength(1);
+
+    const autonRecallOtraKey = findProviderSchemaIssues(
+      { $ref: "#/x", type: "object", properties: {} },
+      "AutonRecall.inputSchema",
+    );
+    expect(autonRecallOtraKey).toHaveLength(1);
   });
 
   it("only exposes Agent when a subagent port is configured", () => {

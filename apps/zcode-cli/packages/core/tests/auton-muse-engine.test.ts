@@ -188,7 +188,7 @@ describe("adaptador de Muse Code", () => {
     }
   }, 30_000);
 
-  it("un terminal fallido del motor se convierte en error explícito", async () => {
+  it("un terminal fallido sin REPORTE cierra NEEDS_CONTEXT en vez de lanzar", async () => {
     const root = await mkdtemp(join(tmpdir(), "muse-fail-"));
     try {
       const input = await makeInput(root);
@@ -199,7 +199,9 @@ describe("adaptador de Muse Code", () => {
         commandPrefix: [FIXTURE],
         env: { ...process.env, FAKE_MUSE_FAIL: "1", FAKE_MUSE_REASON: "auth caída" },
       });
-      await expect(handle.run()).rejects.toThrow(/auth caída/);
+      const result = await handle.run();
+      expect(result.response).toContain("STATUS: NEEDS_CONTEXT");
+      expect(result.response).toContain("motor no emitió REPORTE");
     } finally {
       await rm(root, {
         recursive: true,
@@ -506,4 +508,39 @@ describe.runIf(runRealMuse)("Muse Code real (opt-in con AUTON_MUSE_E2E=1)", () =
       });
     }
   }, 180_000);
+});
+
+describe("cierre honesto sin REPORTE", () => {
+  it("fake que falla sin REPORTE cierra NEEDS_CONTEXT en vez de lanzar", async () => {
+    const root = await mkdtemp(join(tmpdir(), "muse-noreport-"));
+    try {
+      const input = await makeInput(root);
+      const handle = createMuseWorkerHandle({
+        input,
+        prompt: "encargo",
+        command: process.execPath,
+        commandPrefix: [FIXTURE],
+        env: { ...process.env, FAKE_MUSE_FAIL: "1", FAKE_MUSE_REASON: "auth caída" },
+      });
+      const result = await handle.run();
+      expect(result.response).toContain("STATUS: NEEDS_CONTEXT");
+      expect(result.response).toContain("motor no emitió REPORTE");
+    } finally {
+      await rm(root, { recursive: true, force: true, maxRetries: 20, retryDelay: 250 });
+    }
+  }, 30_000);
+
+  it("closeMuseWithoutTerminal devuelve null si el crudo trae STATUS", async () => {
+    const { closeMuseWithoutTerminal } = await import("../src/auton/workerEngine.js");
+    expect(
+      closeMuseWithoutTerminal("algo\nREPORTE:\nSTATUS: BLOCKED\nARCHIVOS: a", ["ev"]),
+    ).toBeNull();
+  });
+
+  it("closeMuseWithoutTerminal sintetiza NEEDS_CONTEXT con evidencia", async () => {
+    const { closeMuseWithoutTerminal } = await import("../src/auton/workerEngine.js");
+    const close = closeMuseWithoutTerminal("salida sin reporte", ["p.jsonl"]);
+    expect(close?.status).toBe("NEEDS_CONTEXT");
+    expect(close?.response).toContain("p.jsonl");
+  });
 });
