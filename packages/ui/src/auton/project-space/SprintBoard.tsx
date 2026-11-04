@@ -1,4 +1,11 @@
-import { ArrowLeft, FileCheck2, FolderGit2, ListTodo, RotateCcw } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  FileCheck2,
+  FolderGit2,
+  ListTodo,
+  RotateCcw,
+} from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button.js";
 import { AutonEvidenceInspector } from "./EvidenceInspector.js";
@@ -104,11 +111,17 @@ function BoardColumn({
   onSelect: (id: string) => void;
 }) {
   const meta = AUTON_SPRINT_STATUS_META[status];
+  // Cada columna se reduce por sí sola: una columna larga (Terminados con
+  // 15+) alarga todo el tablero. Arranca recogida, con nombre y contador
+  // visibles; la persona abre solo la columna que quiere ver.
+  const [open, setOpen] = useState(false);
+  const bodyId = `auton-col-body-${status}`;
   return (
     <section
       className="flex flex-col rounded-lg bg-secondary/40"
       data-testid={`auton-sprint-column-${status}`}
       data-count={items.length}
+      data-open={open ? "true" : "false"}
       aria-label={label}
     >
       <header className="flex items-center gap-2 px-3 pt-3 pb-2">
@@ -119,21 +132,60 @@ function BoardColumn({
         <span className="shrink-0 text-ui-xs tabular-nums text-foreground-subtlest">
           {items.length}
         </span>
+        <button
+          type="button"
+          onClick={() => setOpen((value) => !value)}
+          aria-expanded={open}
+          aria-controls={bodyId}
+          aria-label={open ? `Reducir ${label}` : `Expandir ${label}`}
+          title={open ? `Reducir ${label}` : `Expandir ${label}`}
+          data-testid={`auton-col-toggle-${status}`}
+          className="-mr-1 shrink-0 rounded p-0.5 text-foreground-subtlest transition-colors hover:bg-surface-hover hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-input-border-focused"
+        >
+          <ChevronDown
+            className={`size-3.5 transition-transform duration-500 ease-in-out motion-reduce:transition-none ${
+              open ? "rotate-180" : ""
+            }`}
+            aria-hidden="true"
+          />
+        </button>
       </header>
-      {items.length > 0 ? (
-        <ul className="space-y-2 px-2 pb-2">
-          {items.map((item) => (
-            <SprintCard
-              key={item.id}
-              item={item}
-              selected={selectedId === item.id}
-              onSelect={onSelect}
-            />
-          ))}
-        </ul>
-      ) : (
-        <p className="px-3 pt-1 pb-4 text-ui-xs text-foreground-subtlest">Sin sprints</p>
-      )}
+      {/* Deslizamiento con grid-rows 0fr→1fr (mismo patrón que
+          ModelEditorAdvanced): las tarjetas quedan montadas, así que al
+          reabrir no se pierde el sprint elegido; recogida la columna sale
+          del teclado y del lector de pantalla con inert + aria-hidden. */}
+      <div
+        id={bodyId}
+        data-testid={`auton-col-body-${status}`}
+        inert={!open}
+        aria-hidden={!open}
+        className={`grid transition-[grid-template-rows,opacity,visibility] duration-500 ease-in-out motion-reduce:transition-none ${
+          open ? "visible grid-rows-[1fr] opacity-100" : "invisible grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <div
+            className={`transition-transform duration-500 ease-in-out motion-reduce:transition-none ${
+              open ? "translate-y-0" : "-translate-y-2"
+            }`}
+          >
+            {items.length > 0 ? (
+              <ul className="space-y-2 px-2 pb-2">
+                {items.map((item) => (
+                  <SprintCard
+                    key={item.id}
+                    item={item}
+                    selected={selectedId === item.id}
+                    onSelect={onSelect}
+                  />
+                ))}
+              </ul>
+            ) : (
+              <p className="px-3 pt-1 pb-4 text-ui-xs text-foreground-subtlest">Sin sprints</p>
+            )}
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
@@ -278,7 +330,8 @@ export function AutonSprintBoard({
           <div className="flex min-h-0 flex-col gap-4 px-4 py-4">
             {/* Sin scroll horizontal ni inspector lateral que robe ancho:
                 las 7 columnas usan todo el ancho y el inspector va debajo,
-                a lo ancho, solo cuando se elige un sprint. */}
+                a lo ancho, solo cuando se elige un sprint. Cada columna se
+                expande y se reduce por su cuenta desde su cabecera. */}
             <div
               className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] items-start gap-3 pb-2"
               data-testid="auton-sprint-columns"

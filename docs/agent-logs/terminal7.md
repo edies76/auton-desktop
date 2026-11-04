@@ -243,3 +243,17 @@ bandera mockeada a false para no perder la cobertura del upstream),
 Pendiente: el archivo de logo que el humano quiere usar (llegó una
 captura, no el archivo), el .icns, y las entradas de compra secundarias
 (banner de error de cuota y composer) que aún pueden abrir el diálogo.
+
+## 2026-11-04 — columnas plegables del tablero (0.18.0)
+
+Qué: cada columna del tablero de sprints tiene su propio botón expandir/
+reducir a la derecha del contador; arranca reducida y se despliega con
+deslizamiento (grid-rows 0fr→1fr, 500ms, mismo patrón que
+ModelEditorAdvanced). Primero se hizo un botón global arriba y el humano
+corrigió: era por columna, y el global se quitó.
+Por qué: una columna larga (Terminados con 15) alargaba todo el tablero;
+ahora se abre solo la columna que se quiere ver.
+Verificado con: 38 tests del tablero (incluido uno nuevo de despliegue
+por columna), tsc y oxlint, y en la app real por CDP con clic de mouse:
+Terminados pasó de 0 a 2120px con altura intermedia en plena animación,
+sin mover las demás columnas.

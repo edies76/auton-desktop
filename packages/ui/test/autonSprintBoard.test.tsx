@@ -180,9 +180,32 @@ describe("tablero de sprints", () => {
     expect(screen.getAllByTestId("auton-sprint-card")).toHaveLength(3);
   });
 
+  it("cada columna arranca reducida y su botón la despliega y la recoge sin tocar las demás", () => {
+    renderUi(<AutonSprintBoard project={PROJECT} plan={PLAN} onBack={() => undefined} />);
+
+    const toggle = screen.getByTestId("auton-col-toggle-done");
+    const body = screen.getByTestId("auton-col-body-done");
+    const runningBody = screen.getByTestId("auton-col-body-running");
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.getByTestId("auton-sprint-column-done").getAttribute("data-open")).toBe("false");
+    expect(body.className).toContain("grid-rows-[0fr]");
+
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByTestId("auton-sprint-column-done").getAttribute("data-open")).toBe("true");
+    expect(body.className).toContain("grid-rows-[1fr]");
+    // La columna vecina no se mueve.
+    expect(runningBody.className).toContain("grid-rows-[0fr]");
+
+    fireEvent.click(toggle);
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(body.className).toContain("grid-rows-[0fr]");
+  });
+
   it("al elegir un sprint muestra su requisito, archivos y evidencia", () => {
     renderUi(<AutonSprintBoard project={PROJECT} plan={PLAN} onBack={() => undefined} />);
 
+    fireEvent.click(screen.getByTestId("auton-col-toggle-done"));
     fireEvent.click(
       within(screen.getByTestId("auton-sprint-column-done")).getByTestId("auton-sprint-card"),
     );
@@ -204,6 +227,7 @@ describe("tablero de sprints", () => {
   it("marca la falta de evidencia en vez de inventarla", () => {
     renderUi(<AutonSprintBoard project={PROJECT} plan={PLAN} onBack={() => undefined} />);
 
+    fireEvent.click(screen.getByTestId("auton-col-toggle-running"));
     fireEvent.click(
       within(screen.getByTestId("auton-sprint-column-running")).getByTestId("auton-sprint-card"),
     );
@@ -224,6 +248,7 @@ describe("tablero de sprints", () => {
     renderUi(
       <AutonSprintBoard project={PROJECT} plan={withoutEvidence} onBack={() => undefined} />,
     );
+    fireEvent.click(screen.getByTestId("auton-col-toggle-done"));
     fireEvent.click(screen.getByTestId("auton-sprint-card"));
     expect(screen.getByTestId("auton-evidence-undemonstrated").textContent).toContain(
       "sin evidencia",

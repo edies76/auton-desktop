@@ -4,6 +4,20 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases p├║blicas.
 
+## [0.18.0] — 2026-11-04
+
+El tablero se puede recoger columna por columna.
+
+### Cambiado
+
+- **Columnas plegables del Plan**: cada columna (Pendientes, Activos,
+  Esperando, Bloqueados, No evaluables, Terminados, Descartados) tiene su
+  propio botón a la derecha del contador. Arranca reducida, mostrando solo
+  nombre y cuántas tareas hay; un clic la despliega con animación de
+  deslizamiento y otro clic la recoge. Así una columna larga, como
+  Terminados, ya no alarga todo el tablero: se abre solo la que se quiere
+  ver, sin tocar las demás.
+
 ## [0.17.0] — 2026-11-04
 
 La app se presenta como Auton: marca, nombre y sin tienda de planes.
