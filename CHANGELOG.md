@@ -4,6 +4,23 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases p├║blicas.
 
+## [0.17.0] — 2026-11-04
+
+La app se presenta como Auton: marca, nombre y sin tienda de planes.
+
+### Cambiado
+
+- **Marca Auton**: el logo pasa a ser la A en círculo (arranque, título,
+  bienvenida, onboarding y pantalla vacía) y el ícono de la app se genera
+  con la misma marca. Los textos visibles que decían ZCode ahora dicen
+  Auton: bienvenida, inicio de sesión, título de ventana, diálogos del
+  sistema y mensajes de arranque.
+- **Poda de precios**: en los ajustes de proveedores ya no se muestran los
+  banners de compra con precios, ni la acción de suscripción, ni la de
+  mejora de plan de Z.ai/BigModel. Conectar un proveedor y ver su uso sigue
+  igual; lo que desaparece es la venta, detrás de la misma bandera de poda
+  de siempre.
+
 ## [0.16.2] — 2026-11-04
 
 El tablero se lee de un vistazo y el panel de workers cuenta la verdad.

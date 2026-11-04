@@ -1,4 +1,5 @@
 import { useCodingPlanEntryGate } from "@/settings/CodingPlanEntryButton.js";
+import { AUTON_MVP } from "@/lib/autonMvp.js";
 /* eslint-disable max-lines -- Model Provider 详情页当前集中编排 Plan Card、API Key 表单和 OAuth 套餐态；后续稳定后再按 family/API/OAuth 拆分。 */
 import {
   BIGMODEL_PROVIDER_ID,
@@ -520,12 +521,16 @@ export function ModelProviderSectionDetail({
     const handleUpgradePlansVisibleChange = (visible: boolean) => {
       setUpgradePlansVisibleProviderId(visible ? selectedNavItem.presetId : null);
     };
+    // Poda Auton: no se muestran precios ni compra de planes de Z.ai/BigModel.
+    // Conectar el proveedor sigue disponible; lo que se oculta es la venta.
     const purchaseChoiceBannersVisible =
+      !AUTON_MVP &&
       statusPanelViewState.displayStatus === "notPurchased" &&
       (selectedNavItem.oauthProviderId === ZAI_PROVIDER_ID ||
         (selectedNavItem.oauthProviderId === BIGMODEL_PROVIDER_ID &&
           codingPlanPurchaseTokenAuthenticated));
     const anonymousPurchaseChoiceBannersVisible =
+      !AUTON_MVP &&
       (selectedNavItem.oauthProviderId === BIGMODEL_PROVIDER_ID ||
         selectedNavItem.oauthProviderId === ZAI_PROVIDER_ID) &&
       statusPanelViewState.displayStatus === "disconnected";
@@ -691,7 +696,7 @@ export function ModelProviderSectionDetail({
           upgradePlansVisible={upgradePlansVisible}
           onUpgradePlansVisibleChange={handleUpgradePlansVisibleChange}
           purchaseInitialAudience={selectedNavItem.type === "teamPlan" ? "team" : "personal"}
-          upgradeActionVisible={!isStartPlanProvider || !hasActivePaidPlan}
+          upgradeActionVisible={!AUTON_MVP && (!isStartPlanProvider || !hasActivePaidPlan)}
           startPlanPreviewVisible={false}
         />
       );
@@ -811,7 +816,7 @@ export function ModelProviderSectionDetail({
             upgradePlansVisible={upgradePlansVisible}
             onUpgradePlansVisibleChange={handleUpgradePlansVisibleChange}
             purchaseInitialAudience={selectedNavItem.type === "teamPlan" ? "team" : "personal"}
-            upgradeActionVisible={!isStartPlanProvider || !hasActivePaidPlan}
+            upgradeActionVisible={!AUTON_MVP && (!isStartPlanProvider || !hasActivePaidPlan)}
             startPlanPreviewVisible={false}
           />
           {hidePlanModels ? null : providerSettingsView && !dedicatedProvider ? (

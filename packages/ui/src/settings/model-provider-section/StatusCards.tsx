@@ -1,4 +1,5 @@
 import { CodingPlanEntryButton } from "@/settings/CodingPlanEntryButton.js";
+import { AUTON_MVP } from "@/lib/autonMvp.js";
 /* eslint-disable max-lines -- Coding Plan/Start Plan 状态卡集中编排状态、动作和套餐区块，当前先保持同一文件避免拆散状态语义。 */
 import {
   BIGMODEL_PROVIDER_ID,
@@ -395,8 +396,14 @@ export function CodingPlanStatusPanel({
       }}
     />
   ) : null;
+  // Poda Auton: sin acción de suscripción/compra en la tarjeta de estado.
   const buyAction =
-    !isStartPlanProvider && !canUpgrade && isNotPurchased && !isChecking && !isUnsupported ? (
+    !AUTON_MVP &&
+    !isStartPlanProvider &&
+    !canUpgrade &&
+    isNotPurchased &&
+    !isChecking &&
+    !isUnsupported ? (
       <CodingPlanEntryButton
         type="button"
         size="lg"

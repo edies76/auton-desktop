@@ -224,3 +224,22 @@ cuelgue al probar fue un mock con identidad nueva por render, no la app:
 en producción los servicios salen de un contexto estable.
 Pendiente: terminar Feria (parada manual del research y recall de cierre)
 y ejecutar la tanda 1 de la poda cuando esa corrida cierre.
+
+## 2026-11-04 — marca Auton y poda de precios (0.17.0)
+
+Qué: la marca visible pasa a la A en círculo que ya existía como logo del
+proveedor Auton (componente AutonLogo, asset auton-logo.svg e ícono de
+escritorio generado en PNG/ICO; el .icns de mac queda pendiente por no
+poder generarse en Linux). ZCode→Auton en los locales en/zh y en los
+textos fijos visibles (ventana, bienvenida, diálogos del sistema).
+Precios fuera: banners de compra, acción de suscripción y de mejora de
+plan ocultos en ajustes de proveedores tras AUTON_MVP.
+Por qué: el humano pidió que lo que se ve sea Auton y que no se vendan
+planes de Z.ai dentro de Auton. El proveedor Z.ai conserva su nombre
+donde es el servicio real (como OpenAI); sus ids internos no se tocaron.
+Verificado con: tsc de UI, oxlint, 188 tests de coding plan (con la
+bandera mockeada a false para no perder la cobertura del upstream),
+57 de ajustes/composer/arranque y 125 de chat/permisos/skills.
+Pendiente: el archivo de logo que el humano quiere usar (llegó una
+captura, no el archivo), el .icns, y las entradas de compra secundarias
+(banner de error de cuota y composer) que aún pueden abrir el diálogo.

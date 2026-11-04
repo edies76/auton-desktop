@@ -226,6 +226,14 @@ vi.mock("@/i18n/IntlProvider.js", () => ({
   }),
 }));
 
+// Esta suite es la cobertura de la superficie de compra del upstream.
+// La poda de Auton la oculta con AUTON_MVP en la app real; aquí se apaga la
+// bandera para no perder esa cobertura el día que la poda se levante.
+vi.mock("@/lib/autonMvp.js", () => ({
+  AUTON_MVP: false,
+  AUTON_MVP_HIDDEN_SETTINGS_SECTIONS: [] as const,
+}));
+
 vi.mock("@/hooks/usePlatform.js", () => ({
   useOptionalPlatform: () => ({
     openExternal: vi.fn(),
