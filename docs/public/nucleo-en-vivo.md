@@ -16,7 +16,7 @@ intercalan con su narración y con el trabajo de los workers.
   corre y queda **cerrado por defecto**; las tools se ven solo si abres el
   detalle. La narración del orquestador y lo que te dice después quedan fuera del
   bloque. Si hay varias narraciones con trabajo entre ellas, ves **varios loops**
-  intercalados.
+  intercalados, y **cada worker tiene su propio bloque**.
 - **Puedes escribir siempre**: el turno del orquestador cierra en cuanto termina
   de hablar, aunque un worker siga trabajando. El loop se queda abierto con su
   contador y tú puedes mandar otro mensaje sin esperar ni inyectarlo.

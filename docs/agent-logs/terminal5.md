@@ -125,3 +125,10 @@ por defecto con effort/thinking según velocidad o profundidad, canal frecuente 
 Por qué: el hilo se sentía cargado y el orquestador hablaba de más.
 Verificado con: UI 150, prompt 10. Pendiente: picker, Grok y límites de workers.
 
+## 2026-11-04 — un loop por worker
+
+Qué: cada despacho de `Agent` abre su propio bloque de loop; dos workers en el mismo turno se ven como
+dos bloques intercalados con su contador, no como uno solo.
+Por qué: el spec pedía un loop por worker y el hilo mezclaba varios workers en el mismo bloque.
+Verificado con: unidades de render 45 (incluye dos workers → dos loops), hilo 106.
+

@@ -167,7 +167,8 @@ abre con el evento fuera, trabaja en el loop y traduce fuera. El compositor ya n
 muestra Computer Use. Los turnos de ZCode sin firma no cambian. El turno cierra
 aunque queden workers: el loop sigue abierto con su contador y el evento del
 worker abre un turno nuevo; varios grupos de tools producen varios loops
-intercalados. El loop queda cerrado por defecto (header y contador visibles) y
+intercalados y cada despacho de `Agent` abre su propio loop por worker. El loop
+queda cerrado por defecto (header y contador visibles) y
 los mensajes Auton no llevan barra de acciones; los eventos se pintan fuera. El
 prompt manda `auton-worker` por defecto, ajusta effort/thinking a la velocidad o
 profundidad pedida y pide al orquestador que delegue más y hable menos (1-2

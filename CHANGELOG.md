@@ -4,6 +4,16 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases públicas.
 
+## [0.15.0] — 2026-11-04
+
+Un loop colapsable por worker.
+
+### Cambiado
+
+- Cada despacho de `Agent` abre su propio bloque de loop con su contador; dos
+  workers en el mismo turno se ven como dos bloques intercalados con la
+  narración, no como uno solo.
+
 ## [0.14.0] — 2026-11-03
 
 El chat queda seguido: tools colapsadas, sin barra de acciones y un orquestador

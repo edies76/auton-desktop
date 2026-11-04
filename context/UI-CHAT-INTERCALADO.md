@@ -86,8 +86,9 @@ regla (`following` / `isAtBottom`): no se reimplementa, se respeta y se prueba.
 - **El turno cierra aunque queden workers**: el compositor queda libre y el
   humano puede escribir y enviar. El loop sigue visible con su contador mientras
   el worker vive; el evento del worker abre un turno nuevo.
-- **Varios loops**: cada narración después de un grupo de tools abre un bloque
-  nuevo; el hilo muestra varios loops colapsables intercalados, no uno por turno.
+- **Varios loops por worker**: cada narración después de un grupo de tools y
+  cada despacho de `Agent` abre un bloque nuevo; dos workers se ven como dos
+  loops colapsables intercalados, no como uno por turno.
 - **Sin barra de acciones** en los mensajes Auton: la conversación se lee seguida.
 - **Los eventos despertadores van fuera del loop**: pregunta, cierre y latido se
   pintan como filas del hilo, nunca dentro del historial colapsado.
