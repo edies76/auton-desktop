@@ -5,9 +5,11 @@ import {
   AutonWorkerPanel,
   buildAutonWorkerGroups,
   projectAutonWorkers,
+  projectSessionWorkerView,
   useAutonClock,
   useAutonSubagentCounts,
   useAutonWorkerFocusStore,
+  useSessionWorkerConversations,
 } from "@/auton/index.js";
 import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { logger } from "@/logger.js";
@@ -153,10 +155,24 @@ function AutonWorkersSidebarContents({
     [activeTaskId, orchestratorTaskId],
   );
 
-  const agentWorkers = useMemo(
-    () => projectAutonWorkers(rows, now).filter((worker) => worker.kind === "agent"),
-    [now, rows],
-  );
+  // Los workers en modo sesión no aparecen como filas de subagente en la
+  // conversación del orquestador: viven en `.auton/workers/index.json`.
+  // Sin leer ese índice el panel decía 0 aunque hubiera workers corriendo.
+  const sessionWorkers = useSessionWorkerConversations(workspacePath);
+  const agentWorkers = useMemo(() => {
+    const fromConversation = projectAutonWorkers(rows, now).filter(
+      (worker) => worker.kind === "agent",
+    );
+    const known = new Set(fromConversation.map((worker) => worker.id));
+    const fromIndex = sessionWorkers
+      .map((snapshot) => ({
+        ...projectSessionWorkerView(snapshot),
+        kind: "agent" as const,
+        engine: "zcode" as const,
+      }))
+      .filter((worker) => !known.has(worker.id));
+    return [...fromConversation, ...fromIndex];
+  }, [now, rows, sessionWorkers]);
   const subagentCounts = useAutonSubagentCounts({
     agents: agentWorkers,
     workspacePath,
