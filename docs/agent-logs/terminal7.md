@@ -170,3 +170,22 @@ independiente con tests propios (PASS), 57 tests de UI y 58 del registro en el
 árbol mergeado, `oxlint` sin hallazgos. Merge a `auton-desktop` en 98666a2d.
 Pendiente: la prueba visual en la app real, bloqueada aquí por el entorno
 (Node 22 sin pnpm ni herramientas nativas).
+
+## 2026-11-04 — arranque dev y entrada al tablero (0.16.1)
+
+Qué: fix del arranque en dev (el main fija `app.setVersion(ZCODE_VERSION)`
+antes de cargar `electron-updater`, que rechazaba la versión `0.0` y moría
+sin ventana), espacio Auton sin sesión para proyectos sin hilo, y botón
+Plan en el panel de workers del shell que conmuta al tablero en el sidebar.
+Por qué: la prueba visual destapó que el tablero existía pero no era
+alcanzable: sin sesión la lista saltaba al shell de ZCode y el panel
+embebido no recibía `onOpenPlan`.
+Verificado con: 5 tests del bootstrap del desktop, 18 tests de UI
+(lista y sidebar), `tsc` de UI y del desktop, `oxlint` y
+`architecture:check` en verde; por CDP en la app real, proyecto-prueba
+sin sesiones abre el tablero (Total 4, Activos 1, Bloqueados 1,
+Terminados 2), s1 muestra su evidencia, s4 se marca no demostrado,
+s3 muestra su pregunta, y editar `plan.json` mueve s2 a Terminados sin
+recargar. Merge a `auton-desktop` en 9462caee.
+Pendiente: elegir modelo en el entorno dev para probar el hilo del
+orquestador, y un panel ancho para el tablero dentro del shell.

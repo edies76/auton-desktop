@@ -4,6 +4,23 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases p├║blicas.
 
+## [0.16.1] — 2026-11-04
+
+El tablero ya se alcanza: con sesión, sin sesión y desde el hilo.
+
+### Corregido
+
+- **Arranque en desarrollo**: `mise run dev` moría sin abrir ventana
+  (`electron-updater` rechazaba la versión `0.0` del entorno dev). El main
+  ahora fija la versión de la app al inicio, la misma que lleva el paquete.
+
+### Cambiado
+
+- **Proyectos sin sesiones**: abrir un proyecto sin hilo ya no salta al shell
+  de ZCode; entra al espacio de Auton y el Plan lee `.auton/plan.json`.
+- **Plan en el shell**: el panel de workers del hilo muestra el botón Plan y
+  conmuta al tablero en el propio sidebar, sin salir de la conversación.
+
 ## [0.16.0] — 2026-11-04
 
 El plan del proyecto se ve como tablero, con su evidencia al lado.
