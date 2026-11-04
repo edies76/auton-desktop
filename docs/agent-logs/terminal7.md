@@ -65,3 +65,12 @@ revisión de licencias.
 Por qué: es herramienta de desarrollo del upstream, no runtime ni UI de Auton.
 Verificado con: `pnpm typecheck` completo; lockfile actualizado; `git diff --check` limpio.
 No se tocó UI ni runtime del desktop.
+
+## 2026-11-03 — poda de zcode-server-cli
+
+Qué: se retiró `packages/zcode-server-cli` (CLI y daemon de servidor remoto) y sus referencias de
+typecheck, vitest, política de arquitectura y scripts raíz `prepare:remote-assets*`. El bootstrap
+`--with-remote` deja de invocar el staging de server-cli.
+Por qué: el servidor remoto/standalone está fuera del MVP; el desktop no depende del paquete.
+Verificado con: `pnpm typecheck` completo; lockfile actualizado; `git diff --check` limpio.
+No se tocó UI ni runtime del desktop.

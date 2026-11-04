@@ -211,10 +211,6 @@ runPnpm(["prepare:desktop-runtime"]);
 
 if (withRemoteAssets) {
   runBootstrapWithRemoteBuild();
-  // Bug 原因：R3 首装只消费 Source Server archive，旧 bootstrap 只生成 legacy
-  // manifest/components，导致开发态继续命中 gitignore 中的历史 dist-release。
-  // 放在最终 workspace build 之后，确保 archive 收集的是本轮最新编译产物。
-  runPnpm(["--filter", "@zcode/server-cli", "stage:remote-assets"]);
 } else {
   runPnpm(["run", "build:bootstrap"]);
 }
