@@ -179,7 +179,12 @@ describe("adaptador de Muse Code", () => {
       expect(event?.payload?.prompt).toContain("## ENCARGO");
       expect(event?.payload?.prompt).toContain("haz el encargo");
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(root, {
+        recursive: true,
+        force: true,
+        maxRetries: 20,
+        retryDelay: 250,
+      });
     }
   }, 30_000);
 
@@ -196,7 +201,12 @@ describe("adaptador de Muse Code", () => {
       });
       await expect(handle.run()).rejects.toThrow(/auth caída/);
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(root, {
+        recursive: true,
+        force: true,
+        maxRetries: 20,
+        retryDelay: 250,
+      });
     }
   }, 30_000);
 
@@ -216,7 +226,12 @@ describe("adaptador de Muse Code", () => {
       handle.stop();
       await expect(running).rejects.toThrow(/detenido/);
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(root, {
+        recursive: true,
+        force: true,
+        maxRetries: 20,
+        retryDelay: 250,
+      });
     }
   }, 30_000);
 
@@ -232,7 +247,12 @@ describe("adaptador de Muse Code", () => {
         }),
       ).toThrow(/no está disponible/);
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(root, {
+        recursive: true,
+        force: true,
+        maxRetries: 20,
+        retryDelay: 250,
+      });
     }
   }, 20_000);
 
@@ -250,7 +270,12 @@ describe("adaptador de Muse Code", () => {
         handle.steer({ message: "cambia de rumbo", requiresAnswer: false }),
       ).rejects.toThrow(/one-shot/);
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(root, {
+        recursive: true,
+        force: true,
+        maxRetries: 20,
+        retryDelay: 250,
+      });
     }
   }, 20_000);
 
@@ -325,7 +350,12 @@ describe("adaptador de Muse Code", () => {
       expect(event?.payload?.prompt).toContain("## ENCARGO");
       expect(event?.payload?.prompt).toContain(marker);
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(root, {
+        recursive: true,
+        force: true,
+        maxRetries: 20,
+        retryDelay: 250,
+      });
     }
   }, 30_000);
 });
@@ -347,7 +377,12 @@ describe.runIf(runRealMuse)("Muse Code real (opt-in con AUTON_MUSE_E2E=1)", () =
         expect(result.response).toContain("echo:");
         expect(result.response).toContain("HOLA-MUSE");
       } finally {
-        await rm(root, { recursive: true, force: true });
+        await rm(root, {
+        recursive: true,
+        force: true,
+        maxRetries: 20,
+        retryDelay: 250,
+      });
       }
     }
   }, 120_000);
@@ -365,7 +400,12 @@ describe.runIf(runRealMuse)("Muse Code real (opt-in con AUTON_MUSE_E2E=1)", () =
       expect(result.response).toContain("echo:");
       expect(result.response).toContain("HOLA-MUSE");
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(root, {
+        recursive: true,
+        force: true,
+        maxRetries: 20,
+        retryDelay: 250,
+      });
     }
   }, 120_000);
 
@@ -398,6 +438,7 @@ describe.runIf(runRealMuse)("Muse Code real (opt-in con AUTON_MUSE_E2E=1)", () =
             getTask(id: string): Promise<
               { status: string; outputFile?: string; waitingForAnswer?: boolean } | undefined
             >;
+            stopTask(id: string): Promise<{ status: string } | undefined>;
           };
         }
       ).autonSessionWorkerPort;
@@ -429,10 +470,16 @@ describe.runIf(runRealMuse)("Muse Code real (opt-in con AUTON_MUSE_E2E=1)", () =
       expect(output).toContain("MODO DE TRABAJO: read");
       expect(output).toContain("## ENCARGO");
       expect(output).toContain("Di hola");
+      await port.stopTask(launched.agentId);
     } finally {
       if (previousProvider === undefined) delete process.env.AUTON_MUSE_PROVIDER;
       else process.env.AUTON_MUSE_PROVIDER = previousProvider;
-      await rm(root, { recursive: true, force: true });
+      await rm(root, {
+        recursive: true,
+        force: true,
+        maxRetries: 20,
+        retryDelay: 250,
+      });
     }
   }, 180_000);
 
@@ -451,7 +498,12 @@ describe.runIf(runRealMuse)("Muse Code real (opt-in con AUTON_MUSE_E2E=1)", () =
       expect(result.response.trim().length).toBeGreaterThan(0);
       expect(parseWorkerReporte(result.response)).toBe("DONE");
     } finally {
-      await rm(root, { recursive: true, force: true });
+      await rm(root, {
+        recursive: true,
+        force: true,
+        maxRetries: 20,
+        retryDelay: 250,
+      });
     }
   }, 180_000);
 });

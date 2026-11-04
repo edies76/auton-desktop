@@ -180,6 +180,8 @@ describe("el registro y el contrato declaran el modo", () => {
     expect(assembled).toContain("`worker_mode` es otra cosa");
     expect(assembled).toContain("## Motor del worker");
     expect(assembled).toContain("Muse Code");
+    expect(assembled).toContain("`engine`");
+    expect(assembled).toContain("Usa `muse`");
     expect(assembled).toContain("sesión viva");
     expect(assembled).toContain("steer");
     // La sección sigue existiendo por separado; el ensamblado la incluye.
