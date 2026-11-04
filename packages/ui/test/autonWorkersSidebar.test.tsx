@@ -225,6 +225,32 @@ describe("sidebar de workers del proyecto", () => {
     expect(screen.getByTestId("auton-worker-panel")).toBeTruthy();
   });
 
+  it("un clic fuera del panel lo repliega", async () => {
+    state.rows = [fullWorkerRow()];
+    renderSidebar();
+
+    fireEvent.click(screen.getByTestId("auton-plan-open"));
+    expect(screen.getByTestId("auton-workers-sidebar-plan")).toBeTruthy();
+
+    fireEvent.click(screen.getByTestId("auton-workers-sidebar-plan-backdrop"));
+    await waitFor(() => {
+      expect(screen.queryByTestId("auton-workers-sidebar-plan")).toBeNull();
+    });
+  });
+
+  it("Escape repliega el panel", async () => {
+    state.rows = [fullWorkerRow()];
+    renderSidebar();
+
+    fireEvent.click(screen.getByTestId("auton-plan-open"));
+    expect(screen.getByTestId("auton-workers-sidebar-plan")).toBeTruthy();
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    await waitFor(() => {
+      expect(screen.queryByTestId("auton-workers-sidebar-plan")).toBeNull();
+    });
+  });
+
   it("para un agente completo interrumpiendo el turno del orquestador", () => {
     state.rows = [fullWorkerRow()];
     renderSidebar();

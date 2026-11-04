@@ -89,6 +89,16 @@ function AutonWorkersSidebarContents({
     else openPlan();
   }, [closePlan, openPlan, showPlan]);
 
+  // Clic fuera del panel o Escape: se repliega con la misma animacion.
+  useEffect(() => {
+    if (!showPlan) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closePlan();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [closePlan, showPlan]);
+
   const planPanel = showPlan
     ? (() => {
         const sidebarRight =
@@ -102,16 +112,25 @@ function AutonWorkersSidebarContents({
             ? Math.max(320, Math.min(1480, window.innerWidth - sidebarRight - 16))
             : 1480;
         return createPortal(
-          <div
-            className="fixed inset-y-0 z-40 overflow-hidden border-r border-border bg-background shadow-2xl transition-[width] duration-300 ease-out motion-reduce:transition-none"
-            style={{ left: sidebarRight, width: planExpanded ? targetWidth : 0 }}
-            data-testid="auton-workers-sidebar-plan"
-            aria-hidden={!planExpanded}
-          >
-            <div className="h-full" style={{ width: targetWidth }}>
-              <AutonSprintBoardLive project={planProject} onBack={closePlan} />
+          <>
+            {/* Captura el clic fuera del panel para replegarlo. */}
+            <div
+              className="fixed inset-0 z-30"
+              data-testid="auton-workers-sidebar-plan-backdrop"
+              onClick={closePlan}
+              aria-hidden="true"
+            />
+            <div
+              className="fixed inset-y-0 z-40 overflow-hidden border-r border-border bg-background shadow-2xl transition-[width] duration-300 ease-out motion-reduce:transition-none"
+              style={{ left: sidebarRight, width: planExpanded ? targetWidth : 0 }}
+              data-testid="auton-workers-sidebar-plan"
+              aria-hidden={!planExpanded}
+            >
+              <div className="h-full" style={{ width: targetWidth }}>
+                <AutonSprintBoardLive project={planProject} onBack={closePlan} />
+              </div>
             </div>
-          </div>,
+          </>,
           document.body,
         );
       })()
