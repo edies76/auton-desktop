@@ -81,3 +81,6 @@ site/private-dist/
 
 # Datos locales de Auton en un proyecto (registro, plan, diario)
 .auton/
+
+# Capturas generadas por las pruebas E2E
+e2e-*.png
