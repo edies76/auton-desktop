@@ -86,6 +86,41 @@ describe("lista real de proyectos", () => {
     );
     expect(onOpenWorkspace).not.toHaveBeenCalled();
   });
+
+  it("un proyecto sin sesiones abre el espacio con taskId null, no el workspace", () => {
+    const projects = projectTreeMock.tree.projects as unknown as Record<string, unknown>[];
+    projects.push({
+      id: "solo",
+      name: "Sin sesiones",
+      roots: [{ rootPath: "C:\\solo", position: 0, isPrimary: true }],
+      position: 2,
+      pinned: false,
+      deleted: false,
+      createdAt: 3,
+      updatedAt: 3,
+    });
+    try {
+      const onOpenProject = vi.fn();
+      const onOpenWorkspace = vi.fn();
+      renderUi(
+        <AutonProjectList onOpenProject={onOpenProject} onOpenWorkspace={onOpenWorkspace} />,
+      );
+
+      const rows = screen.getAllByTestId("auton-project-row");
+      const solo = rows.find((row) => row.dataset.projectId === "solo");
+      expect(solo?.textContent).toContain("sin sesiones");
+
+      fireEvent.click(solo!);
+      expect(onOpenProject).toHaveBeenCalledWith(
+        expect.objectContaining({ id: "solo" }),
+        "C:\\solo",
+        null,
+      );
+      expect(onOpenWorkspace).not.toHaveBeenCalled();
+    } finally {
+      projects.pop();
+    }
+  });
 });
 
 describe("lista de proyectos", () => {

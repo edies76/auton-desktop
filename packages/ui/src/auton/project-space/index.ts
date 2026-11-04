@@ -1,6 +1,9 @@
 export { AutonWorkspaceApp } from "./AutonWorkspaceApp.js";
 export type { AutonWorkspaceAppProps } from "./AutonWorkspaceApp.js";
-export { AutonProjectSpaceRoute } from "./AutonProjectSpaceRoute.js";
+export {
+  AutonProjectSpaceRoute,
+  AutonProjectSpaceWithoutSession,
+} from "./AutonProjectSpaceRoute.js";
 export type { AutonProjectSpaceRouteProps } from "./AutonProjectSpaceRoute.js";
 export { AutonSpaceLive } from "./AutonSpaceLive.js";
 export type { AutonSpaceLiveProps } from "./AutonSpaceLive.js";

@@ -71,6 +71,7 @@ import { logger } from "@/logger.js";
 import { RootShell } from "@/root/RootShell.js";
 import {
   AutonProjectSpaceRoute,
+  AutonProjectSpaceWithoutSession,
 } from "@/auton/project-space/index.js";
 import { isAutonRoute } from "@/auton/project-space/autonRoute.js";
 import { RootWorkspaceContent } from "@/root/RootWorkspaceContent.js";
@@ -294,10 +295,10 @@ function RootInner({
   const [autonSpace, setAutonSpace] = useState<{
     name: string;
     path: string;
-    taskId: string;
+    taskId: string | null;
   } | null>(null);
-  // Al abrir un proyecto sin sesiones se entra al workspace de ZCode; esta
-  // bandera evita que la ruta de Auton lo tape. Vuelve al salir del workspace.
+  // `?auton=zcode` entra al shell de ZCode; esta bandera evita que la ruta de
+  // Auton lo tape. Vuelve al salir del workspace.
   const [autonBypass, setAutonBypass] = useState(false);
   const [providerFamilyDomainMigrationComplete, setProviderFamilyDomainMigrationComplete] =
     useState(false);
@@ -1537,16 +1538,28 @@ function RootInner({
         {rootModelSelectionErrorNode}
         {requestSecurityBridgeNode}
         {autonSpace ? (
-          <AutonProjectSpaceRoute
-            project={{
-              id: autonSpace.taskId,
-              name: autonSpace.name,
-              path: autonSpace.path,
-              lastActiveAt: Date.now(),
-            }}
-            sessionId={autonSpace.taskId}
-            onBack={() => setAutonSpace(null)}
-          />
+          autonSpace.taskId ? (
+            <AutonProjectSpaceRoute
+              project={{
+                id: autonSpace.taskId,
+                name: autonSpace.name,
+                path: autonSpace.path,
+                lastActiveAt: Date.now(),
+              }}
+              sessionId={autonSpace.taskId}
+              onBack={() => setAutonSpace(null)}
+            />
+          ) : (
+            <AutonProjectSpaceWithoutSession
+              project={{
+                id: autonSpace.path,
+                name: autonSpace.name,
+                path: autonSpace.path,
+                lastActiveAt: Date.now(),
+              }}
+              onBack={() => setAutonSpace(null)}
+            />
+          )
         ) : (
           <AutonProjectList
             onOpenProject={(project, rootPath, taskId) =>

@@ -11,8 +11,10 @@ interface AutonProjectTask {
 }
 
 export interface AutonProjectListProps {
-  onOpenProject: (project: VirtualProject, rootPath: string, taskId: string) => void;
-  onOpenWorkspace: (path: string) => void;
+  /** `taskId` es null cuando el proyecto aún no tiene sesión: el espacio se abre igual. */
+  onOpenProject: (project: VirtualProject, rootPath: string, taskId: string | null) => void;
+  /** Compatibilidad: ya no se usa para abrir proyectos sin sesión. */
+  onOpenWorkspace?: (path: string) => void;
 }
 
 function rootOf(project: VirtualProject): string {
@@ -36,10 +38,10 @@ function latestTask(
 /**
  * Pantalla 1 de Auton dentro de la app: los proyectos reales del workspace
  * (`useProjectTree`), con el mismo gris y los mismos tokens del shell.
- * Abrir un proyecto entra a su sesión más reciente; si no tiene, abre el
- * workspace para crear la primera.
+ * Abrir un proyecto entra a su sesión más reciente; si no tiene ninguna, el
+ * espacio se abre sin sesión para que el plan en disco ya se pueda ver.
  */
-export function AutonProjectList({ onOpenProject, onOpenWorkspace }: AutonProjectListProps) {
+export function AutonProjectList({ onOpenProject }: AutonProjectListProps) {
   const { tree, loading } = useProjectTree();
   const projects = [...tree.projects]
     .filter((project) => !project.deleted)
@@ -82,11 +84,9 @@ export function AutonProjectList({ onOpenProject, onOpenWorkspace }: AutonProjec
                   data-testid="auton-project-row"
                   data-project-id={project.id}
                   className="group flex h-auto w-full items-center gap-3 rounded-md px-2 py-3 text-left hover:bg-muted/40"
-                  onClick={() =>
-                    task && path
-                      ? onOpenProject(project, path, task.taskId)
-                      : path && onOpenWorkspace(path)
-                  }
+                  onClick={() => {
+                    if (path) onOpenProject(project, path, task?.taskId ?? null);
+                  }}
                 >
                   <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-secondary-foreground">
                     <Folder className="size-4" />
