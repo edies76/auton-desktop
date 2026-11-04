@@ -189,3 +189,19 @@ s3 muestra su pregunta, y editar `plan.json` mueve s2 a Terminados sin
 recargar. Merge a `auton-desktop` en 9462caee.
 Pendiente: elegir modelo en el entorno dev para probar el hilo del
 orquestador, y un panel ancho para el tablero dentro del shell.
+
+## 2026-11-04 — tablero desplegable desde el sidebar
+
+Qué: al pulsar Plan, el tablero se despliega desde el borde derecho del
+sidebar como panel animado (portal con transición de ancho hasta
+1480px) y Hilo lo repliega; el hilo del centro no se mueve. Se trajo el
+trabajo de B desde origin (relojes, cierre honesto, espejos y su fix de
+arranque por manifest, que convive con el bootstrap de versión) y el
+manifest del desktop quedó en 0.16.1 como VERSION.
+Por qué: a 264px el tablero quedaba cortado; el humano pidió que se
+deslizara hasta verse bien sin perder el hilo de vista.
+Verificado con: 10 tests de autonWorkersSidebar, oxlint y
+architecture:check en verde; por CDP el panel crece a 1480px con
+columnas e inspector visibles y se repliega al cerrar.
+Pendiente: probar el hilo del orquestador con modelo (River ya quedó
+configurado en el entorno dev local, fuera del repo).

@@ -19,7 +19,8 @@ El tablero ya se alcanza: con sesión, sin sesión y desde el hilo.
 - **Proyectos sin sesiones**: abrir un proyecto sin hilo ya no salta al shell
   de ZCode; entra al espacio de Auton y el Plan lee `.auton/plan.json`.
 - **Plan en el shell**: el panel de workers del hilo muestra el botón Plan y
-  conmuta al tablero en el propio sidebar, sin salir de la conversación.
+  despliega el tablero desde el borde del sidebar con una animación de
+  ancho, sin salir de la conversación; Hilo lo repliega.
 
 ## [0.16.0] — 2026-11-04
 
