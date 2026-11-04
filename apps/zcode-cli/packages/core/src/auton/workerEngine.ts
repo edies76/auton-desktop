@@ -286,3 +286,40 @@ export function parseWorkerReporte(text: string): AutonWorkerReportStatus | unde
   const match = /STATUS:\s*(DONE_WITH_CONCERNS|DONE|NEEDS_CONTEXT|BLOCKED)\b/.exec(text);
   return match?.[1] as AutonWorkerReportStatus | undefined;
 }
+
+/** Quita posibles secretos del texto que vuelve al orquestador o al diario. */
+export function redactMuseSecrets(text: string): string {
+  return text
+    .replace(/META_API_KEY\s*=\s*\S+/g, "META_API_KEY=<redacted>")
+    .replace(/sk-[A-Za-z0-9]{5,}/g, "sk-<redacted>")
+    .replace(/xai-[A-Za-z0-9]{5,}/g, "xai-<redacted>");
+}
+
+export interface HonestNoReportClose {
+  status: "NEEDS_CONTEXT";
+  response: string;
+}
+
+/**
+ * Cierre honesto cuando el motor no dejó REPORTE: en vez de un `failed`
+ * mudo, NEEDS_CONTEXT con motivo y evidencia. Devuelve null si el texto
+ * crudo ya trae un STATUS válido — entonces manda el REPORTE encontrado.
+ * No inventa DONE jamás.
+ */
+export function closeMuseWithoutTerminal(
+  rawText: string,
+  evidencePaths: readonly string[],
+  stderrTail = "",
+): HonestNoReportClose | null {
+  if (parseWorkerReporte(rawText)) return null;
+  const evidence =
+    evidencePaths.length > 0 ? evidencePaths.join(", ") : "sin artefactos";
+  const response = [
+    "REPORTE:",
+    "STATUS: NEEDS_CONTEXT",
+    `EVIDENCIA: ${evidence}`,
+    "DUDAS: motor no emitió REPORTE; revisar evidencia y decidir" +
+      (stderrTail ? `. stderr: ${stderrTail.slice(0, 300)}` : ""),
+  ].join("\n");
+  return { status: "NEEDS_CONTEXT", response: redactMuseSecrets(response) };
+}
