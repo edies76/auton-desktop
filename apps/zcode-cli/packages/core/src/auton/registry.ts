@@ -14,6 +14,7 @@ import {
   normalizeLegacyPlan,
   type AutonPlan,
   type AutonPlanItem,
+  type AutonRegistryEvent,
 } from "@zcode/contracts";
 import {
   AUTON_DIR_NAME,
@@ -22,12 +23,14 @@ import {
   type ChangeRecord,
   type RevertAuditEntry,
 } from "./journal.js";
+import { readRegistryLog } from "./registry-store.js";
 
 export const AUTON_REGISTRY_READ_VERSION = 1;
 
 export const AUTON_REGISTRY_RECORD_KINDS = [
   "goal",
   "sprint",
+  "dispatch",
   "decision",
   "report",
   "artifact",
@@ -59,6 +62,7 @@ export interface AutonRegistryRecord {
 export type AutonRegistryWarningCode =
   | "invalid_plan"
   | "malformed_line"
+  | "invalid_record"
   | "duplicate_id"
   | "broken_ref";
 
@@ -113,6 +117,7 @@ const MAX_SEARCH_LIMIT = 20;
 const ID_PREFIXES = [
   "goal",
   "item:",
+  "dispatch:",
   "decision:",
   "report:",
   "artifact:",
@@ -328,6 +333,27 @@ function revertRecord(entry: RevertAuditEntry, index: number): AutonRegistryReco
   };
 }
 
+/**
+ * Un evento durable ya viene redactado y topado por el almacén. Se convierte
+ * en la misma ficha que las fuentes derivadas; `source` es el origen que el
+ * escritor declaró, no la línea del archivo.
+ */
+function registryEventRecord(event: AutonRegistryEvent): AutonRegistryRecord {
+  return {
+    id: event.id,
+    kind: event.kind,
+    at: event.at,
+    title: event.title,
+    summary: event.summary,
+    refs: event.refs,
+    source: event.source,
+    ...(event.status !== undefined ? { status: event.status } : {}),
+    ...(event.agentId !== undefined ? { agentId: event.agentId } : {}),
+    ...(event.itemId !== undefined ? { itemId: event.itemId } : {}),
+    ...(event.paths !== undefined ? { paths: event.paths } : {}),
+  };
+}
+
 function brokenReferenceWarnings(records: readonly AutonRegistryRecord[]): AutonRegistryWarning[] {
   const ids = new Set(records.map((record) => record.id));
   const warnings: AutonRegistryWarning[] = [];
@@ -417,8 +443,36 @@ export function readAutonRegistry(workspaceRoot: string, now = new Date()): Auto
     }
   }
 
-  const seen = new Set<string>();
+  // El log durable completa el registro derivado. Un evento con el mismo id
+  // que una ficha derivada la reemplaza: lo durable es la última palabra y no
+  // se duplica. Un id repetido dentro del log conserva la primera aparición.
+  const log = readRegistryLog(workspaceRoot, now);
+  warnings.push(...log.warnings);
+  const durableById = new Map<string, AutonRegistryRecord>();
+  for (const event of log.records) {
+    const record = registryEventRecord(event);
+    if (!durableById.has(record.id)) durableById.set(record.id, record);
+  }
+
+  const mergedRecords: AutonRegistryRecord[] = [];
+  const placedDurableIds = new Set<string>();
   for (const record of records) {
+    const durable = durableById.get(record.id);
+    if (durable) {
+      if (!placedDurableIds.has(record.id)) {
+        mergedRecords.push(durable);
+        placedDurableIds.add(record.id);
+      }
+      continue;
+    }
+    mergedRecords.push(record);
+  }
+  for (const [id, durable] of durableById) {
+    if (!placedDurableIds.has(id)) mergedRecords.push(durable);
+  }
+
+  const seen = new Set<string>();
+  for (const record of mergedRecords) {
     if (seen.has(record.id)) {
       warnings.push({
         code: "duplicate_id",
@@ -429,12 +483,12 @@ export function readAutonRegistry(workspaceRoot: string, now = new Date()): Auto
     seen.add(record.id);
   }
 
-  warnings.push(...brokenReferenceWarnings(records));
+  warnings.push(...brokenReferenceWarnings(mergedRecords));
 
   return {
     version: AUTON_REGISTRY_READ_VERSION,
     generatedAt: now.toISOString(),
-    records,
+    records: mergedRecords,
     warnings,
   };
 }

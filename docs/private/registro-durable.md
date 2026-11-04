@@ -162,6 +162,91 @@ archivo solo contiene claves del contrato, sin `before`/`after`.
 El índice persistente (para buscar sin releer el JSONL) y los dos hooks mínimos
 en plan-handler y revert-handler. Este bloque no los toca.
 
+## Nivel 1B — lectura del log durable y herramienta AutonRecall
+
+Esta capa conecta el almacén del Nivel 1A con el lector y con el orquestador.
+Sigue siendo solo lectura: no agrega hooks, no escribe el plan ni la reversión y
+no toca la UI.
+
+### Lectura
+
+`readAutonRegistry` lee, además de `plan.json`, `changes.jsonl` y
+`reverts.jsonl`, el archivo `<workspace>/.auton/registry.jsonl` mediante
+`readRegistryLog`. Cada evento durable se convierte en la misma ficha
+`AutonRegistryRecord`:
+
+- `id`, `at`, `kind`, `title`, `summary`, `refs` y los opcionales `status`,
+  `agentId`, `itemId`, `paths` vienen del evento;
+- `source` es el origen que declaró el escritor (por ejemplo `dispatch:7`), no
+  la línea del archivo.
+
+La fusión es determinista:
+
+1. Primero se arman las fichas derivadas del plan, los cambios y las
+   reversiones.
+2. Un evento durable con el mismo `id` que una ficha derivada **la reemplaza**.
+   El durable gana y no queda duplicado.
+3. Un `id` repetido dentro del log conserva la primera aparición, para no
+   multiplicar fichas.
+4. Las advertencias del log (`malformed_line`, `invalid_record`,
+   `duplicate_id`) se copian al snapshot. Una línea corrupta no tumba el resto.
+
+`"dispatch"` se suma a `AUTON_REGISTRY_RECORD_KINDS` y `"invalid_record"` a los
+códigos de advertencia del lector, para que ambas capas hablen el mismo
+vocabulario.
+
+### Herramienta AutonRecall
+
+Contrato en `contracts/src/auton/recall.ts`, handler en
+`core/src/auton/recall-handler.ts`, registrada en el arreglo de herramientas
+integradas.
+
+Entrada estricta (`AutonRecallInputSchema`):
+
+| Campo | Regla |
+| --- | --- |
+| `query` | texto libre, recortado, 1–300 caracteres |
+| `id` | id exacto, 1–160 caracteres |
+| `kind` | uno de los tipos del registro (`goal`, `sprint`, `dispatch`, `report`, `decision`, `artifact`, `change`, `revert`) |
+| `ref` | referencia exacta, 1–300 caracteres |
+| `limit` | entero 1–20; 5 por defecto |
+
+Debe venir al menos uno de `query`, `id`, `ref` o `kind`; sin selector la
+validación falla en vez de adivinar. La herramienta llama a
+`readAutonRegistry` y `searchAutonRegistry`, y devuelve:
+
+```ts
+{
+  text: string;        // una línea por ficha, con id y fuente
+  matches: { id, kind, at?, title, summary, refs, source }[];
+  total: number;       // coincidencias antes del tope
+  truncated: boolean;  // true si total > limit
+}
+```
+
+El texto nunca imprime más de `limit` líneas y cada línea tiene la forma
+`- <id> [<kind>] <resumen> (<source>)`. Ni la ficha ni el texto incluyen
+`before`, `after` ni el contenido de un archivo.
+
+Metadatos de la entrada: `readOnly: true`, `destructive: false`,
+`concurrentSafe: true`, `timeoutMs: 10000`, `maxOutputBytes: 12000`,
+`sideEffectScope: "workspace"`, `riskLevel: "low"`, `needsApproval: false`.
+Permiso `auton.recall` con `denyPriority: "beforeAsk"` y sin aprobación.
+
+### Pruebas del nivel
+
+`core/tests/auton-registry-recall.test.ts` cubre: lectura del evento durable;
+el durable reemplaza a la ficha derivada sin duplicar; búsqueda por texto, id,
+referencia y tipo; tope de líneas y valor por defecto 5; rechazo de `limit: 50`;
+rechazo sin selector; workspace vacío sin recuerdos; advertencias del log
+propagadas; ausencia de `before`/`after` y de contenido de archivos; y los
+metadatos de lectura/concurrencia segura.
+
+### Lo que falta para cerrar el Nivel 1
+
+El índice persistente y los dos hooks mínimos en plan-handler y
+revert-handler. Este bloque no los toca.
+
 ## Siguiente nivel (no incluido aquí)
 
 El Nivel 1 agrega contrato versionado, escritura append-only, idempotencia,
