@@ -4,6 +4,21 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases p├║blicas.
 
+## [0.16.2] — 2026-11-04
+
+El tablero se lee de un vistazo y el panel de workers cuenta la verdad.
+
+### Corregido
+
+- **Tablero legible**: las siete columnas entran en una fila, los datos de
+  cada tarjeta ya no se cortan con puntos suspensivos, el detalle del
+  objetivo empieza plegado y el inspector de evidencia va debajo, a lo ancho.
+- **Workers que no aparecían**: el panel del sidebar solo leía los subagentes
+  de la conversación, así que un worker en modo sesión (el modo por defecto)
+  no salía nunca y el contador decía 0 con trabajo en curso. Ahora el panel
+  también lee el índice durable de workers del proyecto, la misma fuente que
+  ya usaba el espacio del proyecto.
+
 ## [0.16.1] — 2026-11-04
 
 El tablero ya se alcanza: con sesión, sin sesión y desde el hilo.

@@ -205,3 +205,22 @@ architecture:check en verde; por CDP el panel crece a 1480px con
 columnas e inspector visibles y se repliega al cerrar.
 Pendiente: probar el hilo del orquestador con modelo (River ya quedó
 configurado en el entorno dev local, fuera del repo).
+
+## 2026-11-04 — tablero legible, workers de sesión en el sidebar y poda propuesta
+
+Qué: las 7 columnas del tablero entran en una fila (minmax 180px), la línea
+de dueño/esfuerzo ya no se corta, el detalle del objetivo empieza plegado y
+el inspector va debajo. El sidebar de workers ahora lee también
+`.auton/workers/index.json` (con el hook que ya usaba el espacio del
+proyecto): los workers en modo sesión no producen filas de subagente y el
+panel decía 0 con 15 workers reales en Feria. Propuesta de poda tanda 1 en
+docs/private con los datos de la corrida (38 ofrecidas, 7 usadas).
+Por qué: el humano no entendía el tablero ni por qué Workers decía 0; ambas
+eran la misma deuda de lectura, no de motor.
+Verificado con: 37 tests de UI (sidebar + tablero), 10 de proyección de
+workers, `tsc` de UI, `oxlint` y `architecture:check` en verde; por CDP las
+7 columnas quedan en una fila en el proyecto Feria real. La causa del
+cuelgue al probar fue un mock con identidad nueva por render, no la app:
+en producción los servicios salen de un contexto estable.
+Pendiente: terminar Feria (parada manual del research y recall de cierre)
+y ejecutar la tanda 1 de la poda cuando esa corrida cierre.
