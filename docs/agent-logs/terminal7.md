@@ -281,3 +281,15 @@ de tsc de desktop (arms y setVersion) existen igual en el árbol limpio.
 Pendiente de esa tanda: el texto del indicador de Computer Use en Windows
 sigue diciendo ZCode; tocar ese archivo exige registrar su módulo en la
 gobernanza de arquitectura, y eso va en una tanda aparte.
+
+## 2026-11-04 — fuente Montserrat en toda la app (0.19.0)
+
+Qué: Montserrat variable e itálica variable convertidas a woff2 (200 y
+216 KB) dentro de assets/fonts con su licencia OFL, declaradas con
+@font-face y como --font-sans del tema. El mono conserva su pila.
+Por qué: el humano entregó la fuente de marca y pidió que todo Auton la
+use. La app seguía mostrando lo viejo porque el proceso en memoria no
+recoge cambios de arranque: se reinició el stack de desarrollo.
+Verificado con: computed style del body en Montserrat y document.fonts
+en cargada, captura de la lista de proyectos ya en Montserrat, y la app
+entrando directo sin login (perfil en «Connect» y workspace usable).

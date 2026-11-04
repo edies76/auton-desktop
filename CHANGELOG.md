@@ -4,6 +4,17 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases p├║blicas.
 
+## [0.19.0] — 2026-11-04
+
+Montserrat es la fuente de toda la interfaz.
+
+### Cambiado
+
+- **Fuente Montserrat**: la variable (con su itálica) viaja en la app y es
+  la fuente de toda la interfaz, en escritorio y web. El mono de código,
+  diffs y terminal conserva su pila propia, como manda el sistema de
+  diseño. La licencia OFL de la fuente va incluida en el paquete.
+
 ## [0.18.1] — 2026-11-04
 
 Tablero más fino, sin plan de Z.ai, sin login al entrar y sin la Z en el arranque.
