@@ -26,3 +26,11 @@ Por qué: el usuario pedía el botón de Meta y el template ya existía sin UI q
 Verificado con: `vitest run test/loginApiKeyForm*.test.ts` (10 passed); oxlint 0 errores; tsc sin errores nuevos (3 preexistentes ajenos).
 
 — Jarvis Ken · terminal8 · meta-login
+
+## 2026-11-04 — Merge final Meta a auton-desktop
+
+Qué: `fix/meta-login` integrado en `auton-desktop` (ff sobre `ab510f93`, 4 commits: helpers + UI + i18n + constancia). El allowlist del `anyOf` ya venía en el remoto (`b0666271`), sin cambios: suite 41/41 en fresco.
+Por qué: cerrar el botón Meta pedido, sin reescribir schema ni relajar la regla global.
+Verificado con: login 10/10 + contratos 41/41 en fresco tras el merge; oxlint 0; tsc 0 nuevos; arch 0 violations.
+
+— Jarvis Ken · terminal8 · meta-merge
