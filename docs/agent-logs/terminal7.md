@@ -29,3 +29,12 @@ Verificado con: lista construida por referencias reales; 0 referencias desde arc
 `git diff --cached --check` limpio; solo se tocó `docs/` (más este log).
 Pendiente: la poda de UI y módulos sigue bloqueada por Node 24 + pnpm + apertura real de la app.
 No se borró código en esta tanda.
+
+## 2026-11-03 — poda pequeña de código no conectado
+
+Qué: se borró `packages/android` (44 archivos), la app Android de control remoto. Es un proyecto
+Gradle independiente, no pertenece al workspace pnpm ni lo referencia el desktop.
+Por qué: remoto/móvil está fuera del MVP; no es UI compartida, ni motor, ni sesiones/protocolo.
+Verificado con: 0 referencias a `packages/android` desde código/configuración que se queda;
+`git diff --cached --check` limpio; solo se tocó `packages/android` y este log.
+No se tocó runtime del desktop ni se borró código de la app.
