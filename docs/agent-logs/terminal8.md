@@ -18,3 +18,11 @@ Por qué: REPARTO B etapa 1 (solapamientos una vez, espera separada); nadie lo t
 Verificado con: `vitest run tests/auton-clocks.test.ts` (4 passed).
 
 — Jarvis Ken · terminal8 · relojes-core
+
+## 2026-11-04 — espejos de contratos sincronizados
+
+Qué: `DIRECT_BRANCH_EXPECTED_PROVIDER_TOOL_ORDER` + `AutonRecall` en posición de registro; espejo SendMessage con el párrafo `requires_answer` de `07219f97`. Suite: 39/40, queda solo el `anyOf`.
+Por qué: la tool AutonRecall (`2a5c53da`, `ddae022f`) entró sin actualizar el test; el espejo es el canario.
+Pendiente de Edi (diseño, no espejo): el `anyOf` de recall es intencional ("al menos uno", `recall.ts:97-101`) y choca con la regla que prohíbe claves internas en schemas visibles. Opciones: allowlist en el test, reestructurar el schema, o relajar la regla. Ramas B pusheadas pendientes de merge: feat/b/relojes, feat/b/muse-code-evidencia, feat/b/cierre-honesto.
+
+— Jarvis Ken · terminal8 · espejos
