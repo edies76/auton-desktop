@@ -104,7 +104,7 @@ function BoardColumn({
   const meta = AUTON_SPRINT_STATUS_META[status];
   return (
     <section
-      className="flex min-w-[216px] flex-1 flex-col rounded-lg bg-secondary/40"
+      className="flex flex-col rounded-lg bg-secondary/40"
       data-testid={`auton-sprint-column-${status}`}
       data-count={items.length}
       aria-label={label}
@@ -254,7 +254,12 @@ export function AutonSprintBoard({
           </section>
 
           <div className="grid min-h-0 grid-cols-1 gap-4 px-4 py-4 xl:grid-cols-[minmax(0,1fr)_320px]">
-            <div className="flex items-start gap-3 overflow-x-auto pb-2" data-testid="auton-sprint-columns">
+            {/* Sin scroll horizontal: las columnas que no caben pasan a la
+                fila de abajo (auto-fill) y el tablero crece hacia abajo. */}
+            <div
+              className="grid grid-cols-[repeat(auto-fill,minmax(216px,1fr))] items-start gap-3 pb-2"
+              data-testid="auton-sprint-columns"
+            >
               {columns.map((column) => (
                 <BoardColumn
                   key={column.status}

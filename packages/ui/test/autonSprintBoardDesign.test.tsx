@@ -113,6 +113,9 @@ describe("tablero de sprints — diseño minimalista", () => {
     expect(AUTON_SPRINT_COLUMNS).toHaveLength(7);
     const columns = screen.getByTestId("auton-sprint-columns");
     expect(columns.children).toHaveLength(7);
+    // Sin barra horizontal: las columnas envuelven hacia abajo (auto-fill).
+    expect(columns.className).toContain("repeat(auto-fill,minmax(216px,1fr))");
+    expect(columns.className).not.toContain("overflow-x-auto");
     for (const column of AUTON_SPRINT_COLUMNS) {
       expect(screen.getByTestId(`auton-sprint-column-${column.status}`)).toBeTruthy();
       expect(
