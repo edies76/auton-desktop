@@ -123,7 +123,9 @@ describe("sidebar de workers del proyecto", () => {
       "Arreglar login",
     );
     expect(screen.queryByTestId("auton-worker-group-subagent")).toBeNull();
-    expect(screen.getByTestId("auton-worker-group-muse").textContent).toContain("Próximamente");
+    expect(screen.getByTestId("auton-worker-group-muse").textContent).toContain(
+      "Sin workers Muse.",
+    );
     expect(screen.getAllByTestId("auton-worker-row")).toHaveLength(1);
   });
 

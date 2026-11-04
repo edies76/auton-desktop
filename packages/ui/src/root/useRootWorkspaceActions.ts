@@ -401,11 +401,18 @@ export function useRootWorkspaceActions({
           });
         }
         // 目录准备成功才提交导航；失败保留当前会话和分屏。
-        if (!hostId || hostId === "local")
+        if (!hostId || hostId === "local") {
           addTab(target.workspacePath, {
             workspacePurpose: target.projectId ? "project" : "conversation",
             ...(target.workspaceIdentity ? { workspaceIdentity: target.workspaceIdentity } : {}),
           });
+          // Un proyecto puede vivir en otra carpeta/workspace: crear la tab no
+          // la activa. Sin este foco el shell sigue mostrando el proyecto previo.
+          tabStoreApi.getState().activateTabByPath(
+            target.workspacePath,
+            target.workspaceIdentity ? { workspaceIdentity: target.workspaceIdentity } : undefined,
+          );
+        }
         startDraftInWorkspace(target.workspacePath, target.workspaceIdentity, {
           ...(typeof request === "string" ? { provider: request } : request),
           ...(pendingDraft ? { draftId: pendingDraft.draftId } : {}),
