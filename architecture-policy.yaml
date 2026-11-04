@@ -799,6 +799,11 @@ global:
   acceptedUpstreamSnapshot: scripts/architecture/upstream-snapshot.json
 
 exceptions:
+  - id: auton-session-worker-runtime-method
+    rule: unmanaged-new-file
+    paths:
+      - apps/zcode-cli/packages/core/src/runtime/methods/autonSessionWorker.ts
+    reason: El metodo de runtime conecta el puerto del worker Auton con el runtime de ZCode; adoptarlo como modulo propio exige mover la fabrica completa y queda fuera de este cambio.
   - id: side-pane-full-view-shortcut-command-edit
     rule: unmanaged-new-file
     paths: [ packages/shared/src/shortcutCommands.ts ]

@@ -6,10 +6,13 @@
 // instantánea que ya consume la proyección del panel.
 
 import { useEffect, useState } from "react";
-import type { IFileService } from "@zcode/services";
 import { useOptionalServices } from "@/hooks/useServices.js";
 import type { AutonWorkerEvent } from "./model.js";
 import type { AutonSessionWorkerSnapshot } from "./sessionWorker.js";
+
+interface FileTextReader {
+  readTextFile(params: { path: string }): Promise<{ content: string }>;
+}
 
 export interface WorkerIndexEntryLike {
   workerId: string;
@@ -119,7 +122,7 @@ export function sessionWorkerSnapshotFromIndex(
 }
 
 async function readIndex(
-  fileService: Pick<IFileService, "readTextFile">,
+  fileService: FileTextReader,
   workspaceRoot: string,
 ): Promise<WorkerIndexEntryLike[]> {
   try {
@@ -133,7 +136,7 @@ async function readIndex(
 }
 
 async function readTranscript(
-  fileService: Pick<IFileService, "readTextFile">,
+  fileService: FileTextReader,
   path: string,
 ): Promise<WorkerTranscriptEntryLike[]> {
   try {
