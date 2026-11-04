@@ -125,3 +125,19 @@ Verificado con: `pnpm typecheck`, 7 archivos de pruebas de UI/remoto (75 en verd
 `pnpm test:architecture` (36 en verde).
 No se tocó el chat único/vivo, el espacio de proyecto, el motor de edición, sesiones,
 proveedores, navegador interno, terminal ni el trabajo de A.
+
+## 2026-11-03 — poda mediana de marketing
+
+Qué: se borró la capa visible de marketing: provider, banner, popups, controlador, poller,
+recursos, navegación de campañas y contrato del módulo. También sus pruebas UI y los tres
+E2E de marketing más el caso de manual review.
+Por qué: marketing no sostiene la promesa de Auton (dirigir trabajo y ver evidencia) y era
+la última superficie de UI grande fuera del producto. Se dejó el servicio de backend y el
+mock de coding plan para no romper pruebas de planes.
+Cómo: se simplificaron `Root`, `App`, `SettingsPage`, `ModelProviderSection`,
+`PluginStorePage` y `SidebarBottomActivity`; se limpió la política y el snapshot de
+arquitectura.
+Verificado con: `pnpm typecheck`, pruebas de sidebar/root/credenciales/mock de plan y
+`pnpm test:architecture` (36 en verde).
+No se tocó el chat único/vivo, el espacio de proyecto, el motor de edición, sesiones,
+proveedores, navegador interno, terminal ni el trabajo de A.

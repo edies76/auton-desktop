@@ -5,9 +5,6 @@ import { reportAppTelemetryEvent } from "@/lib/appTelemetry.js";
 import { PluginAddMenu } from "@/conversation-workspace-target/PluginAddMenu.js";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "zustand";
-import { useOptionalTabStore } from "@/store/TabStoreProvider.js";
-import { isWorkspaceTab } from "@/store/tabStore.js";
-import { marketingNavigation, finishMarketingNavigation } from "@/lib/marketingNavigation.js";
 import { ArrowLeft, RefreshCw, Store } from "lucide-react";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import { Button } from "@/components/ui/button.js";
@@ -207,86 +204,6 @@ export function PluginStorePage({
   );
   const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
   const detailItem = detailPluginId ? (itemById.get(detailPluginId) ?? null) : null;
-  const marketingRequest = useStore(marketingNavigation, (state) => state.request);
-  const isMarketingDestinationVisible = useOptionalTabStore((state) => {
-    const tab = state.tabs.find((tab) => tab.id === state.activeTabId);
-    return Boolean(
-      tab &&
-      isWorkspaceTab(tab) &&
-      (tab.workspaceIdentity?.trim() || tab.workspacePath) ===
-        (workspaceIdentity?.trim() || workspacePath),
-    );
-  });
-  useEffect(() => {
-    const root = rootRef.current;
-    if (!root || view === "manage" || typeof IntersectionObserver === "undefined") return;
-    let visible = false;
-    const observer = new IntersectionObserver(([entry]) => {
-      const next = Boolean(entry?.isIntersecting);
-      if (next && !visible) {
-        void reportAppTelemetryEvent(
-          platform,
-          {
-            elementName: "plugin_discovery",
-            eventRegion: "app",
-            eventType: "view",
-            eventExtraDetail: {
-              schema_version: "1",
-              action: view === "detail" ? "detail_view" : "store_view",
-              entry: embedded
-                ? "side_pane_market"
-                : view === "detail"
-                  ? "store_detail"
-                  : "store_list",
-              client_kind: isWebRemoteControl ? "mobile" : "desktop",
-              ...(view === "detail" && detailPluginId ? { plugin_id: detailPluginId } : {}),
-            },
-          },
-          "plugin-discovery",
-        );
-      }
-      visible = next;
-    });
-    observer.observe(root);
-    return () => observer.disconnect();
-  }, [platform, view, detailPluginId, embedded, isWebRemoteControl]);
-  useEffect(() => {
-    if (embedded || marketingRequest?.target.page !== "plugin_marketplace") return;
-    if (!isMarketingDestinationVisible) return;
-    const pluginId = marketingRequest.target.plugin_id;
-    if (!workspacePath) {
-      finishMarketingNavigation(marketingRequest.id, new Error("marketing_navigation_unavailable"));
-      return;
-    }
-    if (
-      loading ||
-      loadedWorkspacePath !== workspacePath ||
-      loadedWorkspaceIdentity !== normalizedWorkspaceIdentity
-    )
-      return;
-    if (error || (pluginId && !itemById.has(pluginId))) {
-      finishMarketingNavigation(marketingRequest.id, new Error("marketing_plugin_unavailable"));
-    } else if (pluginId ? view === "detail" && detailPluginId === pluginId : view === "store") {
-      finishMarketingNavigation(marketingRequest.id);
-    } else {
-      setDetailPluginId(pluginId ?? null);
-      setView(pluginId ? "detail" : "store");
-      setQuery("");
-    }
-  }, [
-    embedded,
-    marketingRequest,
-    isMarketingDestinationVisible,
-    workspacePath,
-    loading,
-    loadedWorkspacePath,
-    loadedWorkspaceIdentity,
-    normalizedWorkspaceIdentity,
-    error,
-    itemById,
-    view,
-    detailPluginId,
-  ]);
   // 插件自身 warning 诊断（如声明的技能路径扫描为空）：详情高级区展示，避免静默失败。
   const detailPluginInfo = detailItem?.info;
   const detailPluginWarnings = detailPluginInfo

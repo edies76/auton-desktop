@@ -109,7 +109,6 @@ import {
   markCodeCommentRemoved,
 } from "@/lib/codeCommentContext.js";
 import { useCodeCommentPreviewStore } from "@/store/codeCommentPreviewStore.js";
-import { MarketingTouchProvider } from "@/components/marketing-touch/MarketingTouchProvider.js";
 import { setUiPerfArmsReporter } from "@/lib/uiPerfArmsTelemetry.js";
 import { setSessionOpenArmsReporter } from "@/lib/sessionOpenArmsTelemetry.js";
 import { setSendFunnelArmsReporter } from "@/lib/sendFunnelArmsTelemetry.js";
@@ -179,17 +178,9 @@ export function Root(props: RootProps) {
                       >
                         <CodingPlanUpgradeDialogProvider>
                           <RequestSecurityHost />
-                          {AUTON_MVP ? (
-                            <RemoteConnectionProgressProvider>
-                              <RootInner {...props} />
-                            </RemoteConnectionProgressProvider>
-                          ) : (
-                            <MarketingTouchProvider desktop={props.isDesktop === true}>
-                              <RemoteConnectionProgressProvider>
-                                <RootInner {...props} />
-                              </RemoteConnectionProgressProvider>
-                            </MarketingTouchProvider>
-                          )}
+                          <RemoteConnectionProgressProvider>
+                            <RootInner {...props} />
+                          </RemoteConnectionProgressProvider>
                         </CodingPlanUpgradeDialogProvider>
                       </AssistantCodeCommentFeatureProvider>
                     </WebRemoteControlFeatureProvider>

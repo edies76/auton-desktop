@@ -117,3 +117,16 @@ dependan de una verificación visual.
 - No se tocó el chat único/vivo, el espacio de proyecto, el motor de edición, sesiones,
   proveedores, navegador interno, terminal ni el trabajo de A.
 - Verificado con `pnpm typecheck`, las pruebas de web remote/UI y `pnpm test:architecture`.
+
+## Estado 2026-11-03 — poda mediana de marketing
+
+- Se borró la capa de marketing de la UI: banner de campañas, popups, dialogs de fallo,
+  controlador/poller, recursos, navegación de campañas y su contrato de módulo.
+- Se quitaron sus enganches en `Root`, `App`, `SettingsPage`, `ModelProviderSection`,
+  `PluginStorePage` y el slot inferior del sidebar.
+- Se borraron sus pruebas unitarias y los E2E de UI (`marketing-touch-anonymous`,
+  `marketing-touch-delivery`, `marketing-touch-entitlement` y el caso de manual review).
+- Se dejó intacto el servicio de marketing del backend y el mock de coding plan que lo usa
+  para pruebas; solo desaparece la superficie visible y la navegación por campañas.
+- Verificado con `pnpm typecheck`, pruebas de sidebar/root/credenciales/mock de plan y
+  `pnpm test:architecture`.
