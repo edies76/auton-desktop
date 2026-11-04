@@ -44,13 +44,21 @@ export function resolveConversationTurnWorkStatus(
   isInterrupted = false,
 ): ConversationTurnWorkStatus | undefined {
   if (header?.executionKind === "controlOnly") return undefined;
+  // El turno puede haber terminado (para que el humano escriba) mientras un
+  // worker sigue vivo: el loop debe seguir abierto y con su contador.
+  const hasRunningWork = workRows.some(
+    (row) =>
+      (row.kind === "subagent" && row.status === "running") ||
+      (row.kind === "toolCall" && row.status === "running"),
+  );
+  const running = isRunning || hasRunningWork;
   const hasWork =
-    isRunning ||
+    running ||
     workRows.length > 0 ||
     (header?.executionKind === "agent" ? durationMs !== undefined : (durationMs ?? 0) > 0);
   if (!hasWork) return undefined;
   return {
-    state: isRunning ? "running" : isInterrupted ? "interrupted" : "completed",
+    state: running ? "running" : isInterrupted ? "interrupted" : "completed",
     ...(durationMs !== undefined ? { durationMs } : {}),
   };
 }
@@ -88,15 +96,30 @@ function isAssistantWorkRow(row: ConversationRow): row is AssistantWorkRow {
   return row.kind !== "turnHeader" && row.kind !== "userInput";
 }
 
-function splitVisualWorkSegments(rows: readonly ConversationRow[]): DraftVisualWorkSegment[] {
+function isLoopWorkRow(row: ConversationRow): boolean {
+  return row.kind === "toolCall" || row.kind === "subagent" || row.kind === "artifact";
+}
+
+function splitVisualWorkSegments(
+  rows: readonly ConversationRow[],
+  splitAtAssistantText = false,
+): DraftVisualWorkSegment[] {
   const segments: DraftVisualWorkSegment[] = [];
   let current: DraftVisualWorkSegment = { orderedRows: [] };
+  let currentHasLoopWork = false;
   for (const row of rows) {
-    if (isUserInputRow(row) && row.guided === true && current.orderedRows.length > 0) {
+    const guidedBoundary = isUserInputRow(row) && row.guided === true;
+    // Auton: cada narración después de un grupo de tools abre un loop nuevo.
+    // Así el hilo muestra varios bloques colapsables intercalados, no uno solo.
+    const narrationBoundary =
+      splitAtAssistantText && isAssistantTextRow(row) && currentHasLoopWork;
+    if ((guidedBoundary || narrationBoundary) && current.orderedRows.length > 0) {
       segments.push(current);
-      current = { orderedRows: [], triggerRow: row };
+      current = { orderedRows: [], ...(guidedBoundary ? { triggerRow: row } : {}) };
+      currentHasLoopWork = false;
     }
     current.orderedRows.push(row);
+    if (isLoopWorkRow(row)) currentHasLoopWork = true;
   }
   if (current.orderedRows.length > 0) segments.push(current);
   return segments;
@@ -156,7 +179,10 @@ export function buildConversationTurnWorkSegments(options: {
   /** 插件卡片进不进折叠区的裁决；缺省沿用"全部常驻"。 */
   pluginUiPinResolver?: PluginUiRowPinResolver;
 }): ConversationTurnWorkSegment[] {
-  const visualDrafts = splitVisualWorkSegments(options.orderedRows);
+  const visualDrafts = splitVisualWorkSegments(
+    options.orderedRows,
+    options.interleaveAssistantText,
+  );
   const tailRowIds = new Set(options.assistantTailRows.map((row) => row.rowId));
   return visualDrafts.map((segment, segmentIndex) => {
     const segmentAssistantRows = segment.orderedRows.filter(isAssistantWorkRow);
