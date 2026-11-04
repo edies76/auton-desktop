@@ -27,7 +27,7 @@ import {
   type AutonRegistryLog,
 } from "@zcode/contracts";
 import { AUTON_DIR_NAME } from "./journal.js";
-import { readRegistryLog } from "./registry-store.js";
+import { readRegistryLog } from "./registry-log.js";
 
 /** Ruta del índice derivado dentro del workspace. */
 export function registryIndexPath(workspaceRoot: string): string {

@@ -10,10 +10,9 @@
 // ya existente sin volver a escribir.
 
 import { createHash } from "node:crypto";
-import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
+import { appendFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 import {
-  AUTON_REGISTRY_FILE_NAME,
   AUTON_REGISTRY_FILE_VERSION,
   AutonRegistryAppendInputSchema,
   AutonRegistryEventSchema,
@@ -25,6 +24,9 @@ import {
 } from "@zcode/contracts";
 import { AUTON_DIR_NAME } from "./journal.js";
 import { refreshRegistryIndex } from "./registry-index.js";
+import { registryLogPath, readRegistryLog } from "./registry-log.js";
+
+export { readRegistryLog, registryLogPath } from "./registry-log.js";
 
 const MAX_TITLE_LENGTH = 200;
 const MAX_SUMMARY_LENGTH = 800;
@@ -36,11 +38,6 @@ const HASH_LENGTH = 12;
 const ELLIPSIS = "…";
 const REDACTED = "[REDACTED]";
 const REDACTED_PRIVATE_KEY = "[REDACTED PRIVATE KEY]";
-
-/** Directorio y archivo del registro durable dentro de un workspace. */
-export function registryLogPath(workspaceRoot: string): string {
-  return join(workspaceRoot, AUTON_DIR_NAME, AUTON_REGISTRY_FILE_NAME);
-}
 
 const SECRET_PATTERNS: ReadonlyArray<readonly [RegExp, string]> = [
   [
@@ -93,76 +90,6 @@ function generatedId(input: AutonRegistryAppendInput, at: string): string {
     input.dedupeKey,
   ]);
   return `evt:${at}:${digest}`;
-}
-
-function readRawLog(workspaceRoot: string): string | null {
-  const path = registryLogPath(workspaceRoot);
-  if (!existsSync(path)) return null;
-  return readFileSync(path, "utf8");
-}
-
-function parseLines(raw: string): Array<{ line: number; text: string }> {
-  const lines: Array<{ line: number; text: string }> = [];
-  const parts = raw.split(/\r?\n/);
-  for (let index = 0; index < parts.length; index += 1) {
-    const text = parts[index]?.trim() ?? "";
-    if (text.length === 0) continue;
-    lines.push({ line: index + 1, text });
-  }
-  return lines;
-}
-
-/**
- * Lee el registro durable. Tolera líneas corruptas o fuera de contrato: las
- * salta y deja una advertencia, de modo que una línea mala no invalida el resto.
- * Nunca devuelve contenido de archivos, solo los eventos del contrato.
- */
-export function readRegistryLog(workspaceRoot: string, now = new Date()): AutonRegistryLog {
-  const records: AutonRegistryEvent[] = [];
-  const warnings: AutonRegistryLogWarning[] = [];
-  const raw = readRawLog(workspaceRoot);
-
-  if (raw !== null) {
-    for (const { line, text } of parseLines(raw)) {
-      const source = `${AUTON_REGISTRY_FILE_NAME}:${line}`;
-      let parsed: unknown;
-      try {
-        parsed = JSON.parse(text);
-      } catch {
-        warnings.push({ code: "malformed_line", source, message: "no es JSON válido" });
-        continue;
-      }
-      const result = AutonRegistryEventSchema.safeParse(parsed);
-      if (!result.success) {
-        warnings.push({
-          code: "invalid_record",
-          source,
-          message: result.error.issues.map((issue) => issue.message).join("; "),
-        });
-        continue;
-      }
-      records.push(result.data);
-    }
-  }
-
-  const seen = new Set<string>();
-  for (const record of records) {
-    if (seen.has(record.id)) {
-      warnings.push({
-        code: "duplicate_id",
-        source: `${AUTON_REGISTRY_FILE_NAME}`,
-        message: `id duplicado: ${record.id}`,
-      });
-    }
-    seen.add(record.id);
-  }
-
-  return {
-    version: AUTON_REGISTRY_FILE_VERSION,
-    generatedAt: now.toISOString(),
-    records,
-    warnings,
-  };
 }
 
 /** Reutiliza las advertencias de la lectura para decir si el log es sano. */
