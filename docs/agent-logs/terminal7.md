@@ -278,3 +278,6 @@ compuerta de arranque, login), 29 del núcleo (puerto y selección), tsc
 de UI y del núcleo, y en la app real: splash con la A, detalle de Z.ai
 sin tarjetas de plan y columnas con el umbral correcto. Los dos errores
 de tsc de desktop (arms y setVersion) existen igual en el árbol limpio.
+Pendiente de esa tanda: el texto del indicador de Computer Use en Windows
+sigue diciendo ZCode; tocar ese archivo exige registrar su módulo en la
+gobernanza de arquitectura, y eso va en una tanda aparte.
