@@ -95,7 +95,7 @@ export function buildAutonWorkerGroups(params: {
   return [
     {
       kind: "agent",
-      label: "Agentes ZCode",
+      label: "Agentes Auton",
       workers: [...params.agentWorkers],
       canStop,
     },

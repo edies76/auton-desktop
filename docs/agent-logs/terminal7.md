@@ -257,3 +257,24 @@ Verificado con: 38 tests del tablero (incluido uno nuevo de despliegue
 por columna), tsc y oxlint, y en la app real por CDP con clic de mouse:
 Terminados pasó de 0 a 2120px con altura intermedia en plena animación,
 sin mover las demás columnas.
+
+## 2026-11-04 — umbral de columnas, sin plan Z.ai, sin login, sin Z (0.18.1)
+
+Qué: columnas con 5 o menos quedan expandidas y al pasar de 5 se recogen
+solas; todo el encabezado es el botón. Fuera la tarjeta de plan de
+Z.ai/BigModel del detalle de proveedor (queda la configuración por API
+key) y fuera el login forzado al arrancar: se entra directo. El splash
+de escritorio y web, About y los logos heredados dibujan la A de Auton.
+En el núcleo, el puerto de workers de sesión ahora entrega el modelo
+activo y el override del despacho a la fábrica, con la precedencia de
+un subagente; antes los descartaba.
+Por qué: el humano pidió tablero corto sin cazar la flechita, que el
+plan de Z.ai no exista en la app, entrar sin loguearse con ZCode, y que
+el worker corra sí o sí con lo seleccionado en el orquestador. En Feria
+los 15 workers ya usaban el modelo del orquestador; el hueco era el
+override explícito, que ningún worker de sesión recibía.
+Verificado con: 39 tests del tablero, 227 de UI (plan del proveedor,
+compuerta de arranque, login), 29 del núcleo (puerto y selección), tsc
+de UI y del núcleo, y en la app real: splash con la A, detalle de Z.ai
+sin tarjetas de plan y columnas con el umbral correcto. Los dos errores
+de tsc de desktop (arms y setVersion) existen igual en el árbol limpio.

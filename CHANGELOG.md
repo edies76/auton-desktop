@@ -4,6 +4,34 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases p├║blicas.
 
+## [0.18.1] — 2026-11-04
+
+Tablero más fino, sin plan de Z.ai, sin login al entrar y sin la Z en el arranque.
+
+### Cambiado
+
+- **Umbral por columna**: una columna con 5 tareas o menos queda expandida;
+  al pasar de 5 se recoge sola. El encabezado entero (nombre, contador o
+  flecha) expande y reduce, no solo el signo de la derecha.
+- **Fuera el plan de Z.ai del detalle de proveedor**: no hay tarjeta de
+  suscripción ni de cuota; el proveedor se configura directo con su API key
+  y su lista de modelos, como un proveedor personalizado.
+- **Entrada directa**: la app ya no abre pantalla de login ni registro al
+  arrancar, ni cuando una credencial cae. Se entra al workspace y el
+  proveedor se escoge y configura en Ajustes.
+- **Arranque sin la Z**: el splash de escritorio y web, la ventana About y
+  los logos heredados dibujan la A de Auton; el grupo del sidebar pasa a
+  llamarse «Agentes Auton».
+
+### Corregido
+
+- **El worker corre con la selección del orquestador**: el despacho ahora
+  entrega a la fábrica el modelo activo y el override explícito, con la
+  misma precedencia que un subagente. Antes el puerto de workers de sesión
+  los descartaba y solo mandaba la selección guardada de la sesión padre.
+  Sin ninguna selección, el despacho falla en vez de arrancar con otro
+  proveedor por defecto.
+
 ## [0.18.0] — 2026-11-04
 
 El tablero se puede recoger columna por columna.

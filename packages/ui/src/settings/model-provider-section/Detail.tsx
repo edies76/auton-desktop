@@ -486,10 +486,14 @@ export function ModelProviderSectionDetail({
       providerSettingsView?.providers.find(
         (provider) => provider.providerId === selectedNavItem.presetId,
       )?.accountState?.availability === "available";
+    // Poda Auton: el plan de Z.ai/BigModel no existe en el detalle. Sin esa
+    // compuerta por suscripción, el proveedor se configura directo con su
+    // API key, como cualquier proveedor personalizado.
     const hidePlanModels =
-      hasNoPlanEntitlement ||
-      selectedNavItem.status === "disconnected" ||
-      selectedNavItem.status === "notPurchased";
+      !AUTON_MVP &&
+      (hasNoPlanEntitlement ||
+        selectedNavItem.status === "disconnected" ||
+        selectedNavItem.status === "notPurchased");
     const shouldShowDedicatedProviderDetail =
       dedicatedProvider !== null &&
       !hidePlanModels &&
@@ -593,8 +597,8 @@ export function ModelProviderSectionDetail({
             provider.accountState.entitled,
         ),
     );
-    const planSupplementalContent =
-      isStartPlanProvider && hasActivePaidPlan ? null : anonymousPurchaseChoiceBannersVisible ||
+    const planSupplementalContent = AUTON_MVP ? null : isStartPlanProvider &&
+      hasActivePaidPlan ? null : anonymousPurchaseChoiceBannersVisible ||
         purchaseChoiceBannersVisible ? (
         <CodingPlanPurchaseChoiceBanners
           providerId={selectedNavItem.presetId}
@@ -715,10 +719,12 @@ export function ModelProviderSectionDetail({
             onTestModel={onTestModel}
             nameEditable={false}
             statusSection={
-              <div className="space-y-3">
-                {statusPanel}
-                {planSupplementalContent}
-              </div>
+              AUTON_MVP ? undefined : (
+                <div className="space-y-3">
+                  {statusPanel}
+                  {planSupplementalContent}
+                </div>
+              )
             }
             headerActionsVisible={false}
           />
@@ -729,6 +735,9 @@ export function ModelProviderSectionDetail({
     return (
       <ProviderFamilyDetailShell header={codingPlanFamilyHeader}>
         <div className="space-y-3">
+          {/* Poda Auton: sin tarjeta de plan; abajo quedan la configuración
+              del proveedor y su API key. */}
+          {AUTON_MVP ? null : (
           <CodingPlanStatusPanel
             providerId={selectedNavItem.presetId}
             providerName={selectedNavItem.providerName}
@@ -819,6 +828,7 @@ export function ModelProviderSectionDetail({
             upgradeActionVisible={!AUTON_MVP && (!isStartPlanProvider || !hasActivePaidPlan)}
             startPlanPreviewVisible={false}
           />
+          )}
           {hidePlanModels ? null : providerSettingsView && !dedicatedProvider ? (
             <PresetProviderPlaceholderCard
               displayName={selectedNavItem.providerName}

@@ -287,9 +287,11 @@ function RootInner({
     codingPlanSubscriptionService: services.codingPlanSubscriptionService,
   });
   const [welcomeScreenOpenReason, setWelcomeScreenOpenReason] =
-    useState<WelcomeScreenOpenReason | null>(() =>
-      consumeZcodeJwtInvalidRestartMarker() ? "session-expired" : null,
-    );
+    useState<WelcomeScreenOpenReason | null>(() => {
+      const sessionExpired = consumeZcodeJwtInvalidRestartMarker();
+      // Poda Auton: sin cuenta no hay sesión que expire; se entra directo.
+      return sessionExpired && !AUTON_MVP ? "session-expired" : null;
+    });
   // Espacio de Auton abierto desde la lista: el shell de ZCode se conserva para
   // `?auton=zcode`; la entrada por defecto es la lista de proyectos.
   const [autonSpace, setAutonSpace] = useState<{
@@ -593,7 +595,11 @@ function RootInner({
       rootProviderAvailability.hydrated || rootModelSelectionRead.state.status === "error",
   });
   const isWebRemoteControlRoot = Boolean(webRemoteControlWorkspaceSwitcher);
+  // Poda Auton: no hay login ni registro al arrancar; se entra directo y el
+  // proveedor se escoge y se configura con su API key desde Ajustes. Esa
+  // configuración es la que heredan el orquestador y sus workers.
   const providerAvailabilityLoginEntryGuardEnabled =
+    !AUTON_MVP &&
     shouldEnableProviderAvailabilityLoginEntryGuard({
       isWebRemoteControlRoot,
     });
@@ -691,6 +697,9 @@ function RootInner({
     setDirectoryBrowserOpen(true);
   }, []);
   const handleReauthenticationRequired = useCallback(() => {
+    // Poda Auton: sin login, una credencial caída no saca al usuario a una
+    // pantalla de acceso; se resuelve configurando el proveedor.
+    if (AUTON_MVP) return;
     setWelcomeScreenOpenReason("session-expired");
   }, []);
   const {
@@ -724,6 +733,7 @@ function RootInner({
     setOAuthError,
     setUser,
     onProviderFamilyDomainClearedAfterLogout: () => {
+      if (AUTON_MVP) return;
       setWelcomeScreenOpenReason("logout-provider-required");
     },
     userId: user?.id,
@@ -1251,6 +1261,9 @@ function RootInner({
     if (!loginEntryRequest) {
       return;
     }
+    // Poda Auton: conectar un proveedor no pasa por una pantalla de login;
+    // se configura con API key dentro de Ajustes, sin salir del workspace.
+    if (AUTON_MVP) return;
     // 登录入口已从模态弹窗收敛为 WelcomeScreen。
     // provider 连接请求仍要先退出首次启动引导语义，避免连接完成后误创建默认 workspace。
     setWelcomeScreenOpenReason("provider-request");
