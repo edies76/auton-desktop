@@ -77,6 +77,10 @@ Un worker no es una caja que se cierra al entregar. Mientras trabaja, el orquest
 
 En el detalle del worker ves su conversación completa: lo que pidió el orquestador, lo que respondió el worker, las herramientas que usó y cómo cerró. Cada worker queda además en un índice del proyecto, con su motor, su sesión, su carpeta y sus tiempos.
 
+## 4.5. Un proyecto, una sesión
+
+Cada proyecto tiene una sola conversación. Si ya existe, la app no crea otra: el intento de abrir una nueva tarea se rechaza y se indica que el proyecto ya tiene su sesión. La regla vive en el almacén de proyectos, así que también cubre la creación remota y el movimiento de una tarea a un proyecto ocupado; una sesión borrada deja libre el lugar.
+
 ## 5. Comprueba antes de cerrar
 
 Una pieza terminada pasa por una revisión independiente. Se comprueba el criterio de hecho, no la seguridad con la que el modelo cuenta que lo hizo.

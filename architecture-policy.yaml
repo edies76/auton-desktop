@@ -777,14 +777,14 @@ global:
   acceptedUpstreamSnapshot: scripts/architecture/upstream-snapshot.json
 
 exceptions:
+  - id: sidebar-bottom-activity-poda-unmanaged
+    rule: unmanaged-new-file
+    paths: [ packages/ui/src/sidebar-activity/SidebarBottomActivity.tsx ]
+    reason: La poda de marketing deja el indicador de actividad del sidebar en el modulo ui sin gestion; moverlo excede este cambio.
   - id: auton-mvp-flag-unmanaged
     rule: unmanaged-new-file
     paths: [ packages/ui/src/lib/autonMvp.ts ]
     reason: Bandera temporal de la poda del MVP; se retira cuando la poda deje de ser reversible.
-  - id: marketing-touch-poda-unmanaged
-    rule: unmanaged-new-file
-    paths: [ packages/ui/src/components/marketing-touch/MarketingTouchProvider.tsx ]
-    reason: La poda apaga el provider de marketing en un archivo heredado del modulo ui sin gestion; moverlo excede este cambio.
   - id: auton-session-worker-runtime-method
     rule: unmanaged-new-file
     paths:

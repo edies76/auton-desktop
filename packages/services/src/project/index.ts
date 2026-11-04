@@ -225,10 +225,11 @@ export function createProjectService(options: {
           return { workspacePath: path, additionalDirectories: [], projectId: null };
         }
         const repo = await options.repository();
-        // 新建只需要项目目录；读取全量历史任务会阻塞草稿导航，复检也使用同一项目限定读取。
-        let project = repo
-          .readTree({ includeTasks: false })
-          .projects.find((item) => item.id === id);
+        // La creación necesita saber si el proyecto ya tiene su única sesión.
+        const tree = repo.readTree({ includeTasks: true });
+        if (tree.tasks.some((task) => task.projectId === id))
+          throw new Error("project.session-exists");
+        let project = tree.projects.find((item) => item.id === id);
         if (!project) throw new Error("project.not-found");
         if (remoteOwner && project.roots.length !== 1)
           throw new Error("project.remote-single-root-required");

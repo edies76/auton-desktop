@@ -329,6 +329,11 @@ ayer.
 - **Cómo se prueba**: abre el detalle de un worker ZCode y de uno Muse, y revisa el índice de workers del proyecto.
 - **Qué tiene que verse**: mensajes del orquestador y del worker, filas de herramienta y cierre; y en el índice, motor, id de sesión del motor, carpeta, estado y tiempos, con el filtro por motor. La superficie lee el índice y la transcripción del workspace; no usa datos de demostración.
 
+### 26. Un proyecto tiene una sola sesión **[auto]**
+- **Qué prometemos**: no se puede crear una segunda conversación dentro del mismo proyecto.
+- **Cómo se prueba**: crea un proyecto y su primera sesión, intenta crear otra en el mismo proyecto e intenta mover una sesión de otro proyecto a ese.
+- **Qué tiene que verse**: el segundo intento se rechaza con un aviso; la reserva en el almacén falla con `project.session-exists` aunque la creación venga de otra ruta; una sesión borrada deja libre el lugar.
+
 ---
 
 ## Lo que estas pruebas protegen
