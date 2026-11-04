@@ -47,3 +47,11 @@ de test que dependía del script retirado y los scripts raíz `dev:web-share:*` 
 Por qué: compartir un chat no es parte del MVP; era la superficie de publicación pública de share.
 Verificado con: 0 importaciones de `@zcode/web-share`/`@zcode/share-ui` desde el código que se
 queda; lockfile actualizado; `git diff --check` limpio. No se tocó runtime del desktop ni UI.
+
+## 2026-11-03 — poda pequeña de stream-animate
+
+Qué: se retiró `packages/stream-animate`, paquete experimental independiente de animación, y sus
+referencias de build/bootstrap, política de arquitectura, `.gitignore` e inventario.
+Por qué: no es runtime del desktop ni infra de Auton; era una superficie de demo aislada.
+Verificado con: 0 imports de `@zcode/stream-animate`; `node --check` del bootstrap; lockfile
+actualizado; `git diff --check` limpio. No se tocó UI ni runtime.
