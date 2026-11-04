@@ -16,6 +16,7 @@ import {
 import { executeRevert } from "./revert-executor.js";
 import { readChanges } from "./journal.js";
 import { planRevert } from "./revert-plan.js";
+import { recordRevert } from "./registry-hooks.js";
 import type { ToolEntry, ToolHandler } from "../tool/types.js";
 
 function projectRoot(context: { workingDirectory: string; workspaceRoot?: string }): string {
@@ -49,6 +50,8 @@ export const autonRevertHandler: ToolHandler = async (input, context) => {
         : execution.already > 0 && execution.conflicts === 0 && execution.blocked === 0
           ? "already"
           : "blocked";
+
+  recordRevert({ workspaceRoot, selection, execution, result });
 
   return {
     result,

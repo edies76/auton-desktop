@@ -247,6 +247,62 @@ metadatos de lectura/concurrencia segura.
 El índice persistente y los dos hooks mínimos en plan-handler y
 revert-handler. Este bloque no los toca.
 
+## Nivel 1C — índice persistente y hooks mínimos
+
+Esta capa cierra el Nivel 1: agrega una caché derivada del log y conecta los
+dos momentos que faltaban (escribir el plan y ejecutar una reversión) con el
+registro durable. Sigue sin tocar la UI y sin usar vectores.
+
+### Índice persistente
+
+Contrato en `contracts/src/auton/registry-index.ts`, implementación en
+`core/src/auton/registry-index.ts`, sobre `<workspace>/.auton/registry-index.json`:
+
+- `AutonRegistryIndexSchema` (estricto): `version`, `generatedAt`, `sourceBytes`,
+  `records` y `warnings`. `sourceBytes` es el tamaño exacto de `registry.jsonl`
+  cuando se generó el índice.
+- `readRegistryIndex` devuelve `null` si el índice falta, si no valida el
+  esquema, si no existe el log o si `sourceBytes` no coincide con el tamaño
+  actual. El índice nunca es fuente de verdad.
+- `writeRegistryIndex` y `refreshRegistryIndex` escriben de forma atómica: un
+  temporal en el mismo directorio y `renameSync` encima, sin dejar `.tmp`.
+- `readRegistryLogCached` usa el índice solo si es fresco; si no, lee el log,
+  reconstruye el índice como mejor esfuerzo y devuelve el log.
+- Un fallo al escribir el índice no invalida un evento ya anexado: el log manda.
+
+Cada `appendRegistryRecord` refresca el índice después de `appendFileSync`,
+dentro de un `try/catch`.
+
+### Hooks mínimos
+
+En `core/src/auton/registry-hooks.ts`:
+
+- `recordPlanWrite` compara el plan anterior con el nuevo y anexa solo lo que
+  cambió: goal, items (nuevos o distintos), entradas nuevas de `limitHistory` y
+  entradas nuevas de `limitReports`. Un item cuyo `attempts` subió o que pasó a
+  `running` se registra como `dispatch`; el resto, como `sprint`.
+- `recordRevert` refleja el `audit` que ya escribió `reverts.jsonl`: paths,
+  resultado y conteos. No reescribe ni duplica la línea del diario.
+- Los ids son un SHA-256 corto del JSON canónico de la entrada; el mismo
+  contenido produce el mismo id y el mismo `dedupeKey`. No se usa `Date.now()`
+  para construir ids.
+- Ningún evento incluye `before`, `after` ni el contenido de un archivo.
+
+Los handlers llaman a los hooks después de completar su trabajo:
+`plan-handler.ts` tras `writeFile` y `revert-handler.ts` tras calcular el
+resultado. `revert-executor.ts` devuelve además `audit` de forma aditiva.
+
+### Pruebas del nivel
+
+`core/tests/auton-registry-index.test.ts` cubre la frescura por tamaño, el
+esquema inválido, la caída al log con una línea corrupta, la reconstrucción sin
+registros viejos, la ausencia de `.tmp` y de `before`/`after`.
+`core/tests/auton-registry-hooks.test.ts` cubre los cuatro tipos de evento del
+plan, la idempotencia, la conservación de eventos anteriores, la reversión, la
+integración con `AutonPlan`/`AutonRevert`, los ids deterministas y el índice con
+los eventos de los hooks. `auton-four-pieces.test.ts` exige `AutonRecall` y los
+dos archivos nuevos en el prompt.
+
 ## Siguiente nivel (no incluido aquí)
 
 El Nivel 1 agrega contrato versionado, escritura append-only, idempotencia,

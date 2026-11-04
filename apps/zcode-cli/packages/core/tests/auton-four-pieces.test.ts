@@ -18,12 +18,13 @@ const orchestratorSection = buildOrchestratorSection().content;
  * que la segunda y la tercera existen de verdad, no solo en un archivo suelto.
  */
 describe("las cuatro piezas del núcleo", () => {
-  it("AutonPlan y AutonRevert están registradas para el modelo", () => {
+  it("AutonPlan, AutonRevert y AutonRecall están registradas para el modelo", () => {
     const names = builtInTools.map((tool) => tool.metadata.name);
     expect(names).toContain("AutonPlan");
     expect(names).toContain("AutonRevert");
+    expect(names).toContain("AutonRecall");
 
-    for (const name of ["AutonPlan", "AutonRevert"]) {
+    for (const name of ["AutonPlan", "AutonRevert", "AutonRecall"]) {
       const entry = builtInTools.find((tool) => tool.metadata.name === name)!;
       expect(entry.metadata.description?.length ?? 0).toBeGreaterThan(80);
       expect(entry.inputSchema).toBeDefined();
@@ -35,6 +36,7 @@ describe("las cuatro piezas del núcleo", () => {
     expect(autonSection).toContain("Antes de despachar");
     expect(autonSection).toContain("AutonRevert");
     expect(autonSection).toContain("deshacer el trabajo");
+    expect(autonSection).toContain("AutonRecall");
     // El esfuerzo es parámetro de la tool Agent, no texto del brief.
     expect(orchestratorSection).toContain("campo effort");
   });
@@ -52,6 +54,8 @@ describe("las cuatro piezas del núcleo", () => {
     expect(autonSection).toContain(".auton/plan.json");
     expect(autonSection).toContain(".auton/changes.jsonl");
     expect(autonSection).toContain(".auton/reverts.jsonl");
+    expect(autonSection).toContain(".auton/registry.jsonl");
+    expect(autonSection).toContain(".auton/registry-index.json");
   });
 
   it("los límites llegan al modelo: registro, prompt y prueba", () => {
@@ -77,5 +81,6 @@ describe("las cuatro piezas del núcleo", () => {
     );
     expect(pruebas).toContain("### 8. Los límites se escriben");
     expect(pruebas).toContain("### 9. Si no sabe decidir");
+    expect(pruebas).toContain("### 11. Pregunta por algo viejo");
   });
 });

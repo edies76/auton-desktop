@@ -28,6 +28,7 @@ import {
 } from "@zcode/contracts";
 import type { ToolEntry, ToolHandler } from "../tool/types.js";
 import { isAutonWorkerSession } from "./journal.js";
+import { recordPlanWrite } from "./registry-hooks.js";
 
 const MAX_AUTON_PLAN_MODEL_BYTES = 60_000;
 
@@ -231,6 +232,8 @@ export const autonPlanHandler: ToolHandler = async (input, context) => {
   await mkdir(dirname(path), { recursive: true });
 
   await writeFile(path, `${JSON.stringify(plan, null, 2)}\n`, "utf8");
+
+  recordPlanWrite({ workspaceRoot: projectRoot(context), previous, plan });
 
   return {
     path,
