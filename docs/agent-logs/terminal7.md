@@ -55,3 +55,13 @@ referencias de build/bootstrap, política de arquitectura, `.gitignore` e invent
 Por qué: no es runtime del desktop ni infra de Auton; era una superficie de demo aislada.
 Verificado con: 0 imports de `@zcode/stream-animate`; `node --check` del bootstrap; lockfile
 actualizado; `git diff --check` limpio. No se tocó UI ni runtime.
+
+## 2026-11-03 — poda media-pequeña de dev-docs
+
+Qué: se retiró `apps/dev-docs` (visor interno del mapa de capacidades y del grafo de features),
+sus docs `docs/product-capability-map*`, `docs/zcode-stdio-tap-proxy.md` y los scripts raíz
+`dev:docs`/`build:docs`. También se quitó `apps/dev-docs` del workspace/typecheck y `elkjs` de la
+revisión de licencias.
+Por qué: es herramienta de desarrollo del upstream, no runtime ni UI de Auton.
+Verificado con: `pnpm typecheck` completo; lockfile actualizado; `git diff --check` limpio.
+No se tocó UI ni runtime del desktop.
