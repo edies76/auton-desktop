@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   AutonSprintBoardLive,
   AutonWorkerPanel,
@@ -41,6 +42,8 @@ function AutonWorkersSidebarContents({
   const focusedWorkerId = useAutonWorkerFocusStore((state) => state.selectedWorkerId);
   const listWorkerId = useAutonWorkerFocusStore((state) => state.listWorkerId);
   const [showPlan, setShowPlan] = useState(false);
+  const [planExpanded, setPlanExpanded] = useState(false);
+  const planCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const planProject = useMemo(
     () => ({
       id: workspacePath,
@@ -50,6 +53,70 @@ function AutonWorkersSidebarContents({
     }),
     [workspacePath],
   );
+  // El tablero no cabe en los 264px del sidebar: se desliza desde su borde
+  // derecho como panel expansible (portal, para escapar del overflow del
+  // sidebar) con transicion de ancho. El shell conserva su ancho; el panel
+  // se cierra con la misma animacion en reversa.
+  useEffect(() => {
+    if (!showPlan) return;
+    setPlanExpanded(false);
+    const frame = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setPlanExpanded(true));
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [showPlan]);
+
+  useEffect(
+    () => () => {
+      if (planCloseTimer.current) clearTimeout(planCloseTimer.current);
+    },
+    [],
+  );
+
+  const openPlan = useCallback(() => {
+    if (planCloseTimer.current) clearTimeout(planCloseTimer.current);
+    setShowPlan(true);
+  }, []);
+
+  const closePlan = useCallback(() => {
+    setPlanExpanded(false);
+    if (planCloseTimer.current) clearTimeout(planCloseTimer.current);
+    planCloseTimer.current = setTimeout(() => setShowPlan(false), 280);
+  }, []);
+
+  const togglePlan = useCallback(() => {
+    if (showPlan) closePlan();
+    else openPlan();
+  }, [closePlan, openPlan, showPlan]);
+
+  const planPanel = showPlan
+    ? (() => {
+        const sidebarRight =
+          typeof document !== "undefined"
+            ? (document
+                .querySelector('[data-testid="sidebar"]')
+                ?.getBoundingClientRect().right ?? 264)
+            : 264;
+        const targetWidth =
+          typeof window !== "undefined"
+            ? Math.max(320, Math.min(1480, window.innerWidth - sidebarRight - 16))
+            : 1480;
+        return createPortal(
+          <div
+            className="fixed inset-y-0 z-40 overflow-hidden border-r border-border bg-background shadow-2xl transition-[width] duration-300 ease-out motion-reduce:transition-none"
+            style={{ left: sidebarRight, width: planExpanded ? targetWidth : 0 }}
+            data-testid="auton-workers-sidebar-plan"
+            aria-hidden={!planExpanded}
+          >
+            <div className="h-full" style={{ width: targetWidth }}>
+              <AutonSprintBoardLive project={planProject} onBack={closePlan} />
+            </div>
+          </div>,
+          document.body,
+        );
+      })()
+    : null;
+
   const projection = useConversationProjection(lease);
   const workerProjection = useConversationProjection(workerLease);
   const rows = projection.snapshot?.rows.window ?? [];
@@ -169,24 +236,19 @@ function AutonWorkersSidebarContents({
   return (
     <div className="flex min-h-0 flex-1 flex-col" data-testid="auton-workers-sidebar">
       <div className="min-h-0 flex-1">
-        {showPlan ? (
-          <div className="h-full min-h-0" data-testid="auton-workers-sidebar-plan">
-            <AutonSprintBoardLive project={planProject} onBack={() => setShowPlan(false)} />
-          </div>
-        ) : (
-          <AutonWorkerPanel
-            groups={groups}
-            now={now}
-            selectedWorkerId={focusedWorkerId}
-            onOpenWorker={openWorker}
-            onOpenSubagent={openSubagent}
-            onStopWorker={stopWorker}
-            onOpenPlan={() => setShowPlan(true)}
-            planActive={showPlan}
-            embedded
-          />
-        )}
+        <AutonWorkerPanel
+          groups={groups}
+          now={now}
+          selectedWorkerId={focusedWorkerId}
+          onOpenWorker={openWorker}
+          onOpenSubagent={openSubagent}
+          onStopWorker={stopWorker}
+          onOpenPlan={togglePlan}
+          planActive={showPlan}
+          embedded
+        />
       </div>
+      {planPanel}
     </div>
   );
 }

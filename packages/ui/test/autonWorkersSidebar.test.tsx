@@ -208,18 +208,21 @@ describe("sidebar de workers del proyecto", () => {
     expect(state.stopGeneration).not.toHaveBeenCalled();
   });
 
-  it("el botón Plan muestra el tablero en el sidebar y Hilo vuelve a los workers", () => {
+  it("el botón Plan despliega el tablero desde el sidebar y Hilo lo repliega", async () => {
     state.rows = [fullWorkerRow()];
     renderSidebar();
 
     fireEvent.click(screen.getByTestId("auton-plan-open"));
     expect(screen.getByTestId("auton-workers-sidebar-plan")).toBeTruthy();
     expect(screen.getByTestId("auton-sprint-board")).toBeTruthy();
-    expect(screen.queryByTestId("auton-worker-panel")).toBeNull();
+    // El panel de workers queda detras: el tablero se desliza sobre el centro.
+    expect(screen.getByTestId("auton-worker-panel")).toBeTruthy();
 
     fireEvent.click(screen.getByTestId("auton-sprint-board-back"));
+    await waitFor(() => {
+      expect(screen.queryByTestId("auton-workers-sidebar-plan")).toBeNull();
+    });
     expect(screen.getByTestId("auton-worker-panel")).toBeTruthy();
-    expect(screen.queryByTestId("auton-workers-sidebar-plan")).toBeNull();
   });
 
   it("para un agente completo interrumpiendo el turno del orquestador", () => {
