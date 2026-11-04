@@ -590,6 +590,27 @@ describe("buildConversationTurnRenderUnits", () => {
     }
   });
 
+  it("abre un loop por worker", () => {
+    const [unit] = buildConversationTurnRenderUnits([
+      turnHeader(1, { state: "running" }),
+      userInput(2, "manda dos workers"),
+      assistantText(3, "Mando el primero."),
+      toolCall(4, "Agent", { description: "Uno", subagent_type: "auton-worker" }),
+      subagent(5, { subagentType: "auton-worker", status: "success", summaryText: "uno" }),
+      assistantText(6, "Mando el segundo."),
+      toolCall(7, "Agent", { description: "Dos", subagent_type: "auton-worker" }),
+      subagent(8, { subagentType: "auton-worker", status: "success", summaryText: "dos" }),
+      assistantText(9, "Listo.\n\n— Auton · terminal9 · dos workers"),
+    ]);
+
+    const workerSegments = (unit?.workSegments ?? []).filter((segment) =>
+      segment.flowItems.some(
+        (item) => item.kind === "assistantHistory" && item.rows.some((row) => row.kind === "subagent"),
+      ),
+    );
+    expect(workerSegments).toHaveLength(2);
+  });
+
   it("不按 raw /compact 文本隐藏 CLI 标记为 visible 的 user input", () => {
     const units = buildConversationTurnRenderUnits([
       turnHeader(1),
