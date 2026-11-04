@@ -21,15 +21,13 @@ worker.** Etiqueta, color o forma distinta. No basta con el nombre.
 - La app abre aquí, con el proyecto anterior cerrado. **No hay chat activo ni workers a la vista.**
 - El panel izquierdo muestra **solo proyectos**: nombre, ruta y botón `+` para crear uno. Sin chats,
   tareas, Automations, Plugin Marketplace ni buscador de tareas.
-- El centro conserva **el compositor normal de ZCode**, centrado, con su estado de bienvenida. El
-  selector de proyecto que vivía encima del input se retira: los proyectos están en el panel.
-- **Enviar sin proyecto no avanza.** El compositor deja escribir, pero el botón de envío queda
-  deshabilitado y un aviso pide elegir un proyecto.
-- **Crear proyecto** pide nombre y ruta; al guardarlo se entra al proyecto. **Elegir una fila** también
-  entra. En ese momento el panel cambia a workers y aparece el hilo del orquestador.
-- El texto escrito en la entrada **viaja al compositor del proyecto**. Si el proyecto ya tenía un
-  borrador con texto, ese borrador manda y no se pisa.
-- La pantalla se reutiliza del draft existente; no se crea una vista nueva desde cero.
+- El centro **no tiene compositor**. Muestra la lista de proyectos con nombre, ruta y un **recap en
+  una línea** del último trabajo de cada uno. Si no hay trabajo, dice `Sin sesiones todavía.`
+- **Elegir una fila** (en el centro o en el panel) entra al proyecto. **Crear proyecto** pide nombre y
+  ruta; al guardarlo se entra también. En ese momento el panel cambia a workers y aparece el hilo del
+  orquestador.
+- La pantalla se reutiliza del draft existente para el armazón; el resumen central es nuevo y
+  minimalista.
 
 ## Pantalla 2 — Espacio del proyecto
 
@@ -57,6 +55,8 @@ Es **el espacio de un proyecto, y solo uno a la vez**. Se compone de tres zonas:
 - En la **vista del orquestador no se listan subagentes**: solo agentes completos. Al abrir un worker,
   sus subagentes aparecen en el panel izquierdo y se abren a la derecha como un chat normal. Si el
   worker abierto no creó ninguno, el grupo `Subagentes` no aparece.
+- El **panel derecho `Subagents`** lista solo subagentes (running/ended). No tiene el toggle
+  `Espacio`/`Workers` ni el agregado que mezclaba todos los agentes; su pestaña se llama `Workers`.
 - Los workers se agrupan por rol/motor (`Agentes ZCode`, `Subagentes`, `Muse Code`) con cabeceras
   plegables. La cabecera **Workers** también se pliega para ocultar la lista completa.
 - **No hay vistas nativas de ZCode** (`Timeline`, agrupado, lista de tareas) ni sección `Tasks` en este
