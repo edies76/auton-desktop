@@ -141,3 +141,18 @@ Verificado con: `pnpm typecheck`, pruebas de sidebar/root/credenciales/mock de p
 `pnpm test:architecture` (36 en verde).
 No se tocó el chat único/vivo, el espacio de proyecto, el motor de edición, sesiones,
 proveedores, navegador interno, terminal ni el trabajo de A.
+## 2026-11-04 — registro durable de Auton (niveles 0 a 1C)
+
+Qué: se construyó la memoria durable del proyecto en cuatro capas verificadas por separado: lector
+de plan/diario/reversiones; contrato de evento y almacén append-only con redacción, topes e
+idempotencia; fusión con el registro y tool `AutonRecall`; e índice persistente con hooks de plan y
+reversión. También se añadieron las líneas de prompt que hacen que el orquestador sepa que el
+registro existe y cuándo consultarlo.
+Por qué: el contexto del bucle no puede depender del hilo; lo que pasó tiene que quedar en disco,
+con identificador y referencias, para responder sin inventar y sin filtrar contenido de archivos.
+Verificado con: 128 tests en las 14 suites afectadas (registro, recall, índice, hooks, plan, límites,
+reversión y cuatro piezas), `typecheck` limpio y `oxlint` sin hallazgos en los archivos de la unidad.
+Cada nivel tuvo constructor y verificador independiente en worktrees separados; los tres veredictos
+fueron PASS.
+Pendiente: merge a `auton-desktop` tras revisión final; la verificación visual del desktop sigue
+bloqueada por el entorno nativo.

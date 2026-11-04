@@ -80,6 +80,9 @@ En el detalle del worker ves su conversación completa: lo que pidió el orquest
 ## 4.5. Un proyecto, una sesión
 
 Cada proyecto tiene una sola conversación. Si ya existe, la app no crea otra: el intento de abrir una nueva tarea se rechaza y se indica que el proyecto ya tiene su sesión. La regla vive en el almacén de proyectos, así que también cubre la creación remota y el movimiento de una tarea a un proyecto ocupado; una sesión borrada deja libre el lugar.
+## 4.6. La memoria no depende del hilo
+
+Lo que pasa queda escrito en el proyecto, no solo en la conversación. Cada cambio del plan y cada reversión se anotan en un registro durable con identificador, fecha y fuente. Cuando el orquestador duda de una decisión vieja, consulta ese registro y responde con punteros: qué se decidió, cuándo y de dónde salió. Si no está, lo dice; no lo inventa. La consulta devuelve unas pocas líneas, no el contenido de tus archivos.
 
 ## 5. Comprueba antes de cerrar
 

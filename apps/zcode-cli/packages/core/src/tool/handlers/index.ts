@@ -42,6 +42,7 @@ import { skillToolEntry } from "./skill.js";
 import { todoReadToolEntry, todoWriteToolEntry } from "./todo.js";
 import { autonPlanToolEntry } from "../../auton/plan-handler.js";
 import { autonRevertToolEntry } from "../../auton/revert-handler.js";
+import { autonRecallToolEntry } from "../../auton/recall-handler.js";
 import {
   cronCreateToolEntry,
   cronDeleteToolEntry,
@@ -95,6 +96,7 @@ export const builtInTools: ToolEntry[] = [
   todoWriteToolEntry,
   autonPlanToolEntry,
   autonRevertToolEntry,
+  autonRecallToolEntry,
   cronCreateToolEntry,
   cronListToolEntry,
   cronUpdateToolEntry,
