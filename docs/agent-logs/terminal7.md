@@ -16,3 +16,16 @@ Verificado con: `git diff --cached --check` limpio; 0 referencias a archivos bor
 archivos que quedan; `git status` confirma que solo se tocó `docs/` (más este log).
 Pendiente: la poda de UI y módulos (ocultar tienda, automatizaciones, facturación y remoto) queda
 para cuando el entorno tenga Node 24 + pnpm y la app abra, como manda `context/PODA-DE-ZCODE.md`.
+
+## 2026-11-03 — segunda poda segura de docs
+
+Qué: se borraron 129 documentos más que ya no tenían ninguna referencia desde los archivos que se
+quedan. Son restos de CUA, remoto/móvil, coding plan/facturación, plugins/marketplace, feedback,
+WSL/SSH, telemetría interna y planes históricos de `docs/superpowers`. También se quitaron docs
+sueltos de stats, onboarding externo y herramientas internas.
+Por qué: siguen el mismo criterio de la primera tanda: documentación upstream que no sostiene Auton
+y que ya no es enlazada por código ni por los docs que conservamos.
+Verificado con: lista construida por referencias reales; 0 referencias desde archivos conservados;
+`git diff --cached --check` limpio; solo se tocó `docs/` (más este log).
+Pendiente: la poda de UI y módulos sigue bloqueada por Node 24 + pnpm + apertura real de la app.
+No se borró código en esta tanda.
