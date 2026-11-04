@@ -87,6 +87,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
   const { view: storedView, setView } = preferences;
   const homeVisible = useAutonHomeStore((state) => state.homeVisible);
   const enterProject = useAutonHomeStore((state) => state.enterProject);
+  const showHome = useAutonHomeStore((state) => state.showHome);
   // El arranque vive en la pantalla de proyectos; dentro de un proyecto manda
   // la preferencia guardada (workers por defecto).
   const view = homeVisible ? "projects" : storedView === "projects" ? "projects" : "workers";
@@ -151,7 +152,10 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     if (homeVisible) return;
     const orchestratorId = activeConversation?.conversation.orchestratorTaskId;
     if (orchestratorId) {
-      if (autoOpenedRef.current === orchestratorId) return;
+      // El ref evita reabrir en bucle cuando ya estamos en el orquestador.
+      // Si la tarea activa es null (p. ej. "New task" o Ctrl+N), hay que volver
+      // a la única sesión del proyecto; si no, el draft podría crear otra.
+      if (autoOpenedRef.current === orchestratorId && activeTaskId === orchestratorId) return;
       // La sesión activa manda salvo que sea un chat legado del proyecto; en
       // ese caso se abre la conversación persistida del orquestador.
       if (
@@ -282,6 +286,10 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     consumeProjectRequest();
     if (project) selectProject(project);
   }, [consumeProjectRequest, projects, requestedProjectId, selectProject]);
+  const showProjects = useCallback(() => {
+    showHome();
+    setView("projects");
+  }, [setView, showHome]);
   const openSettings = useCallback(() => {
     tabStore.getState().openSettingsTab();
   }, [tabStore]);  const changeLocale = useCallback(
@@ -314,7 +322,8 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
               <ProjectSidebarNavigation
                 props={props}
                 home={homeVisible}
-                onCreate={() => props.onCreateTask()}
+                onShowProjects={showProjects}
+                onCreateProject={() => setCreating(true)}
               />
               <div
                 data-testid="sidebar-task-list-region"
