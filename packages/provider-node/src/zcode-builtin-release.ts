@@ -1,10 +1,10 @@
 import { z } from "zod";
 import {
+  ModelConfigRules,
   parseZCodeBuiltinModelConfigRules,
   parseZCodeBuiltinProviderConfigRules,
-  type ModelConfigRules,
+  ProviderTemplateMap,
   type ProviderConfigMap,
-  type ProviderTemplateMap,
 } from "@zcode/provider";
 
 export const ZCODE_BUILTIN_RELEASE_SCHEMA_VERSION = 1 as const;
@@ -72,4 +72,44 @@ export function encodeZCodeBuiltinRelease(release: ZCodeBuiltinRelease): object 
 
 export function serializeZCodeBuiltinRelease(release: ZCodeBuiltinRelease): string {
   return JSON.stringify(encodeZCodeBuiltinRelease(release));
+}
+
+/**
+ * Las plantillas que trae el producto en su archivo bundled (hoy las de
+ * Auton: `auton` y `auton-meta`) no existen en el Release remoto de ZCode.
+ * Si el Release activo viene de la caché remota, esas plantillas se pierden
+ * y crear un proveedor desde ellas falla con "Template no existe".
+ * Esta mezcla devuelve solo las plantillas bundled que el Release
+ * seleccionado no trae, con sus reglas de modelo; nunca pisa una plantilla
+ * que el Release seleccionado ya define. La mezcla es solo en memoria:
+ * el archivo activo y su revision quedan intactos.
+ */
+export function mergeBundledOnlyProviderTemplates(
+  selected: ZCodeBuiltinRelease,
+  bundled: ZCodeBuiltinRelease,
+): ZCodeBuiltinRelease {
+  const missing = bundled.config.providerTemplates
+    .entries()
+    .filter(([templateId]) => !selected.config.providerTemplates.has(templateId));
+  if (missing.length === 0) {
+    return selected;
+  }
+  const missingIds = new Set(missing.map(([templateId]) => templateId));
+  const extraRules = bundled.config.modelConfigRules
+    .rules()
+    .filter((rule) => rule.type === "template-model" && missingIds.has(rule.templateId));
+  return Object.freeze({
+    schemaVersion: selected.schemaVersion,
+    revision: selected.revision,
+    config: Object.freeze({
+      providers: selected.config.providers,
+      providerTemplates: selected.config.providerTemplates.overlay(
+        new ProviderTemplateMap(missing),
+      ),
+      modelConfigRules:
+        extraRules.length === 0
+          ? selected.config.modelConfigRules
+          : new ModelConfigRules([...selected.config.modelConfigRules.rules(), ...extraRules]),
+    }),
+  });
 }

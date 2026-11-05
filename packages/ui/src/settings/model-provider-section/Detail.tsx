@@ -19,6 +19,7 @@ import {
   type ProviderSettingsFormProvider,
 } from "@/lib/providerSettingsFormTypes.js";
 import { ArrowRightIcon, AstroidIcon, UsersIcon } from "lucide-react";
+import { Button } from "@/components/ui/button.js";
 import { useEffect, useMemo, useState } from "react";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
@@ -254,6 +255,7 @@ export function ModelProviderSectionDetail({
   onOpenBigModelRegistration,
   onCodingPlanPurchaseComplete,
   onSelectNavItem,
+  onCreateFromTemplate,
   providerSettingsView: providerSettingsViewOverride,
 }: {
   selectedNavItem: ModelProviderNavItem | null;
@@ -303,6 +305,7 @@ export function ModelProviderSectionDetail({
   onOpenBigModelRegistration: () => void;
   onCodingPlanPurchaseComplete: () => void | Promise<void>;
   onSelectNavItem?: (item: ModelProviderNavItem) => void;
+  onCreateFromTemplate?: (templateId: string) => Promise<void>;
   providerSettingsView?: ProviderSettingsView | null;
 }) {
   const { intl } = useZCodeIntl();
@@ -841,6 +844,28 @@ export function ModelProviderSectionDetail({
           {planSupplementalContent}
         </div>
       </ProviderFamilyDetailShell>
+    );
+  }
+
+  if (selectedNavItem.type === "template") {
+    // Meta todavia no tiene proveedor creado: el detalle solo ofrece
+    // crearlo desde su plantilla; despues manda el formulario de API key.
+    return (
+      <div className="flex min-h-64 flex-col items-start justify-center gap-3">
+        <h3 className="text-ui-lg font-semibold text-foreground">{selectedNavItem.label}</h3>
+        <p className="max-w-md text-ui-base text-foreground-subtle">
+          {intl.formatMessage({ id: "settings.modelProvider.meta.description" })}
+        </p>
+        <Button
+          type="button"
+          disabled={!onCreateFromTemplate}
+          onClick={() => {
+            void onCreateFromTemplate?.(selectedNavItem.templateId).catch(() => undefined);
+          }}
+        >
+          {intl.formatMessage({ id: "settings.modelProvider.meta.add" })}
+        </Button>
+      </div>
     );
   }
 

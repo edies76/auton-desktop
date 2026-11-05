@@ -9,6 +9,7 @@ import {
   testId,
 } from "@zcode/shared/test-ids";
 import { Button } from "@/components/ui/button.js";
+import { AUTON_MVP } from "@/lib/autonMvp.js";
 import { ControlHintTooltip } from "@/ControlHintTooltip.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { logger } from "@/logger.js";
@@ -35,18 +36,26 @@ export function ProviderTemplatePicker({
   const { dismissFeedback, showFeedback } = useProviderDetailFeedback();
   const customLabel = intl.formatMessage({ id: "settings.modelProvider.newProviderName" });
   const zhipuIds = ["bigmodel-api", "zai-api", "bigmodel-standard-api", "zai-standard-api"];
-  const groups = [
+  // Poda Auton: las plantillas de Z.ai/BigModel no se ofrecen ni por la
+  // puerta de "Agregar proveedor"; el grupo Zhipu desaparece entero.
+  const visibleTemplates = AUTON_MVP
+    ? templates.filter((template) => !zhipuIds.includes(template.templateId))
+    : templates;
+  const allGroups: Array<{ id: "zhipu" | "other"; templates: typeof visibleTemplates }> = [
     {
       id: "zhipu",
       templates: zhipuIds.flatMap((id) =>
-        templates.filter((template) => template.templateId === id),
+        visibleTemplates.filter((template) => template.templateId === id),
       ),
     },
     {
       id: "other",
-      templates: templates.filter((template) => !zhipuIds.includes(template.templateId)),
+      templates: visibleTemplates.filter((template) => !zhipuIds.includes(template.templateId)),
     },
-  ] as const;
+  ];
+  const groups = allGroups.filter(
+    (group) => !AUTON_MVP || group.templates.length > 0 || group.id === "other",
+  );
   const createWithFeedback = async (create: () => Promise<void>) => {
     const feedbackKey = "provider-template-create";
     dismissFeedback(feedbackKey);

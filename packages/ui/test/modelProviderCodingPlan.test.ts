@@ -739,6 +739,52 @@ describe("model provider coding plan", () => {
     expect(connectionSelections.bigmodel.kind).toBe("start-plan");
   });
 
+  it("con la poda Auton, el grupo de integrados ofrece solo Meta y desaparece al crearlo", () => {
+    let captured: ReturnType<typeof useModelProviderNavigation> | undefined;
+    const intl = {
+      formatMessage: ({ id }: { id: string }) =>
+        id === "login.apiKey.provider.meta" ? "Meta" : id,
+    } as never;
+    function Harness({ withMeta }: { withMeta: boolean }) {
+      captured = useModelProviderNavigation({
+        presetProviders: [
+          {
+            id: BUILTIN_MODEL_PROVIDER_IDS.zaiStartPlan,
+            displayName: "Z.ai",
+            provider: null,
+          },
+        ],
+        modelProviders: withMeta
+          ? [
+              {
+                ...createProvider({
+                  id: "personal-auton-meta",
+                  name: "Meta",
+                  config: { group: "standard-personal" },
+                }),
+                templateId: "auton-meta",
+              },
+            ]
+          : [],
+        selectedNodeKey: null,
+        setSelectedNodeKey: vi.fn(),
+        intl,
+        hideBuiltinPlanProviders: true,
+      });
+      return createElement("div");
+    }
+    renderToStaticMarkup(createElement(Harness, { withMeta: false }));
+    const presetSinMeta = captured?.navigationGroups.find((group) => group.id === "preset");
+    expect(presetSinMeta?.items).toMatchObject([
+      { type: "template", templateId: "auton-meta", label: "Meta" },
+    ]);
+    renderToStaticMarkup(createElement(Harness, { withMeta: true }));
+    const presetConMeta = captured?.navigationGroups.find((group) => group.id === "preset");
+    expect(presetConMeta?.items).toHaveLength(0);
+    const custom = captured?.navigationGroups.find((group) => group.id === "custom");
+    expect(custom?.items).toMatchObject([{ type: "custom", label: "Meta" }]);
+  });
+
   it("预置导航并列显示 family 与 Start，付费连接方式另放 navigationItems", () => {
     let capturedGroups: ModelProviderNavGroup[] = [];
     let capturedNavigationItems: ReturnType<typeof useModelProviderNavigation>["navigationItems"] =

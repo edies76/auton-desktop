@@ -4,6 +4,31 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases p├║blicas.
 
+## [0.20.0] — 2026-11-04
+
+Meta ocupa el lugar de Z.ai en Model settings, sin login.
+
+### Agregado
+
+- **Meta en Model settings**: donde antes iban los integrados de Z.ai
+  ahora está Meta. Se agrega con tu propia API key de Meta y trae los
+  modelos Muse (Wonder y Spark). Sin cuenta, sin pantalla de acceso:
+  entrar a Auton sigue siendo directo.
+- Las plantillas que Auton trae de fábrica ya no se pierden cuando la
+  configuración de proveedores se actualiza desde la red: la plantilla
+  de Meta sobrevive y se puede usar siempre.
+
+### Quitado
+
+- **La fuga de Z.ai en «Agregar proveedor»**: ese selector ya no ofrece
+  las plantillas de Z.ai ni de BigModel.
+
+### Cambiado
+
+- El logo de fondo de la pantalla vacía ahora es una marca de agua
+  tenue, casi del color del fondo, para que el saludo se lea sin
+  esfuerzo.
+
 ## [0.19.1] — 2026-11-04
 
 Ni pantalla de login ni Z.ai en la lista de proveedores.

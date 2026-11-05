@@ -3528,6 +3528,8 @@ const zhCN: Record<string, string> = {
   "settings.modelProvider.catalogProviderEmpty": "未找到供应商",
   "settings.modelProvider.addProviderAction": "添加供应商",
   "settings.modelProvider.templatePickerTitle": "添加供应商",
+  "settings.modelProvider.meta.description": "使用你自己的 API key 接入 Meta 模型，无需账号或登录。",
+  "settings.modelProvider.meta.add": "添加 Meta",
   "settings.modelProvider.templateGroup.zhipu": "智谱",
   "settings.modelProvider.templateGroup.other": "其他",
   "settings.modelProvider.templatePickerBack": "返回供应商详情",

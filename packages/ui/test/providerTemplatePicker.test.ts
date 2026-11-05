@@ -77,6 +77,44 @@ describe("ProviderTemplatePicker", () => {
     );
   });
 
+  it("en Auton no ofrece plantillas de Z.ai/BigModel y si la de Meta", () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        TooltipProvider,
+        null,
+        createElement(ProviderTemplatePicker, {
+          templates: [
+            {
+              templateId: "zai-api",
+              templateNameMap: { "zh-CN": "Z.ai Coding Plan", "en-US": "Z.ai Coding Plan" },
+              config: {},
+            },
+            {
+              templateId: "bigmodel-standard-api",
+              templateNameMap: { "zh-CN": "BigModel API", "en-US": "BigModel API" },
+              config: {},
+            },
+            {
+              templateId: "auton-meta",
+              templateNameMap: { "zh-CN": "Meta", "en-US": "Meta" },
+              config: { logo: { type: "builtin", key: "auton" } },
+            },
+          ],
+          onBack: vi.fn(),
+          onCreateFromTemplate: vi.fn(),
+          onCreateCustom: vi.fn(),
+          creating: false,
+        }),
+      ),
+    );
+
+    expect(html).not.toContain("Z.ai Coding Plan");
+    expect(html).not.toContain("BigModel API");
+    expect(html).not.toContain("templateGroup.zhipu");
+    expect(html).toContain(`data-testid="${testId(TID_MODEL_PROVIDER_TEMPLATE_ITEM, "auton-meta")}"`);
+    expect(html).toContain("Meta");
+  });
+
   it("Template 创建失败时在详情底部显示错误并允许重试", async () => {
     const onCreateFromTemplate = vi
       .fn<(templateId: string) => Promise<void>>()

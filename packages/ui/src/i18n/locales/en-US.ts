@@ -3778,6 +3778,9 @@ const enUS: Record<string, string> = {
   "settings.modelProvider.catalogProviderEmpty": "No providers found",
   "settings.modelProvider.addProviderAction": "Add provider",
   "settings.modelProvider.templatePickerTitle": "Add provider",
+  "settings.modelProvider.meta.description":
+    "Meta models with your own API key. No account or sign-in required.",
+  "settings.modelProvider.meta.add": "Add Meta",
   "settings.modelProvider.templateGroup.zhipu": "Zhipu",
   "settings.modelProvider.templateGroup.other": "Other",
   "settings.modelProvider.templatePickerBack": "Back to provider details",

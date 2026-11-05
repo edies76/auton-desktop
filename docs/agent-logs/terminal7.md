@@ -308,3 +308,19 @@ el OAuth de Z.ai y el perfil volvió a Aveess.
 Verificado con: tests de UI de proveedores y compuerta (mock a false
 para el upstream), tsc, y en la app real: sin Welcome, grupo Providers
 vacío y perfil Aveess visible.
+
+## 2026-11-04 — Meta en Model settings y marca de agua (0.20.0)
+
+Qué: Meta queda donde iba Z.ai en Model settings, con el nombre «Meta»
+a secas (plantilla renombrada en los dos archivos builtin). Sin login:
+seleccionarla crea su proveedor y abre el formulario de API key; al
+crearlo pasa a personalizados. Se tapó la fuga del selector «Agregar
+proveedor», que ya no lista Z.ai/BigModel. El logo de fondo de la
+pantalla vacía baja a marca de agua (8% en oscuro).
+Por qué: el botón Meta de terminal8 vivía en la pantalla de login, que
+ya no existe. Al probarlo salió el hueco real: el host usa la caché
+remota de ZCode y esa no trae las plantillas de Auton, así que crear el
+proveedor fallaba con «Template no existe». Se mezclan en memoria las
+plantillas que solo trae el bundled, sin tocar la caché ni su revisión.
+Verificado con: tests de navegación, selector, plantilla y mezcla
+(203+29 en verde), tsc y oxlint, y en la app real por CDP.

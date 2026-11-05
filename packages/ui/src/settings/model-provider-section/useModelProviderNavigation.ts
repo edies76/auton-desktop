@@ -26,6 +26,7 @@ import {
   createCodingPlanProviderNodeKey,
   createCustomProviderNodeKey,
   createPresetProviderNodeKey,
+  createTemplateProviderNodeKey,
 } from "@/settings/model-provider-section/utils.js";
 import {
   sortModelProvidersForDisplay,
@@ -194,9 +195,22 @@ export function useModelProviderNavigation({
       {
         id: "preset",
         title: intl.formatMessage({ id: "settings.modelProvider.presetTitle" }),
-        // Poda Auton: el grupo queda vacío a propósito (sin Z.ai ni BigModel).
+        // Poda Auton: sin Z.ai ni BigModel. En su lugar va Meta, como
+        // entrada de plantilla: al crear su proveedor pasa a personalizados.
         items: hideBuiltinPlanProviders
-          ? []
+          ? modelProviders.some((provider) => provider.templateId === "auton-meta")
+            ? []
+            : [
+                {
+                  key: createTemplateProviderNodeKey("auton-meta"),
+                  type: "template" as const,
+                  templateId: "auton-meta",
+                  label: intl.formatMessage({ id: "login.apiKey.provider.meta" }),
+                  logo: { type: "builtin", key: "auton" } as const,
+                  provider: null,
+                  statusActive: false,
+                },
+              ]
           : [
               ...presetProviders.map(({ id, displayName, provider }) => {
             const statusProvider = resolvePresetFamilyStatusProvider({
@@ -574,7 +588,7 @@ export function connectionSelectionMatchesNavigationItem(
   selection: ProviderFamilyConnectionSelection,
   item: Exclude<ModelProviderNavGroup["items"][number], { type: "codingPlanLoading" }>,
 ): boolean {
-  if (item.type === "custom") return false;
+  if (item.type === "custom" || item.type === "template") return false;
   const familySpec = resolveModelProviderFamilySpecByProviderId(item.presetId ?? "");
   if (familySpec?.id !== family) return false;
   if (selection.kind === "start-plan") {

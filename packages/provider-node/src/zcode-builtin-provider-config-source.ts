@@ -7,6 +7,7 @@ import { atomicWritePrivateTextFile, withFileLock } from "@zcode/shared/node";
 import {
   decodeZCodeBuiltinRelease,
   encodeZCodeBuiltinRelease,
+  mergeBundledOnlyProviderTemplates,
   serializeZCodeBuiltinRelease,
   type ZCodeBuiltinRelease,
 } from "./zcode-builtin-release.js";
@@ -58,6 +59,14 @@ export class NodeZCodeBuiltinProviderConfigSource implements ProviderSource<Prov
       release = selectReleaseCandidate(await readReleaseCandidate(this.#bundledFilePath), null);
     }
     this.#observedSignature ??= signatureOf(release);
+    // El Release remoto no conoce las plantillas que el producto trae en
+    // bundled (las de Auton); sin esta mezcla, el snapshot las pierde y
+    // crear proveedores desde ellas falla. Solo en memoria, sin tocar
+    // el archivo activo ni su revision.
+    const bundled = (await readReleaseCandidate(this.#bundledFilePath))?.release;
+    if (bundled) {
+      release = mergeBundledOnlyProviderTemplates(release, bundled);
+    }
     return snapshotFromRelease(release, this.#sourceKey);
   }
 
