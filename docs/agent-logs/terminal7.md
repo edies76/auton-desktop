@@ -324,3 +324,15 @@ proveedor fallaba con «Template no existe». Se mezclan en memoria las
 plantillas que solo trae el bundled, sin tocar la caché ni su revisión.
 Verificado con: tests de navegación, selector, plantilla y mezcla
 (203+29 en verde), tsc y oxlint, y en la app real por CDP.
+
+## 2026-11-04 — Poda banner/recomendaciones y zoom +1 (0.20.1)
+
+Qué: fuera el banner «No model available. Upgrade…» (suprimido solo su
+código model_config_missing bajo AUTON_MVP), fuera las tarjetas de
+recomendación bajo el input en SessionPane, y zoom por defecto nivel 1
+(constante DESKTOP_ZOOM_DEFAULT_LEVEL, también en reset).
+Por qué: sin Z.ai no hay upgrade que vender y las tarjetas son ruido de
+la demo; el zoom +1 es el tamaño que el usuario usa. Todo reversible:
+bandera AUTON_MVP y una constante.
+Verificado con: tests banner+zoom (24 en verde), tsc ui, architecture
+sin violaciones y CDP en la app real (sin banner ni tarjetas).

@@ -6,6 +6,7 @@ import {
 } from "@/lib/remoteWorkspaceServiceError.js";
 import { buildConversationShareItems } from "@/v4/conversationShareItems.js";
 import { resolveSelectionSideInheritedModel } from "@/lib/selectionSideInheritedModel.js";
+import { AUTON_MVP } from "@/lib/autonMvp.js";
 import { useStartPlanRecommendation } from "@/hooks/useStartPlanRecommendation.js";
 import type { SessionCreateSource } from "@zcode/shared";
 import { reportSessionCreate } from "@/lib/sessionCreateTelemetry.js";
@@ -5646,7 +5647,10 @@ export function SessionPane({
       {composerNode}
       {/* 办公模式显示主动任务推荐；编程模式保留原有小型场景入口。 */}
       {/* 完整视图浮窗只露出输入框，草稿推荐提示不进入浮窗。 */}
-      {isDraft &&
+      {/* Poda Auton: sin tarjetas de recomendación (Weekly Summary,
+          Error Fix, PPT…) bajo el input; el código queda intacto. */}
+      {!AUTON_MVP &&
+      isDraft &&
       !submissionBlocked &&
       !isFloatingPresentation &&
       (!isOfficeMode || sharedSettings?.proactiveSuggestionsEnabled === true) ? (

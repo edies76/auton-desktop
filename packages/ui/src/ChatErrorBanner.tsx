@@ -31,6 +31,7 @@ import {
 import { cn } from "./components/lib/utils.js";
 import { toast } from "./components/ui/toast.js";
 import { useFeedbackStore } from "@/feedback/feedbackStore.js";
+import { AUTON_MVP } from "@/lib/autonMvp.js";
 import { getProviderBusinessErrorMessageId } from "@/lib/providerBusinessError.js";
 import { buildErrorFeedbackDescription } from "@/lib/errorFeedbackDraft.js";
 import {
@@ -155,6 +156,12 @@ export function resolveChatErrorBannerDisplayMessage(
 export function shouldSuppressChatErrorBanner(
   error: Pick<ZCodeUiError, "code" | "message">,
 ): boolean {
+  // Poda Auton: sin planes de Z.ai no hay "Upgrade" que ofrecer; el aviso
+  // de que falta un modelo solo empujaba a esa venta. Los demás errores
+  // se siguen mostrando.
+  if (AUTON_MVP && isModelConfigMissingError(error)) {
+    return true;
+  }
   // 只有历史恢复残留的模型不可用提示才隐藏；当前发送/草稿报错需要展示，
   // 否则 registry 移除模型后用户会看到“请求没返回”而没有任何可操作反馈。
   return Boolean(

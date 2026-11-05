@@ -417,15 +417,16 @@ describe("desktopCommandHandlers resolveFeedbackUrl", () => {
 
     targetWindow.webContents.getZoomFactor.mockReturnValue(Math.pow(1.1, 5));
     updateDesktopZoomLevel(targetWindow, "reset");
-    expect(targetWindow.webContents.setZoomFactor).toHaveBeenLastCalledWith(1);
-    expect(targetWindow.setWindowButtonPosition).toHaveBeenLastCalledWith({ x: 22, y: 23 });
+    // El reset vuelve al nivel por defecto de Auton (1), no al neutro.
+    expect(targetWindow.webContents.setZoomFactor).toHaveBeenLastCalledWith(Math.pow(1.1, 1));
+    expect(targetWindow.setWindowButtonPosition).toHaveBeenLastCalledWith({ x: 22, y: 26 });
     expect(targetWindow.webContents.send).toHaveBeenCalledWith(
       "zcode:window-controls-overlay-changed",
-      { leftPaddingPx: 96 },
+      { leftPaddingPx: 87 },
     );
     expect(targetWindow.webContents.send).toHaveBeenLastCalledWith(
       "zcode:desktop-zoom-level-changed",
-      { zoomLevel: 0 },
+      { zoomLevel: 1 },
     );
   });
 
@@ -472,7 +473,7 @@ describe("desktopCommandHandlers resolveFeedbackUrl", () => {
   it.each([
     [4, "in", 5, 84, 77],
     [-2, "out", -3, 181, 36],
-    [4, "reset", 0, 136, 48],
+    [4, "reset", 1, 124, 53],
   ] as const)(
     "Windows 缩放 %s/%s 区分自绘与原生窗控",
     async (initialLevel, action, nextLevel, nativePadding, height) => {

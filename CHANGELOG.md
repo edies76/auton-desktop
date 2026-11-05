@@ -4,6 +4,24 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases p├║blicas.
 
+## [0.20.1] — 2026-11-04
+
+Poda de ruido en la pantalla vacía y zoom un paso mayor.
+
+### Quitado
+
+- **El banner «No model available. Upgrade…»**: sin planes de Z.ai no
+  hay upgrade que ofrecer; el aviso ya no aparece sobre el input.
+- **Las tarjetas de recomendación bajo el input** (Weekly Summary,
+  Error Fix, PPT Creation, Idle-time task): la pantalla vacía queda
+  limpia, solo el saludo y el cuadro de texto.
+
+### Cambiado
+
+- **Zoom por defecto un paso mayor** (nivel 1, ×1.1): la app abre como
+  tras un clic de «acercar». Restablecer zoom vuelve a ese nivel. Es
+  reversible cambiando una constante.
+
 ## [0.20.0] — 2026-11-04
 
 Meta ocupa el lugar de Z.ai en Model settings, sin login.

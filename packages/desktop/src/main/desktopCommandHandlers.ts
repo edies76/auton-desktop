@@ -33,6 +33,7 @@ import {
 } from "./desktopWindowSize.js";
 import {
   clampDesktopZoomLevel,
+  DESKTOP_ZOOM_DEFAULT_LEVEL,
   resolveDesktopZoomFactorForLevel,
   resolveDesktopZoomLevelFromFactor,
 } from "./desktopZoom.js";
@@ -62,7 +63,9 @@ export function updateDesktopZoomLevel(
 
   const currentLevel = resolveDesktopZoomLevelFromFactor(targetWindow.webContents.getZoomFactor());
   const nextLevel =
-    action === "reset" ? 0 : clampDesktopZoomLevel(currentLevel + (action === "in" ? 1 : -1));
+    action === "reset"
+      ? DESKTOP_ZOOM_DEFAULT_LEVEL
+      : clampDesktopZoomLevel(currentLevel + (action === "in" ? 1 : -1));
 
   // 系统缩放快捷键需要可用，但不能无限放大/缩小导致界面失控。
   // Electron zoomLevel 的真实比例是 1.2^level；这里改用 zoomFactor，保证每档统一为 1.1。

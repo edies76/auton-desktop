@@ -136,7 +136,11 @@ import { createWebRemoteControlFeatureGate } from "./webRemoteControlFeatureGate
 import { reconnectWebRemoteControlWorkspaceInRenderer } from "./webRemoteControlRendererReconnect.js";
 import { sendWebRemoteControlStatusChangedToWindow } from "./webRemoteControlStatusEvents.js";
 import { executeDesktopCommand } from "./desktopCommandHandlers.js";
-import { clampDesktopZoomLevel, resolveDesktopZoomLevelFromFactor } from "./desktopZoom.js";
+import {
+  clampDesktopZoomLevel,
+  DESKTOP_ZOOM_DEFAULT_LEVEL,
+  resolveDesktopZoomLevelFromFactor,
+} from "./desktopZoom.js";
 import {
   getDesktopMenuLabel as getDesktopMenuLabelByLocale,
   rebuildApplicationMenu,
@@ -2116,7 +2120,9 @@ app.whenReady().then(async () => {
       migrationPersisted: closeToTrayMigrationPersisted,
     });
     keepAwakeWhileRunning = bootstrapSettings.keepAwakeWhileRunning ?? false;
-    currentDesktopZoomLevel = clampDesktopZoomLevel(bootstrapSettings.desktopZoomLevel ?? 0);
+    currentDesktopZoomLevel = clampDesktopZoomLevel(
+      bootstrapSettings.desktopZoomLevel ?? DESKTOP_ZOOM_DEFAULT_LEVEL,
+    );
     currentDesktopWindowSize = bootstrapSettings.desktopWindowSize;
     // 全局 keep-awake：启动时若设置已开，立刻持有 powerSaveBlocker，不必等设置变更事件。
     reconcileKeepAwakeBlocker();
