@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button.js";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog.js";
 import { useModelProviders } from "@/hooks/useModelProviders.js";
 import { resolveEntitledAccountProviderAccess } from "@/lib/accountProviderAccess.js";
+import { AUTON_MVP } from "@/lib/autonMvp.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { useServices } from "@/hooks/useServices.js";
 import { useZCodeStore } from "@/store/StoreProvider.js";
@@ -698,6 +699,8 @@ export function ModelProviderSection({
       familyConnectionSettingsFailed,
       selectedNodeKey,
       setSelectedNodeKey,
+      // Poda Auton: sin Z.ai ni BigModel en la lista de proveedores.
+      hideBuiltinPlanProviders: AUTON_MVP,
       intl,
     });
   const selectedPlanAccessKey =

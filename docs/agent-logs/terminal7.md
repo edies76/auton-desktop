@@ -293,3 +293,18 @@ recoge cambios de arranque: se reinició el stack de desarrollo.
 Verificado con: computed style del body en Montserrat y document.fonts
 en cargada, captura de la lista de proyectos ya en Montserrat, y la app
 entrando directo sin login (perfil en «Connect» y workspace usable).
+
+## 2026-11-04 — ni pantalla de login ni Z.ai (0.19.1)
+
+Qué: la WelcomeScreen ya no se renderiza bajo AUTON_MVP desde ningún
+motivo y el botón Connect del perfil desaparece (sin cuenta, configurar
+un proveedor es dentro de Ajustes). La navegación de proveedores oculta
+los integrados de plan (Z.ai/BigModel, personal y Start) tras una opción
+nueva del hook; el grupo queda vacío y quedan los personalizados.
+Por qué: el humano aclaró que "entrar directo" no era cerrar sesiones:
+era que ningún usuario, nuevo o no, vea una pared de login. La salida de
+su cuenta fue el reinicio con el entorno test; se restauró completando
+el OAuth de Z.ai y el perfil volvió a Aveess.
+Verificado con: tests de UI de proveedores y compuerta (mock a false
+para el upstream), tsc, y en la app real: sin Welcome, grupo Providers
+vacío y perfil Aveess visible.

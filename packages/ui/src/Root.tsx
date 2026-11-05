@@ -1508,7 +1508,7 @@ function RootInner({
     onCreateTask: handleCreateTask,
     onOpenWorkspace: handleOpenWorkspace,
     allowOpenWorkspace,
-    onLogin: !user ? handleOpenLoginEntry : undefined,
+    onLogin: !AUTON_MVP && !user ? handleOpenLoginEntry : undefined,
     onLogout: user ? handleLogout : undefined,
     user,
   };
@@ -1529,7 +1529,9 @@ function RootInner({
     );
   }
 
-  if (welcomeScreenOpenReason) {
+  // Poda Auton: la pantalla de login no existe; ni el arranque ni un clic
+  // en Connect pueden tapar el workspace con ella. Se entra directo.
+  if (welcomeScreenOpenReason && !AUTON_MVP) {
     return (
       <RootShell>
         {rootModelSelectionErrorNode}
@@ -1694,7 +1696,7 @@ function RootInner({
                 allowRemoteWorkspace={allowRemoteWorkspace}
                 handleBackFromSettings={handleBackFromSettings}
                 handleLogout={user ? handleLogout : undefined}
-                onLogin={!user ? handleOpenLoginEntry : undefined}
+                onLogin={!AUTON_MVP && !user ? handleOpenLoginEntry : undefined}
                 user={user}
                 reconnectingRemoteWorkspaceKeys={reconnectingRemoteWorkspaceKeys}
                 remoteWorkspaceRecoveryByWorkspaceKey={remoteWorkspaceRecoveryByWorkspaceKey}

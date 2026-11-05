@@ -4,6 +4,20 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases p├║blicas.
 
+## [0.19.1] — 2026-11-04
+
+Ni pantalla de login ni Z.ai en la lista de proveedores.
+
+### Quitado
+
+- **Pantalla de acceso**: la bienvenida con botones de conexión ya no se
+  muestra nunca: ni al arrancar, ni desde el botón Connect del perfil.
+  Se entra directo al workspace; quien quiera un proveedor lo agrega y
+  configura en Ajustes con su API key.
+- **Z.ai y BigModel de la lista de proveedores**: el grupo de integrados
+  queda vacío por ahora. Quedan los proveedores personalizados que el
+  usuario agregue.
+
 ## [0.19.0] — 2026-11-04
 
 Montserrat es la fuente de toda la interfaz.

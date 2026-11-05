@@ -61,6 +61,11 @@ interface UseModelProviderNavigationOptions {
   selectedNodeKey: string | null;
   setSelectedNodeKey: (key: string | null) => void;
   intl: ReturnType<typeof useZCodeIntl>["intl"];
+  /**
+   * Poda Auton: sin proveedores de plan integrados (Z.ai/BigModel) en la
+   * lista; quedan solo los proveedores personalizados del usuario.
+   */
+  hideBuiltinPlanProviders?: boolean;
 }
 
 export function useModelProviderNavigation({
@@ -80,6 +85,7 @@ export function useModelProviderNavigation({
   selectedNodeKey,
   setSelectedNodeKey,
   intl,
+  hideBuiltinPlanProviders = false,
 }: UseModelProviderNavigationOptions) {
   const customProviders = useMemo(() => {
     const allCustomProviders = modelProviders.filter(
@@ -91,8 +97,10 @@ export function useModelProviderNavigation({
 
   const codingPlanItems = useMemo(
     () =>
-      CODING_PLAN_PROVIDER_SPECS.filter((spec) =>
-        shouldShowCodingPlanForProviderFamilyDomain(spec.oauthProviderId, providerFamilyDomain),
+      hideBuiltinPlanProviders
+        ? []
+        : CODING_PLAN_PROVIDER_SPECS.filter((spec) =>
+            shouldShowCodingPlanForProviderFamilyDomain(spec.oauthProviderId, providerFamilyDomain),
       ).map((spec) => {
         const provider = modelProviders.find((item) => item.providerId === spec.id) ?? null;
         const accountEntitled = entitledAccountProviderIds.has(spec.id);
@@ -144,6 +152,7 @@ export function useModelProviderNavigation({
     [
       entitledAccountProviderIds,
       codingPlanEntitlements,
+      hideBuiltinPlanProviders,
       intl,
       modelProviders,
       modelProvidersLoading,
@@ -152,7 +161,9 @@ export function useModelProviderNavigation({
   );
   const connectionModeCodingPlanItems = useMemo(
     () =>
-      buildVisibleFamilyConnectionItems({
+      hideBuiltinPlanProviders
+        ? []
+        : buildVisibleFamilyConnectionItems({
         items: codingPlanItems.filter((item) => !isStartPlanModelProviderId(item.presetId)),
         codingPlanEntitlements,
         subscribedTeamProducts,
@@ -169,6 +180,7 @@ export function useModelProviderNavigation({
       }),
     [
       codingPlanEntitlements,
+      hideBuiltinPlanProviders,
       showPurchasedTeamPlanFallback,
       codingPlanItems,
       connectionSelections,
@@ -182,8 +194,11 @@ export function useModelProviderNavigation({
       {
         id: "preset",
         title: intl.formatMessage({ id: "settings.modelProvider.presetTitle" }),
-        items: [
-          ...presetProviders.map(({ id, displayName, provider }) => {
+        // Poda Auton: el grupo queda vacío a propósito (sin Z.ai ni BigModel).
+        items: hideBuiltinPlanProviders
+          ? []
+          : [
+              ...presetProviders.map(({ id, displayName, provider }) => {
             const statusProvider = resolvePresetFamilyStatusProvider({
               presetId: id,
               provider,
@@ -228,6 +243,7 @@ export function useModelProviderNavigation({
     customProviders,
     codingPlanItems,
     connectionModeCodingPlanItems,
+    hideBuiltinPlanProviders,
     // 左侧导航分组标题在这个 memo 内格式化。
     // 语言切换时 provider/权益引用可能不变，必须依赖 intl 才能刷新旧 locale 的文案。
     intl,
