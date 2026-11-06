@@ -157,12 +157,11 @@ impl AutonWindow {
         while let Some(message) = engine.try_response() {
             messages.push(message);
         }
-        if let Some(session_id) = &self.session_id {
-            if self.events_request_id.is_none() {
-                if let Ok(id) = engine.request("session.events", json!({"sessionId": session_id})) {
-                    self.events_request_id = Some(id);
-                }
-            }
+        if let Some(session_id) = &self.session_id
+            && self.events_request_id.is_none()
+            && let Ok(id) = engine.request("session.events", json!({"sessionId": session_id}))
+        {
+            self.events_request_id = Some(id);
         }
         drop(engine);
         for message in messages {
@@ -210,34 +209,30 @@ impl AutonWindow {
                         .and_then(|result| result.get("sessionId"))
                         .and_then(Value::as_str)
                         .map(str::to_owned);
-                    self.status = if self.session_id.is_some() {
-                        if let Some(session_id) = &self.session_id {
-                            if let Some(parent) = self.session_file.parent() {
-                                let _ = fs::create_dir_all(parent);
-                            }
-                            let _ = fs::write(
-                                &self.session_file,
-                                serde_json::to_vec(&json!({"sessionId": session_id}))
-                                    .unwrap_or_default(),
-                            );
+                    self.status = if let Some(session_id) = &self.session_id {
+                        if let Some(parent) = self.session_file.parent() {
+                            let _ = fs::create_dir_all(parent);
                         }
+                        let _ = fs::write(
+                            &self.session_file,
+                            serde_json::to_vec(&json!({"sessionId": session_id}))
+                                .unwrap_or_default(),
+                        );
                         "Sesión real conectada".into()
                     } else {
                         "El runtime respondió sin identificador de sesión".into()
                     };
                 } else {
-                    if method == "session.resume" {
-                        if let Some(engine) = &self.engine {
-                            if let Ok(mut engine) = engine.lock() {
-                                let _ = engine.request(
-                                    "session.create",
-                                    json!({"workspacePath": self.project.to_string()}),
-                                );
-                                self.status =
-                                    "La sesión anterior no está disponible; iniciando una nueva…"
-                                        .into();
-                            }
-                        }
+                    if method == "session.resume"
+                        && let Some(engine) = &self.engine
+                        && let Ok(mut engine) = engine.lock()
+                    {
+                        let _ = engine.request(
+                            "session.create",
+                            json!({"workspacePath": self.project.to_string()}),
+                        );
+                        self.status =
+                            "La sesión anterior no está disponible; iniciando una nueva…".into();
                     } else {
                         self.status = format!(
                             "No se pudo iniciar la sesión: {}",
