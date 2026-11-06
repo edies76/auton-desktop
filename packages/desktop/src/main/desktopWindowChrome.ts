@@ -27,6 +27,7 @@ import {
 } from "./desktopWindowButtonPosition.js";
 import {
   clampDesktopZoomLevel,
+  DESKTOP_ZOOM_DEFAULT_LEVEL,
   resolveDesktopZoomFactorForLevel,
   resolveDesktopZoomLevelFromFactor,
 } from "./desktopZoom.js";
@@ -582,7 +583,9 @@ export function createBrowserWindow(options: {
       }
     | undefined;
 }): BrowserWindow {
-  const initialDesktopZoomLevel = clampDesktopZoomLevel(options.initialDesktopZoomLevel ?? 0);
+  const initialDesktopZoomLevel = clampDesktopZoomLevel(
+    options.initialDesktopZoomLevel ?? DESKTOP_ZOOM_DEFAULT_LEVEL,
+  );
   const initialDesktopZoomFactor = resolveDesktopZoomFactorForLevel(initialDesktopZoomLevel);
   const initialWindowSize = resolveDesktopWindowSize(
     options.initialWindowSize,

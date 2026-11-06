@@ -17,6 +17,7 @@ const state = vi.hoisted(() => {
   }));
   return {
     rows: [] as unknown[],
+    sessionIndex: "",
     activeTaskId: "orch" as string | null,
     stopGeneration: vi.fn(async () => undefined),
     acquire,
@@ -35,12 +36,29 @@ vi.mock("@/v4/useConversationProjection.js", () => ({
   useConversationProjection: () => ({ snapshot: { rows: { window: state.rows } } }),
 }));
 
-vi.mock("@/hooks/useWorkspaceServices.js", () => ({
-  useBaseWorkspaceServices: () => ({
+vi.mock("@/hooks/useWorkspaceServices.js", () => {
+  // Estable a propósito: en producción los servicios salen de un contexto
+  // memoizado; una identidad nueva por render re-dispara los efectos.
+  const services = {
     zcodeTaskService: { stopGeneration: state.stopGeneration },
     zcodeAgentService: { listSessionSubagents: state.listSessionSubagents },
-  }),
-}));
+  };
+  return { useBaseWorkspaceServices: () => services };
+});
+
+vi.mock("@/hooks/useServices.js", () => {
+  // Estable a propósito: una identidad nueva en cada render re-dispara el
+  // efecto de lectura del índice y entra en bucle.
+  const services = {
+    fileService: {
+      readTextFile: async ({ path }: { path: string }) => {
+        if (path.endsWith(".auton/workers/index.json")) return { content: state.sessionIndex };
+        return { content: "[]" };
+      },
+    },
+  };
+  return { useOptionalServices: () => services };
+});
 
 vi.mock("@/store/zcodeSessionStore.js", () => ({
   useZCodeSessionStore: (selector: (value: { workspaces: Record<string, { activeTaskId: string }> }) => unknown) =>
@@ -102,6 +120,7 @@ function renderSidebar(orchestratorTaskId: string | null = "orch") {
 afterEach(() => {
   cleanup();
   state.rows = [];
+  state.sessionIndex = "";
   state.activeTaskId = "orch";
   state.stopGeneration.mockClear();
   state.acquire.mockClear();
@@ -123,8 +142,41 @@ describe("sidebar de workers del proyecto", () => {
       "Arreglar login",
     );
     expect(screen.queryByTestId("auton-worker-group-subagent")).toBeNull();
-    expect(screen.getByTestId("auton-worker-group-muse").textContent).toContain("Próximamente");
+    expect(screen.getByTestId("auton-worker-group-muse").textContent).toContain(
+      "Sin workers Muse.",
+    );
     expect(screen.getAllByTestId("auton-worker-row")).toHaveLength(1);
+  });
+
+  it("lista los workers de sesión del índice aunque no haya filas de subagente", async () => {
+    state.sessionIndex = JSON.stringify([
+      {
+        workerId: "agent_1",
+        engine: "zcode",
+        engineSessionId: "sess_auton_agent_1",
+        status: "running",
+        startedAt: new Date(NOW - 5_000).toISOString(),
+        description: "Arreglar la hora",
+      },
+      {
+        workerId: "agent_2",
+        engine: "zcode",
+        engineSessionId: "sess_auton_agent_2",
+        status: "completed",
+        startedAt: new Date(NOW - 9_000).toISOString(),
+        endedAt: new Date(NOW - 1_000).toISOString(),
+        description: "Revisar precios",
+      },
+    ]);
+    renderSidebar();
+
+    await waitFor(() => {
+      expect(screen.getAllByTestId("auton-worker-row")).toHaveLength(2);
+    });
+    expect(screen.getByTestId("auton-worker-count").textContent).toBe("2");
+    expect(screen.getByTestId("auton-worker-group-agent").textContent).toContain(
+      "Arreglar la hora",
+    );
   });
 
   it("muestra cuántos subagentes creó cada worker sin abrirlo", async () => {
@@ -204,6 +256,49 @@ describe("sidebar de workers del proyecto", () => {
     );
     expect(screen.queryByTestId("auton-worker-stop")).toBeNull();
     expect(state.stopGeneration).not.toHaveBeenCalled();
+  });
+
+  it("el botón Plan despliega el tablero desde el sidebar y Hilo lo repliega", async () => {
+    state.rows = [fullWorkerRow()];
+    renderSidebar();
+
+    fireEvent.click(screen.getByTestId("auton-plan-open"));
+    expect(screen.getByTestId("auton-workers-sidebar-plan")).toBeTruthy();
+    expect(screen.getByTestId("auton-sprint-board")).toBeTruthy();
+    // El panel de workers queda detras: el tablero se desliza sobre el centro.
+    expect(screen.getByTestId("auton-worker-panel")).toBeTruthy();
+
+    fireEvent.click(screen.getByTestId("auton-sprint-board-back"));
+    await waitFor(() => {
+      expect(screen.queryByTestId("auton-workers-sidebar-plan")).toBeNull();
+    });
+    expect(screen.getByTestId("auton-worker-panel")).toBeTruthy();
+  });
+
+  it("un clic fuera del panel lo repliega", async () => {
+    state.rows = [fullWorkerRow()];
+    renderSidebar();
+
+    fireEvent.click(screen.getByTestId("auton-plan-open"));
+    expect(screen.getByTestId("auton-workers-sidebar-plan")).toBeTruthy();
+
+    fireEvent.click(screen.getByTestId("auton-workers-sidebar-plan-backdrop"));
+    await waitFor(() => {
+      expect(screen.queryByTestId("auton-workers-sidebar-plan")).toBeNull();
+    });
+  });
+
+  it("Escape repliega el panel", async () => {
+    state.rows = [fullWorkerRow()];
+    renderSidebar();
+
+    fireEvent.click(screen.getByTestId("auton-plan-open"));
+    expect(screen.getByTestId("auton-workers-sidebar-plan")).toBeTruthy();
+
+    fireEvent.keyDown(window, { key: "Escape" });
+    await waitFor(() => {
+      expect(screen.queryByTestId("auton-workers-sidebar-plan")).toBeNull();
+    });
   });
 
   it("para un agente completo interrumpiendo el turno del orquestador", () => {

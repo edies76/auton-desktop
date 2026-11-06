@@ -11,6 +11,28 @@
 @plugin "@tailwindcss/typography";
 @plugin "../lucide-colors.mjs";
 
+/*
+ * Fuente de Auton: Montserrat (variable, con itálica variable).
+ * Archivos OFL en assets/fonts/ (licencia en Montserrat-OFL.txt).
+ * Es la fuente de toda la interfaz vía --font-sans en @theme; el mono
+ * de código, diff y terminal conserva su propia pila.
+ */
+@font-face {
+  font-family: "Montserrat";
+  src: url("./assets/fonts/Montserrat-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Montserrat";
+  src: url("./assets/fonts/Montserrat-Italic-Variable.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
 /* Hero 可为任意图片/视频/iframe，不能用 App 主题推断关闭图标对比度。 */
 .cloud-content-dialog {
   --media-close-surface: rgb(0 0 0 / 50%);
@@ -141,6 +163,11 @@ html[data-document-hidden] *::after {
 /* === 主题变量 === */
 
 @theme {
+  /* Fuente de toda la interfaz de Auton. Los fallbacks CJK quedan detrás de
+   * Montserrat para que el chino no caiga a una serif del sistema. */
+  --font-sans:
+    "Montserrat", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Noto Sans CJK SC", sans-serif;
   /* 修复原因：Windows 的 Consolas 不含中文字形，Tailwind 默认栈最终会让中文落到宋体。
    * 保留各平台西文等宽字体，并在通用 monospace 前显式加入各平台 CJK 无衬线字体。 */
   --font-mono:

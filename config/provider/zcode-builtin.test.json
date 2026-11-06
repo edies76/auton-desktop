@@ -29,8 +29,8 @@
         {
           "templateId": "auton-meta",
           "templateNameMap": {
-            "zh-CN": "Auton Meta",
-            "en-US": "Auton Meta"
+            "zh-CN": "Meta",
+            "en-US": "Meta"
           },
           "config": {
             "access": {

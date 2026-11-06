@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button.js";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog.js";
 import { useModelProviders } from "@/hooks/useModelProviders.js";
 import { resolveEntitledAccountProviderAccess } from "@/lib/accountProviderAccess.js";
+import { AUTON_MVP } from "@/lib/autonMvp.js";
 import { usePlatform } from "@/hooks/usePlatform.js";
 import { useServices } from "@/hooks/useServices.js";
 import { useZCodeStore } from "@/store/StoreProvider.js";
@@ -698,6 +699,8 @@ export function ModelProviderSection({
       familyConnectionSettingsFailed,
       selectedNodeKey,
       setSelectedNodeKey,
+      // Poda Auton: sin Z.ai ni BigModel en la lista de proveedores.
+      hideBuiltinPlanProviders: AUTON_MVP,
       intl,
     });
   const selectedPlanAccessKey =
@@ -988,10 +991,21 @@ export function ModelProviderSection({
   const handleSelectNavItem = useCallback(
     (item: (typeof navigationItems)[number]) => {
       setInvalidProviderTarget(false);
-      setSelectedNodeKey(resolveModelProviderSideSelectionKey(item));
       setTemplatePickerOpen(false);
+      if (item.type === "template") {
+        // Meta aun no tiene proveedor: seleccionarlo lo crea desde su
+        // plantilla y el detalle pasa al formulario de su API key.
+        void handleCreateProvider({ templateId: item.templateId }).catch((error) => {
+          logger.error("[ModelProviderSection] crear proveedor Meta falló", { error });
+        });
+        return;
+      }
+      setSelectedNodeKey(resolveModelProviderSideSelectionKey(item));
       void persistProviderFamilyModeForNavItem(item);
     },
+    // handleCreateProvider se declara justo debajo; la referencia se
+    // resuelve al invocar el callback, no durante el render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [persistProviderFamilyModeForNavItem],
   );
 
@@ -1153,6 +1167,7 @@ export function ModelProviderSection({
           onCodingPlanDisconnect={handleCodingPlanDisconnect}
           onOpenApiKeyUrl={handleOpenApiKeyUrl}
           onSelectNavItem={handleSelectNavItem}
+          onCreateFromTemplate={(templateId) => handleCreateProvider({ templateId })}
           onOpenBigModelRegistration={() => {
             // 未注册提示来自一次失败的 OAuth checking 状态；跳转注册后要恢复普通状态，避免提示卡住。
             setOAuthError(null);

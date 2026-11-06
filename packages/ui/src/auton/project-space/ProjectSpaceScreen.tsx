@@ -2,7 +2,9 @@ import { useState } from "react";
 import { AutonThreadView } from "./ThreadView.js";
 import { AutonWorkerDetail } from "./WorkerDetail.js";
 import { AutonWorkerPanel } from "./WorkerPanel.js";
+import { AutonSprintBoard, AutonSprintBoardLive } from "./SprintBoard.js";
 import type { AutonProject, AutonProjectSpaceData } from "./model.js";
+import type { AutonPlanFile } from "./planFile.js";
 
 export interface AutonProjectSpaceProps {
   project: AutonProject;
@@ -14,6 +16,33 @@ export interface AutonProjectSpaceProps {
   showComposer?: boolean;
   canStopWorkers?: boolean;
   backLabel?: string;
+  /** Plan ya cargado (pruebas o superficies que lo tienen); sin él se lee del workspace. */
+  plan?: AutonPlanFile | null;
+  planLoading?: boolean;
+}
+
+function PlanSurface({
+  project,
+  onBack,
+  plan,
+  planLoading,
+}: {
+  project: AutonProject;
+  onBack: () => void;
+  plan?: AutonPlanFile | null;
+  planLoading?: boolean;
+}) {
+  if (plan !== undefined || planLoading !== undefined) {
+    return (
+      <AutonSprintBoard
+        project={project}
+        plan={plan ?? null}
+        loading={planLoading ?? false}
+        onBack={onBack}
+      />
+    );
+  }
+  return <AutonSprintBoardLive project={project} onBack={onBack} />;
 }
 
 /**
@@ -30,8 +59,11 @@ export function AutonProjectSpace({
   showComposer = true,
   canStopWorkers = true,
   backLabel,
+  plan,
+  planLoading,
 }: AutonProjectSpaceProps) {
   const [selectedWorkerId, setSelectedWorkerId] = useState<string | null>(null);
+  const [surface, setSurface] = useState<"thread" | "plan">("thread");
   const selectedWorker = selectedWorkerId
     ? data.workers.find((worker) => worker.id === selectedWorkerId)
     : undefined;
@@ -44,9 +76,17 @@ export function AutonProjectSpace({
             workers={data.workers}
             now={now}
             selectedWorkerId={selectedWorkerId ?? undefined}
-            onOpenWorker={(workerId) => setSelectedWorkerId(workerId)}
+            onOpenWorker={(workerId) => {
+              setSurface("thread");
+              setSelectedWorkerId(workerId);
+            }}
             onStopWorker={onStopWorker}
             canStop={canStopWorkers}
+            onOpenPlan={() => {
+              setSelectedWorkerId(null);
+              setSurface("plan");
+            }}
+            planActive={surface === "plan" && !selectedWorker}
           />
         </div>
         <main className="min-h-0 min-w-0 overflow-hidden">
@@ -55,6 +95,13 @@ export function AutonProjectSpace({
               worker={selectedWorker}
               now={now}
               onBack={() => setSelectedWorkerId(null)}
+            />
+          ) : surface === "plan" ? (
+            <PlanSurface
+              project={project}
+              onBack={() => setSurface("thread")}
+              {...(plan !== undefined ? { plan } : {})}
+              {...(planLoading !== undefined ? { planLoading } : {})}
             />
           ) : (
             <AutonThreadView

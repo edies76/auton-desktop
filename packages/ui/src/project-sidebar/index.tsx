@@ -87,6 +87,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
   const { view: storedView, setView } = preferences;
   const homeVisible = useAutonHomeStore((state) => state.homeVisible);
   const enterProject = useAutonHomeStore((state) => state.enterProject);
+  const showHome = useAutonHomeStore((state) => state.showHome);
   // El arranque vive en la pantalla de proyectos; dentro de un proyecto manda
   // la preferencia guardada (workers por defecto).
   const view = homeVisible ? "projects" : storedView === "projects" ? "projects" : "workers";
@@ -107,27 +108,47 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     return state.workspaces[workspaceKey]?.activeTaskId ?? null;
   });
   const workspaceKey = props.workspaceIdentity?.trim() || props.workspacePath;
+  // El árbol de proyectos es del host; la conversación y el proyecto activo
+  // pertenecen al workspace de esta tab. Sin este filtro, una tab nueva puede
+  // abrir el proyecto/tarea de la tab anterior (Lunar) y regresar a ella.
+  const workspaceTasks = useMemo(
+    () =>
+      tree.tasks.filter(
+        (task) =>
+          (task.workspaceIdentity?.trim() || task.workspacePath) === workspaceKey,
+      ),
+    [tree.tasks, workspaceKey],
+  );
+  const workspaceProjects = useMemo(
+    () =>
+      tree.projects.filter(
+        (project) =>
+          project.roots.some((root) => root.rootPath === props.workspacePath) ||
+          project.directoryMatchPath === props.workspacePath,
+      ),
+    [props.workspacePath, tree.projects],
+  );
   const activeProject = useMemo(() => {
     const activeProjectId = activeTaskId
-      ? tree.tasks.find((task) => task.taskId === activeTaskId)?.projectId
+      ? workspaceTasks.find((task) => task.taskId === activeTaskId)?.projectId
       : null;
-    const latestProjectId = tree.tasks.find((task) => !task.archived)?.projectId;
+    const latestProjectId = workspaceTasks.find((task) => !task.archived)?.projectId;
     return (
       tree.projects.find((project) => project.id === activeProjectId) ??
       tree.projects.find((project) => project.id === latestProjectId) ??
-      tree.projects[0] ??
+      workspaceProjects[0] ??
       null
     );
-  }, [activeTaskId, tree.projects, tree.tasks]);
+  }, [activeTaskId, tree.projects, workspaceProjects, workspaceTasks]);
   const activeConversation = useMemo(() => {
     if (!activeProject) return null;
     const key = projectConversationKey(workspaceKey, activeProject.id);
-    const projectTasks = tree.tasks.filter((task) => task.projectId === activeProject.id);
+    const projectTasks = workspaceTasks.filter((task) => task.projectId === activeProject.id);
     return {
       key,
       conversation: ensureProjectConversation(key, projectTasks, activeTaskId),
     };
-  }, [activeProject, activeTaskId, tree.tasks, workspaceKey]);
+  }, [activeProject, activeTaskId, workspaceKey, workspaceTasks]);
   // El shell no conoce el árbol de proyectos; publica la identidad resuelta
   // para etiquetar el hilo como orquestador solo cuando de verdad lo es.
   useEffect(() => {
@@ -151,7 +172,10 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     if (homeVisible) return;
     const orchestratorId = activeConversation?.conversation.orchestratorTaskId;
     if (orchestratorId) {
-      if (autoOpenedRef.current === orchestratorId) return;
+      // El ref evita reabrir en bucle cuando ya estamos en el orquestador.
+      // Si la tarea activa es null (p. ej. "New task" o Ctrl+N), hay que volver
+      // a la única sesión del proyecto; si no, el draft podría crear otra.
+      if (autoOpenedRef.current === orchestratorId && activeTaskId === orchestratorId) return;
       // La sesión activa manda salvo que sea un chat legado del proyecto; en
       // ese caso se abre la conversación persistida del orquestador.
       if (
@@ -163,7 +187,7 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
       ) {
         return;
       }
-      const orchestrator = tree.tasks.find((task) => task.taskId === orchestratorId);
+      const orchestrator = workspaceTasks.find((task) => task.taskId === orchestratorId);
       if (!orchestrator) return;
       autoOpenedRef.current = orchestratorId;
       onSelectTask(
@@ -190,8 +214,8 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     homeVisible,
     onSelectTask,
     props,
-    tree.tasks,
     workspaceKey,
+    workspaceTasks,
   ]);
   // Una sesión nueva del proyecto (no legada) pasa a ser la conversación del
   // orquestador; así sigue habiendo un solo chat.
@@ -206,23 +230,26 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     ) {
       return;
     }
-    const belongs = tree.tasks.some(
+    const belongs = workspaceTasks.some(
       (task) => task.taskId === activeTaskId && task.projectId === activeProject.id,
     );
     if (!belongs) return;
     rememberProjectOrchestrator(activeConversation.key, activeTaskId);
-  }, [activeConversation, activeProject, activeTaskId, tree.tasks]);
+  }, [activeConversation, activeProject, activeTaskId, workspaceTasks]);
   const projects = preferences.sort(selectSortedProjects(tree));
   const selectProject = useCallback(
     (project: VirtualProject) => {
-      enterProject();
       const key = projectConversationKey(workspaceKey, project.id);
       const projectTasks = tree.tasks.filter((task) => task.projectId === project.id);
       const conversation = ensureProjectConversation(key, projectTasks, activeTaskId);
       const orchestrator = tree.tasks.find(
         (task) => task.taskId === conversation.orchestratorTaskId,
       );
+      const rootPath =
+        project.roots.find((root) => root.isPrimary)?.rootPath ?? project.roots[0]?.rootPath;
       if (orchestrator) {
+        enterProject();
+        setView("workers");
         // Lo que el humano escribió en la pantalla de entrada viaja al chat del
         // proyecto. Si el proyecto ya tenía un borrador con texto, ese manda.
         if (homeVisible) {
@@ -254,14 +281,30 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
           orchestrator.taskId,
           orchestrator.workspaceIdentity,
         );
-      } else {
-        props.onCreateTask({
-          projectId: project.id,
-          taskGroupId: null,
-          initialPrompt: PROJECT_START_PROMPT,
-        });
+        return;
       }
-      setView("workers");
+      // Proyecto sin sesión: la tarea prepara su workspace. La entrada se
+      // mantiene visible hasta que la nueva tab/draft esté lista; si no, el
+      // shell muestra la tarea anterior mientras navega.
+      props.onCreateTask({
+        projectId: project.id,
+        hostId: project.hostId,
+        taskGroupId: null,
+        initialPrompt: PROJECT_START_PROMPT,
+        ...(rootPath
+          ? {
+              targetWorkspace: {
+                projectId: project.id,
+                hostId: project.hostId,
+                workspacePath: rootPath,
+              },
+            }
+          : {}),
+        onComplete: () => {
+          enterProject();
+          setView("workers");
+        },
+      });
     },
     [
       activeTaskId,
@@ -282,6 +325,10 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
     consumeProjectRequest();
     if (project) selectProject(project);
   }, [consumeProjectRequest, projects, requestedProjectId, selectProject]);
+  const showProjects = useCallback(() => {
+    showHome();
+    setView("projects");
+  }, [setView, showHome]);
   const openSettings = useCallback(() => {
     tabStore.getState().openSettingsTab();
   }, [tabStore]);  const changeLocale = useCallback(
@@ -314,7 +361,8 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
               <ProjectSidebarNavigation
                 props={props}
                 home={homeVisible}
-                onCreate={() => props.onCreateTask()}
+                onShowProjects={showProjects}
+                onCreateProject={() => setCreating(true)}
               />
               <div
                 data-testid="sidebar-task-list-region"
@@ -391,8 +439,17 @@ export const ProjectSidebar = memo(function ProjectSidebar(props: ProjectSidebar
               workspacePath={props.workspacePath}
               workspaceIdentity={props.workspaceIdentity}
               onCreateTask={(request) => {
-                enterProject();
-                setView("workers");
+                if (typeof request === "object" && request !== null) {
+                  props.onCreateTask({
+                    ...request,
+                    onComplete: () => {
+                      enterProject();
+                      setView("workers");
+                      request.onComplete?.();
+                    },
+                  });
+                  return;
+                }
                 props.onCreateTask(request);
               }}
               directory={directory}

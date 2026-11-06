@@ -22,6 +22,15 @@ const SUBAGENT: AutonWorkerView = {
   kind: "subagent",
 };
 
+const MUSE: AutonWorkerView = {
+  ...WORKER,
+  id: "sess_muse_agent_3",
+  name: "Worker Muse",
+  kind: "muse",
+  engine: "muse",
+  lastLine: "Preparando el motor Muse",
+};
+
 vi.mock("@/v4/V4ChatPane.js", () => ({
   V4ChatPane: ({ sessionId, readOnly }: { sessionId: string; readOnly?: boolean }) => (
     <div
@@ -61,6 +70,22 @@ describe("chat completo del worker", () => {
 
     expect(screen.getByTestId("v4-chat-pane").dataset.sessionId).toBe(SUBAGENT.id);
     expect(screen.getByTestId("v4-chat-pane").dataset.readonly).toBe("true");
+  });
+
+  it("un worker Muse tiene una vista mínima sin chat ZCode", () => {
+    render(
+      <AutonWorkerFocusPane
+        worker={MUSE}
+        workspacePath="/workspace/lunar"
+        onBack={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByTestId("v4-chat-pane")).toBeNull();
+    expect(screen.getByText("Muse Code")).toBeTruthy();
+    expect(screen.getByText("Worker Muse")).toBeTruthy();
+    expect(screen.getByText("Preparando el motor Muse")).toBeTruthy();
+    expect(screen.getByTestId("auton-worker-focus-back")).toBeTruthy();
   });
 
   it("la vuelta es un botón flotante sobre el chat", () => {

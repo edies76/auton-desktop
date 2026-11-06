@@ -27,6 +27,7 @@ import type {
   AttachmentRef,
   CommandAck,
   ConversationRowTarget,
+  SubagentRow,
 } from "@zcode/shared/zcode-protocol-v4";
 import { ChatLoading } from "@/components/ai-elements/chat-loading.js";
 import { ChatApiRetryStatus } from "@/chat-input-toolbar/display.js";
@@ -80,6 +81,7 @@ import {
 } from "@/v4/conversationAssistantWorkItems.js";
 import type { ConversationCuaGroupEvent } from "@/v4/conversationCuaGroups.js";
 import { ConversationAgentToolCallRow, openSubagentSessionFromSummary } from "@/v4/ConversationAgentToolCallRow.js";
+import { deriveWakeEvents } from "@/auton/subagentChannel.js";
 import { WakeEventItem } from "@/auton/WakeEventItem.js";
 import { ConversationFileSummaryPanel } from "@/v4/ConversationFileSummaryPanel.js";
 import {
@@ -424,10 +426,13 @@ function ConversationAssistantWorkItems({
   stageTailIsRunning = false,
   assistantCodeCommentProjectionEnabled = false,
   historyContainer,
+  suppressWakeEvents = false,
 }: {
   rows: readonly AssistantWorkRow[];
   context: ConversationRowRenderContext;
   stageTailIsRunning?: boolean;
+  /** El hilo Auton pinta los eventos fuera del loop; el historial no los repite. */
+  suppressWakeEvents?: boolean;
   /** running turn 的正文可能暂时落在 history renderer，仍需隐藏特化协议原文。 */
   assistantCodeCommentProjectionEnabled?: boolean;
   historyContainer?: {
@@ -462,6 +467,7 @@ function ConversationAssistantWorkItems({
         {
           stageTailIsRunning,
           nowMs,
+          ...(suppressWakeEvents ? { suppressWakeEvents: true } : {}),
           enableCuaGrouping: ENABLE_CUA_TOOL_CALL_GROUPING,
           enableExploreGrouping:
             context.toolGroupingExploreEnabled ?? ENABLE_EXPLORE_TOOL_CALL_GROUPING,
@@ -804,10 +810,14 @@ function ConversationWorkSegmentFlow({
   highspeed: boolean;
   highspeedMeta?: HighspeedMessageMeta;
 }) {
-  const [historyOpen, setHistoryOpen] = useState(segment.assistantHistoryDefaultOpen);
+  // En Auton las tools no se despliegan bajo cada mensaje: el header del loop
+  // queda visible con su contador y el contenido se abre solo si el humano
+  // quiere ver el detalle.
+  const defaultOpen = segment.autonLoop ? false : segment.assistantHistoryDefaultOpen;
+  const [historyOpen, setHistoryOpen] = useState(defaultOpen);
   useEffect(() => {
-    setHistoryOpen(segment.assistantHistoryDefaultOpen);
-  }, [segment.assistantHistoryDefaultOpen, segment.key]);
+    setHistoryOpen(defaultOpen);
+  }, [defaultOpen, segment.key]);
 
   const shouldShowHistoryStatus = segment.workStatus !== undefined;
   const firstLoopItemIndex = segment.flowItems.findIndex(
@@ -824,12 +834,13 @@ function ConversationWorkSegmentFlow({
     ? firstLoopItemIndex
     : firstAssistantFlowItemIndex;
   let historyChunkIndex = 0;
-  const open = segment.assistantHistoryDefaultOpen ? true : historyOpen;
+  const open = defaultOpen ? true : historyOpen;
 
   return (
+    <>
     <Collapsible
       open={open}
-      onOpenChange={segment.assistantHistoryDefaultOpen ? undefined : setHistoryOpen}
+      onOpenChange={defaultOpen ? undefined : setHistoryOpen}
       // 外层 flex gap 不属于 Radix 测量的 content 高度，收起到 0 后会在
       // display:none 的最后一帧再少 20px。普通兄弟用外边距保持原盒模型，history
       // 的间距则放进动画层。
@@ -888,6 +899,7 @@ function ConversationWorkSegmentFlow({
               stageTailIsRunning={stageTailIsRunning}
               assistantCodeCommentProjectionEnabled={assistantCodeCommentProjectionEnabled}
               historyContainer={{ chunkKey, open }}
+              suppressWakeEvents={segment.autonLoop}
             />
           );
         } else if (item.kind === "assistantText") {
@@ -895,16 +907,26 @@ function ConversationWorkSegmentFlow({
             <ConversationTurnRow
               row={item.row}
               context={context}
-              onFork={item.latest && canForkLatestAssistant ? onFork : undefined}
-              onRetry={item.latest && canRetryLatestAssistant ? onRetry : undefined}
-              hideAssistantActions={!item.latest}
-              deferAssistantActions={item.latest}
-              assistantCopyText={item.latest ? assistantCopyText : undefined}
-              assistantPreviewCards={item.latest ? assistantPreviewCards : undefined}
-              assistantPreviewCardsAutoOpenKey={
-                item.latest ? assistantPreviewCardsAutoOpenKey : undefined
+              onFork={
+                !segment.autonLoop && item.latest && canForkLatestAssistant ? onFork : undefined
               }
-              assistantCodeCommentCards={item.latest ? assistantCodeCommentCards : undefined}
+              onRetry={
+                !segment.autonLoop && item.latest && canRetryLatestAssistant ? onRetry : undefined
+              }
+              hideAssistantActions={segment.autonLoop || !item.latest}
+              deferAssistantActions={!segment.autonLoop && item.latest}
+              assistantCopyText={
+                !segment.autonLoop && item.latest ? assistantCopyText : undefined
+              }
+              assistantPreviewCards={
+                !segment.autonLoop && item.latest ? assistantPreviewCards : undefined
+              }
+              assistantPreviewCardsAutoOpenKey={
+                !segment.autonLoop && item.latest ? assistantPreviewCardsAutoOpenKey : undefined
+              }
+              assistantCodeCommentCards={
+                !segment.autonLoop && item.latest ? assistantCodeCommentCards : undefined
+              }
               assistantCodeCommentProjectionEnabled={assistantCodeCommentProjectionEnabled}
             />
           );
@@ -964,6 +986,32 @@ function ConversationWorkSegmentFlow({
         />
       ) : null}
     </Collapsible>
+    {segment.autonLoop
+      ? segment.assistantHistoryRows
+          .filter((row): row is SubagentRow => row.kind === "subagent")
+          .flatMap((row) => {
+            const title = row.summaryText?.trim() || "Worker";
+            return deriveWakeEvents(row, Date.now(), title).map((event) => ({
+              row,
+              event,
+              title,
+            }));
+          })
+          .map(({ row, event, title }) => (
+            <WakeEventItemRow
+              key={`wake:${event.kind}:${row.rowId}`}
+              item={{
+                kind: "wakeEvent",
+                key: `wake:${event.kind}:${row.rowId}`,
+                event,
+                subagentRow: row,
+                channelTitle: title,
+              }}
+              context={context}
+            />
+          ))
+      : null}
+    </>
   );
 }
 
@@ -1717,7 +1765,7 @@ function ConversationTurnGroupImpl({
                   : "opacity-0 transition-opacity group-hover/assistant-turn:opacity-100 focus-within:opacity-100 has-[[data-bot-group-delivery]]:opacity-100",
               )}
             />
-          ) : (hasHookActions || !unit.isRunning) && !canRenderAssistantActions ? (
+          ) : (hasHookActions || !unit.isRunning) && !canRenderAssistantActions && !interleavedAutonText ? (
             // 冲突合并曾把此兜底接到 Highspeed 页脚的 else，导致普通回复重复入口，
             // Highspeed 无正文轮又丢失入口；它只与普通操作栏互斥，页脚独立渲染。
             <MessageActions

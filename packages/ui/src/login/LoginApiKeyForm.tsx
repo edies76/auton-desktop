@@ -13,6 +13,7 @@ import {
   testId,
 } from "@zcode/shared/test-ids";
 import { Alert, AlertDescription } from "@/components/ui/alert.js";
+import { ProviderLogo } from "@/settings/model-provider-section/ProviderLogo.js";
 import { Button } from "@/components/ui/button.js";
 import { Input } from "@/components/ui/input.js";
 import {
@@ -190,6 +191,16 @@ export function LoginApiKeyForm({ onCancel, onSaved, onSkipped }: LoginApiKeyFor
                   {renderOAuthProviderIcon(BIGMODEL_PROVIDER_ID, "size-4")}
                   {intl.formatMessage({
                     id: "login.apiKey.provider.bigmodel",
+                  })}
+                </SelectItem>
+                <SelectItem
+                  value="meta"
+                  className="rounded-md"
+                  data-testid={testId(TID_LOGIN_API_KEY_PROVIDER_ITEM, "meta")}
+                >
+                  <ProviderLogo logo={{ type: "builtin", key: "auton" }} className="size-4" />
+                  {intl.formatMessage({
+                    id: "login.apiKey.provider.meta",
                   })}
                 </SelectItem>
               </SelectContent>

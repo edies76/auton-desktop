@@ -1,11 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import {
+  AutonSprintBoardLive,
   AutonWorkerPanel,
   buildAutonWorkerGroups,
   projectAutonWorkers,
+  projectSessionWorkerView,
   useAutonClock,
   useAutonSubagentCounts,
   useAutonWorkerFocusStore,
+  useSessionWorkerConversations,
 } from "@/auton/index.js";
 import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { logger } from "@/logger.js";
@@ -39,6 +43,101 @@ function AutonWorkersSidebarContents({
   const [workerLease, setWorkerLease] = useState<SessionLease | null>(null);
   const focusedWorkerId = useAutonWorkerFocusStore((state) => state.selectedWorkerId);
   const listWorkerId = useAutonWorkerFocusStore((state) => state.listWorkerId);
+  const [showPlan, setShowPlan] = useState(false);
+  const [planExpanded, setPlanExpanded] = useState(false);
+  const planCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const planProject = useMemo(
+    () => ({
+      id: workspacePath,
+      name: workspacePath.split(/[\\/]/).filter(Boolean).at(-1) ?? workspacePath,
+      path: workspacePath,
+      lastActiveAt: 0,
+    }),
+    [workspacePath],
+  );
+  // El tablero no cabe en los 264px del sidebar: se desliza desde su borde
+  // derecho como panel expansible (portal, para escapar del overflow del
+  // sidebar) con transicion de ancho. El shell conserva su ancho; el panel
+  // se cierra con la misma animacion en reversa.
+  useEffect(() => {
+    if (!showPlan) return;
+    setPlanExpanded(false);
+    const frame = requestAnimationFrame(() => {
+      requestAnimationFrame(() => setPlanExpanded(true));
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [showPlan]);
+
+  useEffect(
+    () => () => {
+      if (planCloseTimer.current) clearTimeout(planCloseTimer.current);
+    },
+    [],
+  );
+
+  const openPlan = useCallback(() => {
+    if (planCloseTimer.current) clearTimeout(planCloseTimer.current);
+    setShowPlan(true);
+  }, []);
+
+  const closePlan = useCallback(() => {
+    setPlanExpanded(false);
+    if (planCloseTimer.current) clearTimeout(planCloseTimer.current);
+    planCloseTimer.current = setTimeout(() => setShowPlan(false), 280);
+  }, []);
+
+  const togglePlan = useCallback(() => {
+    if (showPlan) closePlan();
+    else openPlan();
+  }, [closePlan, openPlan, showPlan]);
+
+  // Clic fuera del panel o Escape: se repliega con la misma animacion.
+  useEffect(() => {
+    if (!showPlan) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") closePlan();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [closePlan, showPlan]);
+
+  const planPanel = showPlan
+    ? (() => {
+        const sidebarRight =
+          typeof document !== "undefined"
+            ? (document
+                .querySelector('[data-testid="sidebar"]')
+                ?.getBoundingClientRect().right ?? 264)
+            : 264;
+        const targetWidth =
+          typeof window !== "undefined"
+            ? Math.max(320, Math.min(1480, window.innerWidth - sidebarRight - 16))
+            : 1480;
+        return createPortal(
+          <>
+            {/* Captura el clic fuera del panel para replegarlo. */}
+            <div
+              className="fixed inset-0 z-30"
+              data-testid="auton-workers-sidebar-plan-backdrop"
+              onClick={closePlan}
+              aria-hidden="true"
+            />
+            <div
+              className="fixed inset-y-0 z-40 overflow-hidden border-r border-border bg-background shadow-2xl transition-[width] duration-300 ease-out motion-reduce:transition-none"
+              style={{ left: sidebarRight, width: planExpanded ? targetWidth : 0 }}
+              data-testid="auton-workers-sidebar-plan"
+              aria-hidden={!planExpanded}
+            >
+              <div className="h-full" style={{ width: targetWidth }}>
+                <AutonSprintBoardLive project={planProject} onBack={closePlan} />
+              </div>
+            </div>
+          </>,
+          document.body,
+        );
+      })()
+    : null;
+
   const projection = useConversationProjection(lease);
   const workerProjection = useConversationProjection(workerLease);
   const rows = projection.snapshot?.rows.window ?? [];
@@ -56,10 +155,24 @@ function AutonWorkersSidebarContents({
     [activeTaskId, orchestratorTaskId],
   );
 
-  const agentWorkers = useMemo(
-    () => projectAutonWorkers(rows, now).filter((worker) => worker.kind === "agent"),
-    [now, rows],
-  );
+  // Los workers en modo sesión no aparecen como filas de subagente en la
+  // conversación del orquestador: viven en `.auton/workers/index.json`.
+  // Sin leer ese índice el panel decía 0 aunque hubiera workers corriendo.
+  const sessionWorkers = useSessionWorkerConversations(workspacePath);
+  const agentWorkers = useMemo(() => {
+    const fromConversation = projectAutonWorkers(rows, now).filter(
+      (worker) => worker.kind === "agent",
+    );
+    const known = new Set(fromConversation.map((worker) => worker.id));
+    const fromIndex = sessionWorkers
+      .map((snapshot) => ({
+        ...projectSessionWorkerView(snapshot),
+        kind: "agent" as const,
+        engine: "zcode" as const,
+      }))
+      .filter((worker) => !known.has(worker.id));
+    return [...fromConversation, ...fromIndex];
+  }, [now, rows, sessionWorkers]);
   const subagentCounts = useAutonSubagentCounts({
     agents: agentWorkers,
     workspacePath,
@@ -165,9 +278,12 @@ function AutonWorkersSidebarContents({
           onOpenWorker={openWorker}
           onOpenSubagent={openSubagent}
           onStopWorker={stopWorker}
+          onOpenPlan={togglePlan}
+          planActive={showPlan}
           embedded
         />
       </div>
+      {planPanel}
     </div>
   );
 }

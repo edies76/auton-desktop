@@ -24,8 +24,11 @@ worker.** Etiqueta, color o forma distinta. No basta con el nombre.
 - El centro **no tiene compositor**. Muestra la lista de proyectos con nombre, ruta y un **recap en
   una línea** del último trabajo de cada uno. Si no hay trabajo, dice `Sin sesiones todavía.`
 - **Elegir una fila** (en el centro o en el panel) entra al proyecto. **Crear proyecto** pide nombre y
-  ruta; al guardarlo se entra también. En ese momento el panel cambia a workers y aparece el hilo del
+  ruta; al guardarlo se activa su carpeta como workspace/tab y arranca su **sesión única** con el
+  prompt inicial en el compositor. En ese momento el panel cambia a workers y aparece el hilo del
   orquestador.
+- Dentro de un proyecto, el sidebar ofrece `Proyectos` (vuelve a la entrada) y `Nuevo proyecto`
+  (abre el selector nativo de carpeta). No hay `New task`: un proyecto tiene una sola sesión.
 - La pantalla se reutiliza del draft existente para el armazón; el resumen central es nuevo y
   minimalista.
 
@@ -61,6 +64,8 @@ Es **el espacio de un proyecto, y solo uno a la vez**. Se compone de tres zonas:
   plegables. La cabecera **Workers** también se pliega para ocultar la lista completa.
 - **No hay vistas nativas de ZCode** (`Timeline`, agrupado, lista de tareas) ni sección `Tasks` en este
   panel. El proyecto es el encabezado; el hilo central no lleva la etiqueta `Orquestador`.
+- **Cada tab/workspace tiene su proyecto y sus tareas.** El árbol del host se filtra por el workspace
+  activo; una tab nueva no hereda el proyecto ni la sesión de la tab anterior.
 - **Clicable**: al abrir una fila se ve **su conversación completa directamente**, sin resumen ni
   cabecera separadora; la vuelta es un botón flotante sobre el chat. El worker conserva el chat
   normal de ZCode (compositor, modelo, permisos y acciones de la conversación); un subagente se

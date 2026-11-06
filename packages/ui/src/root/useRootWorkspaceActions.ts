@@ -1,5 +1,6 @@
 import { stageV4ComposerDraftAttachments } from "@/v4/composer/composerDraftWorkspaceTransfer.js";
 import { readProjectSidebarView } from "@/project-sidebar/index.js";
+import { useAutonProjectConversationStore } from "@/project-sidebar/projectConversationStore.js";
 /* eslint-disable max-lines -- Root workspace action hook 集中编排项目、远程和 conversation 入口；合并期保持动作边界完整，后续按领域拆分。 */
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
@@ -247,6 +248,26 @@ export function useRootWorkspaceActions({
 
   const startNewTaskFromActiveWorkspace = useCallback(
     async (source: string, request?: CreateTaskRequest) => {
+      // Un proyecto tiene una sola sesión: Ctrl+N o cualquier "nueva tarea"
+      // genérica vuelve a su orquestador en vez de crear otro chat.
+      const isGenericNewTask =
+        !request ||
+        typeof request !== "object" ||
+        (!request.projectId && !request.targetWorkspace);
+      if (activeWorkspacePath && isGenericNewTask) {
+        const published = useAutonProjectConversationStore.getState();
+        const activeKey = activeWorkspaceIdentity?.trim() || activeWorkspacePath;
+        if (published.workspaceKey === activeKey && published.orchestratorTaskId) {
+          useZCodeSessionStore
+            .getState()
+            .setActiveTaskId(
+              activeWorkspacePath,
+              published.orchestratorTaskId,
+              activeWorkspaceIdentity ?? undefined,
+            );
+          return;
+        }
+      }
       const openRemoteProjectWorkspace = remoteProjectOpener.current;
       const sequence = ++navigationSequence.current;
       const originTab = tabStoreApi.getState().activeTabId;
@@ -380,11 +401,18 @@ export function useRootWorkspaceActions({
           });
         }
         // 目录准备成功才提交导航；失败保留当前会话和分屏。
-        if (!hostId || hostId === "local")
+        if (!hostId || hostId === "local") {
           addTab(target.workspacePath, {
             workspacePurpose: target.projectId ? "project" : "conversation",
             ...(target.workspaceIdentity ? { workspaceIdentity: target.workspaceIdentity } : {}),
           });
+          // Un proyecto puede vivir en otra carpeta/workspace: crear la tab no
+          // la activa. Sin este foco el shell sigue mostrando el proyecto previo.
+          tabStoreApi.getState().activateTabByPath(
+            target.workspacePath,
+            target.workspaceIdentity ? { workspaceIdentity: target.workspaceIdentity } : undefined,
+          );
+        }
         startDraftInWorkspace(target.workspacePath, target.workspaceIdentity, {
           ...(typeof request === "string" ? { provider: request } : request),
           ...(pendingDraft ? { draftId: pendingDraft.draftId } : {}),

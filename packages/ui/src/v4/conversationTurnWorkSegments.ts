@@ -100,6 +100,13 @@ function isLoopWorkRow(row: ConversationRow): boolean {
   return row.kind === "toolCall" || row.kind === "subagent" || row.kind === "artifact";
 }
 
+function isWorkerDispatchRow(row: ConversationRow): boolean {
+  return (
+    row.kind === "toolCall" &&
+    (row.toolName === "Agent" || row.toolName === "Task" || row.toolName === "subagent")
+  );
+}
+
 function splitVisualWorkSegments(
   rows: readonly ConversationRow[],
   splitAtAssistantText = false,
@@ -113,7 +120,13 @@ function splitVisualWorkSegments(
     // Así el hilo muestra varios bloques colapsables intercalados, no uno solo.
     const narrationBoundary =
       splitAtAssistantText && isAssistantTextRow(row) && currentHasLoopWork;
-    if ((guidedBoundary || narrationBoundary) && current.orderedRows.length > 0) {
+    // Un loop por worker: cada despacho de `Agent` abre su propio bloque.
+    const workerBoundary =
+      splitAtAssistantText && isWorkerDispatchRow(row) && currentHasLoopWork;
+    if (
+      (guidedBoundary || narrationBoundary || workerBoundary) &&
+      current.orderedRows.length > 0
+    ) {
       segments.push(current);
       current = { orderedRows: [], ...(guidedBoundary ? { triggerRow: row } : {}) };
       currentHasLoopWork = false;
@@ -258,10 +271,11 @@ export function buildConversationTurnWorkSegments(options: {
       assistantHistoryDefaultOpen:
         !options.timelineOnly &&
         (options.forceOpenHistory ||
-          (options.isLastTurn && segmentWorkStatus?.state === "running") ||
-          (visualDrafts.length === 1 &&
-            visibleAssistantTextRow === undefined &&
-            segmentFlowRows.length > 0)),
+          (!options.interleaveAssistantText &&
+            ((options.isLastTurn && segmentWorkStatus?.state === "running") ||
+              (visualDrafts.length === 1 &&
+                visibleAssistantTextRow === undefined &&
+                segmentFlowRows.length > 0)))),
       autonLoop: options.interleaveAssistantText,
       ...(segmentWorkStatus ? { workStatus: segmentWorkStatus } : {}),
     };

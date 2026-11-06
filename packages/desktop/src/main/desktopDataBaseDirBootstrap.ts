@@ -2,6 +2,24 @@ import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { APP_DATA_DIR_NAME_ENV, setAppDataDirName, setDataBaseDir } from "@zcode/services/node";
+import { ZCODE_VERSION } from "@zcode/shared";
+
+interface AppVersionBootstrapApp {
+  setVersion(version: string): void;
+}
+
+export function applyEarlyAppVersionBootstrap(
+  app: AppVersionBootstrapApp,
+  version: string = ZCODE_VERSION,
+): string {
+  // 原因：开发态 Electron 以 packages/desktop 为应用目录，该 package.json 没有 version 字段，
+  // app.getVersion() 返回 "0.0"；autoUpdater.ts 在模块顶层解构 electron-updater 的 autoUpdater，
+  // getter 会立即构造 AppUpdater 并校验 semver，抛错使 main 在 whenReady 之前就退出、无窗口。
+  // 打包态由 electron-builder 注入根 package.json 的版本；这里在任何业务模块加载前用同一
+  // 来源（构建期 __ZCODE_VERSION__）显式对齐，保证开发态与打包态版本一致。
+  app.setVersion(version);
+  return version;
+}
 
 export function resolveBootstrapSettingsFile(homePath: string = homedir()): string {
   return join(homePath, ".auton", "v2", "setting.json");

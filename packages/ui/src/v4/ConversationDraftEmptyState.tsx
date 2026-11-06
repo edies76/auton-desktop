@@ -11,7 +11,7 @@ import {
   useRef,
   useState,
 } from "react";
-import darkEmptyStateLogoUrl from "@/assets/Z.svg";
+import darkEmptyStateLogoUrl from "@/assets/auton-logo.svg";
 import { cn } from "@/components/lib/utils.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { useIsOfficeMode } from "@/hooks/useInterfaceMode.js";
@@ -249,7 +249,9 @@ function ZCodeEmptyStateLogo({ className }: { className?: string }) {
         aria-hidden="true"
         className={cn(
           className,
-          "opacity-70 dark:hidden",
+          // Marca de agua: casi del color del fondo, solo insinuada, para
+          // que el saludo de enfrente contraste sin pelear con el logo.
+          "opacity-30 dark:hidden",
           "[-webkit-mask-image:linear-gradient(to_bottom,black_0%,transparent_70%,transparent_100%)]",
           "[-webkit-mask-repeat:no-repeat] [-webkit-mask-size:100%_100%]",
           "[mask-image:linear-gradient(to_bottom,black_0%,transparent_70%,transparent_100%)]",
@@ -269,7 +271,9 @@ function ZCodeEmptyStateLogo({ className }: { className?: string }) {
       {/* 深色资源包含专用渐变与模糊效果，不能通过 currentColor 复刻；主题类保证两套 Logo 互斥显示。 */}
       <img
         aria-hidden="true"
-        className={cn(className, "hidden dark:block")}
+        // El asset oscuro es blanco casi puro: a plena opacidad tapaba el
+        // saludo. Como marca de agua va al 8%, visible pero de fondo.
+        className={cn(className, "hidden opacity-[0.08] dark:block")}
         data-v4-draft-logo="dark"
         src={darkEmptyStateLogoUrl}
         alt=""

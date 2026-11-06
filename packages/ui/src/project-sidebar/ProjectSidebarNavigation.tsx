@@ -1,8 +1,7 @@
-import { Blocks, CalendarClock } from "lucide-react";
+import { Blocks, CalendarClock, FolderPlus, LayoutGrid } from "lucide-react";
 import { TID_AUTOMATIONS_OPEN } from "@zcode/shared/test-ids";
 import type { ProjectSidebarProps } from "@/project-sidebar/contract.js";
 import { Button } from "@/components/ui/button.js";
-import { NewTaskButtonGroup } from "@/NewTaskButtonGroup.js";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import { AUTON_MVP } from "@/lib/autonMvp.js";
 import { WebRemoteControlDeviceHeader } from "@/web-remote-control/WebRemoteControlDeviceHeader.js";
@@ -11,7 +10,8 @@ import { WebRemoteControlDeviceHeader } from "@/web-remote-control/WebRemoteCont
 export function ProjectSidebarNavigation({
   props,
   home = false,
-  onCreate,
+  onShowProjects,
+  onCreateProject,
 }: {
   props: Pick<
     ProjectSidebarProps,
@@ -24,7 +24,8 @@ export function ProjectSidebarNavigation({
   >;
   /** Pantalla de entrada: solo proyectos, sin tareas ni accesos globales. */
   home?: boolean;
-  onCreate(): void;
+  onShowProjects?: () => void;
+  onCreateProject?: () => void;
 }) {
   const { intl } = useZCodeIntl();
   const deviceNavigation = props.webRemoteControlWorkspaceSwitcher?.deviceNavigation;
@@ -37,7 +38,30 @@ export function ProjectSidebarNavigation({
       {deviceNavigation ? <WebRemoteControlDeviceHeader navigation={deviceNavigation} /> : null}
       {home ? null : (
         <>
-          <NewTaskButtonGroup onCreateTask={onCreate} />
+          {onShowProjects ? (
+            <Button
+              variant="ghost"
+              size="lg"
+              className="w-full justify-start gap-2"
+              data-testid="auton-projects-home"
+              onClick={onShowProjects}
+            >
+              <LayoutGrid className="size-4" />
+              Proyectos
+            </Button>
+          ) : null}
+          {onCreateProject ? (
+            <Button
+              variant="ghost"
+              size="lg"
+              className="w-full justify-start gap-2"
+              data-testid="auton-new-project"
+              onClick={onCreateProject}
+            >
+              <FolderPlus className="size-4" />
+              Nuevo proyecto
+            </Button>
+          ) : null}
           {!AUTON_MVP && props.onOpenAutomations ? (
             <Button
               variant="ghost"

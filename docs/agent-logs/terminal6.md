@@ -305,3 +305,17 @@ Verificado:
 - En vivo: se escribió `texto de prueba del home`, el envío siguió bloqueado en
   el home, al elegir Lunar el compositor del proyecto apareció con ese texto y
   el envío habilitado.
+## 2026-11-04 - abrir el proyecto nuevo en su propio workspace
+
+Qué: el sidebar filtra tareas/proyecto activo por el workspace de su tab; una tab nueva ya no
+hereda el proyecto ni la sesión de la anterior. Al crear/elegir un proyecto sin orquestador se pasa
+`targetWorkspace` con su raíz, se activa la tab del destino y la entrada se cierra con `onComplete`,
+cuando el draft ya está listo. El shell permite crear tareas con proyecto explícito desde la entrada;
+una tarea genérica (Ctrl+N) vuelve al orquestador único. Dentro del proyecto el sidebar ofrece
+`Proyectos` y `Nuevo proyecto`; `New task` ya no existe.
+
+Verificado en vivo: `Auton Verificación` abre su carpeta temp como workspace, muestra su nombre/ruta,
+Workers 0 y el draft con el prompt inicial. `Proyectos` vuelve a la entrada; Lunar conserva sus 6
+workers; volver a Auton Verificación conserva 0. Sin fugas entre proyectos.
+
+Pruebas: 92/92 en las suites afectadas, typecheck 0, lint 0 errores, arquitectura 0.

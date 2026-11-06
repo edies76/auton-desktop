@@ -1,4 +1,5 @@
 import { useCodingPlanEntryGate } from "@/settings/CodingPlanEntryButton.js";
+import { AUTON_MVP } from "@/lib/autonMvp.js";
 /* eslint-disable max-lines -- Model Provider 详情页当前集中编排 Plan Card、API Key 表单和 OAuth 套餐态；后续稳定后再按 family/API/OAuth 拆分。 */
 import {
   BIGMODEL_PROVIDER_ID,
@@ -18,6 +19,7 @@ import {
   type ProviderSettingsFormProvider,
 } from "@/lib/providerSettingsFormTypes.js";
 import { ArrowRightIcon, AstroidIcon, UsersIcon } from "lucide-react";
+import { Button } from "@/components/ui/button.js";
 import { useEffect, useMemo, useState } from "react";
 import { useZCodeIntl } from "@/i18n/IntlProvider.js";
 import {
@@ -253,6 +255,7 @@ export function ModelProviderSectionDetail({
   onOpenBigModelRegistration,
   onCodingPlanPurchaseComplete,
   onSelectNavItem,
+  onCreateFromTemplate,
   providerSettingsView: providerSettingsViewOverride,
 }: {
   selectedNavItem: ModelProviderNavItem | null;
@@ -302,6 +305,7 @@ export function ModelProviderSectionDetail({
   onOpenBigModelRegistration: () => void;
   onCodingPlanPurchaseComplete: () => void | Promise<void>;
   onSelectNavItem?: (item: ModelProviderNavItem) => void;
+  onCreateFromTemplate?: (templateId: string) => Promise<void>;
   providerSettingsView?: ProviderSettingsView | null;
 }) {
   const { intl } = useZCodeIntl();
@@ -485,10 +489,14 @@ export function ModelProviderSectionDetail({
       providerSettingsView?.providers.find(
         (provider) => provider.providerId === selectedNavItem.presetId,
       )?.accountState?.availability === "available";
+    // Poda Auton: el plan de Z.ai/BigModel no existe en el detalle. Sin esa
+    // compuerta por suscripción, el proveedor se configura directo con su
+    // API key, como cualquier proveedor personalizado.
     const hidePlanModels =
-      hasNoPlanEntitlement ||
-      selectedNavItem.status === "disconnected" ||
-      selectedNavItem.status === "notPurchased";
+      !AUTON_MVP &&
+      (hasNoPlanEntitlement ||
+        selectedNavItem.status === "disconnected" ||
+        selectedNavItem.status === "notPurchased");
     const shouldShowDedicatedProviderDetail =
       dedicatedProvider !== null &&
       !hidePlanModels &&
@@ -520,12 +528,16 @@ export function ModelProviderSectionDetail({
     const handleUpgradePlansVisibleChange = (visible: boolean) => {
       setUpgradePlansVisibleProviderId(visible ? selectedNavItem.presetId : null);
     };
+    // Poda Auton: no se muestran precios ni compra de planes de Z.ai/BigModel.
+    // Conectar el proveedor sigue disponible; lo que se oculta es la venta.
     const purchaseChoiceBannersVisible =
+      !AUTON_MVP &&
       statusPanelViewState.displayStatus === "notPurchased" &&
       (selectedNavItem.oauthProviderId === ZAI_PROVIDER_ID ||
         (selectedNavItem.oauthProviderId === BIGMODEL_PROVIDER_ID &&
           codingPlanPurchaseTokenAuthenticated));
     const anonymousPurchaseChoiceBannersVisible =
+      !AUTON_MVP &&
       (selectedNavItem.oauthProviderId === BIGMODEL_PROVIDER_ID ||
         selectedNavItem.oauthProviderId === ZAI_PROVIDER_ID) &&
       statusPanelViewState.displayStatus === "disconnected";
@@ -588,8 +600,8 @@ export function ModelProviderSectionDetail({
             provider.accountState.entitled,
         ),
     );
-    const planSupplementalContent =
-      isStartPlanProvider && hasActivePaidPlan ? null : anonymousPurchaseChoiceBannersVisible ||
+    const planSupplementalContent = AUTON_MVP ? null : isStartPlanProvider &&
+      hasActivePaidPlan ? null : anonymousPurchaseChoiceBannersVisible ||
         purchaseChoiceBannersVisible ? (
         <CodingPlanPurchaseChoiceBanners
           providerId={selectedNavItem.presetId}
@@ -691,7 +703,7 @@ export function ModelProviderSectionDetail({
           upgradePlansVisible={upgradePlansVisible}
           onUpgradePlansVisibleChange={handleUpgradePlansVisibleChange}
           purchaseInitialAudience={selectedNavItem.type === "teamPlan" ? "team" : "personal"}
-          upgradeActionVisible={!isStartPlanProvider || !hasActivePaidPlan}
+          upgradeActionVisible={!AUTON_MVP && (!isStartPlanProvider || !hasActivePaidPlan)}
           startPlanPreviewVisible={false}
         />
       );
@@ -710,10 +722,12 @@ export function ModelProviderSectionDetail({
             onTestModel={onTestModel}
             nameEditable={false}
             statusSection={
-              <div className="space-y-3">
-                {statusPanel}
-                {planSupplementalContent}
-              </div>
+              AUTON_MVP ? undefined : (
+                <div className="space-y-3">
+                  {statusPanel}
+                  {planSupplementalContent}
+                </div>
+              )
             }
             headerActionsVisible={false}
           />
@@ -724,6 +738,9 @@ export function ModelProviderSectionDetail({
     return (
       <ProviderFamilyDetailShell header={codingPlanFamilyHeader}>
         <div className="space-y-3">
+          {/* Poda Auton: sin tarjeta de plan; abajo quedan la configuración
+              del proveedor y su API key. */}
+          {AUTON_MVP ? null : (
           <CodingPlanStatusPanel
             providerId={selectedNavItem.presetId}
             providerName={selectedNavItem.providerName}
@@ -811,9 +828,10 @@ export function ModelProviderSectionDetail({
             upgradePlansVisible={upgradePlansVisible}
             onUpgradePlansVisibleChange={handleUpgradePlansVisibleChange}
             purchaseInitialAudience={selectedNavItem.type === "teamPlan" ? "team" : "personal"}
-            upgradeActionVisible={!isStartPlanProvider || !hasActivePaidPlan}
+            upgradeActionVisible={!AUTON_MVP && (!isStartPlanProvider || !hasActivePaidPlan)}
             startPlanPreviewVisible={false}
           />
+          )}
           {hidePlanModels ? null : providerSettingsView && !dedicatedProvider ? (
             <PresetProviderPlaceholderCard
               displayName={selectedNavItem.providerName}
@@ -826,6 +844,28 @@ export function ModelProviderSectionDetail({
           {planSupplementalContent}
         </div>
       </ProviderFamilyDetailShell>
+    );
+  }
+
+  if (selectedNavItem.type === "template") {
+    // Meta todavia no tiene proveedor creado: el detalle solo ofrece
+    // crearlo desde su plantilla; despues manda el formulario de API key.
+    return (
+      <div className="flex min-h-64 flex-col items-start justify-center gap-3">
+        <h3 className="text-ui-lg font-semibold text-foreground">{selectedNavItem.label}</h3>
+        <p className="max-w-md text-ui-base text-foreground-subtle">
+          {intl.formatMessage({ id: "settings.modelProvider.meta.description" })}
+        </p>
+        <Button
+          type="button"
+          disabled={!onCreateFromTemplate}
+          onClick={() => {
+            void onCreateFromTemplate?.(selectedNavItem.templateId).catch(() => undefined);
+          }}
+        >
+          {intl.formatMessage({ id: "settings.modelProvider.meta.add" })}
+        </Button>
+      </div>
     );
   }
 

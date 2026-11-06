@@ -218,6 +218,18 @@ export type ModelProviderNavItem =
       label: string;
       provider: ProviderSettingsFormProvider;
       statusActive: boolean;
+    }
+  | {
+      // Entrada de plantilla sin proveedor creado todavia (hoy: Meta).
+      // Al seleccionarla se crea el proveedor desde la plantilla y el
+      // detalle pasa a ser el del proveedor personal resultante.
+      key: string;
+      type: "template";
+      templateId: string;
+      label: string;
+      logo?: ProviderSettingsFormProvider["config"]["logo"];
+      provider: ProviderSettingsFormProvider | null;
+      statusActive: boolean;
     };
 
 export type ModelProviderNavGroupId = "preset" | "custom";

@@ -243,10 +243,10 @@ describe("virtual-project sidebar on desktop and mobile", () => {
     );
     const device = screen.getByRole("button", { name: "webRemoteControl.switchDevice" });
     const navigation = screen.getByTestId("sidebar-primary-navigation");
-    // 设备行是导航首行：位于“新建任务”之上。
+    // 设备行是导航首行：位于 las acciones del proyecto 之上.
     expect(navigation.firstElementChild).toBe(device);
     expect(
-      device.compareDocumentPosition(screen.getByText("New task")) &
+      device.compareDocumentPosition(screen.getByTestId("plugin-store-sidebar-open")) &
         Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     fireEvent.click(device);

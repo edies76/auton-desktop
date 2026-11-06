@@ -116,3 +116,19 @@ Por qué: el humano quedaba bloqueado con el input en "queue follow-up" mientras
 Verificado con: core 110 (turno cierra y el evento despierta; dispatch real), hilo 106, unidades 44.
 Pendiente: picker de proyectos vacíos, Grok, límites de workers.
 
+## 2026-11-03 — chat seguido, tools colapsadas y orquestador breve
+
+Qué: el loop queda cerrado por defecto (header y contador visibles); las tools no se apilan bajo cada
+mensaje. Los mensajes Auton pierden la barra de acciones (copiar/fork/reaccionar) y los eventos
+despertadores se pintan fuera del loop. El prompt pide delegar más, hablar 1-2 líneas, worker de ZCode
+por defecto con effort/thinking según velocidad o profundidad, canal frecuente y verificación básica.
+Por qué: el hilo se sentía cargado y el orquestador hablaba de más.
+Verificado con: UI 150, prompt 10. Pendiente: picker, Grok y límites de workers.
+
+## 2026-11-04 — un loop por worker
+
+Qué: cada despacho de `Agent` abre su propio bloque de loop; dos workers en el mismo turno se ven como
+dos bloques intercalados con su contador, no como uno solo.
+Por qué: el spec pedía un loop por worker y el hilo mezclaba varios workers en el mismo bloque.
+Verificado con: unidades de render 45 (incluye dos workers → dos loops), hilo 106.
+

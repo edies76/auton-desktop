@@ -158,15 +158,18 @@ export function ProjectCreation({
       .getState()
       .getWorkspaceState(workspacePath, workspaceIdentity);
     // 创建原来只刷新列表，草稿仍绑定旧项目；复用项目选择入口，并拒绝保存期间已失效的草稿。
+    // La comparación del proyecto del draft solo decide si se arrastra el texto; entrar al
+    // proyecto recién creado no depende de que el draft siga apuntando al proyecto anterior.
     if (
       active.current &&
       currentScope.current.activeTabId === originTabId.current &&
       currentScope.current.workspaceKey === originDraft.workspaceKey &&
       !originDraft.activeTaskId &&
-      !draft.activeTaskId &&
-      draft.draftFocusVersion === originDraft.draftFocusVersion &&
-      draft.draftProjectId === originDraft.draftProjectId
+      !draft.activeTaskId
     ) {
+      const sameProject = draft.draftProjectId === originDraft.draftProjectId;
+      const rootPath =
+        project.roots.find((root) => root.isPrimary)?.rootPath ?? project.roots[0]?.rootPath;
       logger.debug("[ProjectCreation] select created project for draft", {
         projectId: project.id,
         hostId: project.hostId,
@@ -174,12 +177,25 @@ export function ProjectCreation({
       onCreateTask({
         projectId: project.id,
         hostId: project.hostId,
-        taskGroupId: draft.draftTaskGroupId ?? null,
-        initialComposerDraft: captureV4ComposerDraftHandoff(
-          workspacePath,
-          workspaceIdentity,
-          composerClientNamespace,
-        ),
+        taskGroupId: sameProject ? (draft.draftTaskGroupId ?? null) : null,
+        ...(rootPath
+          ? {
+              targetWorkspace: {
+                projectId: project.id,
+                hostId: project.hostId,
+                workspacePath: rootPath,
+              },
+            }
+          : {}),
+        ...(sameProject
+          ? {
+              initialComposerDraft: captureV4ComposerDraftHandoff(
+                workspacePath,
+                workspaceIdentity,
+                composerClientNamespace,
+              ),
+            }
+          : {}),
       });
     }
   };

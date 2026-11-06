@@ -156,3 +156,183 @@ Cada nivel tuvo constructor y verificador independiente en worktrees separados; 
 fueron PASS.
 Pendiente: merge a `auton-desktop` tras revisión final; la verificación visual del desktop sigue
 bloqueada por el entorno nativo.
+
+## 2026-11-04 — tablero de sprints e inspector de evidencia (etapa 3 de A)
+
+Qué: entrada Plan en el espacio del proyecto, tablero que lee `.auton/plan.json`
+en vivo con siete columnas por estado, e inspector de evidencia por sprint con
+aviso cuando un sprint terminado no tiene evidencia. Diseño minimalista casi
+monocromo con los tokens de la app.
+Por qué: el registro durable ya existía, pero el humano no tenía pantalla para
+ver el plan ni la prueba de que un sprint cerró; solo el orquestador lo leía.
+Verificado con: constructores separados para tablero e inspector, verificador
+independiente con tests propios (PASS), 57 tests de UI y 58 del registro en el
+árbol mergeado, `oxlint` sin hallazgos. Merge a `auton-desktop` en 98666a2d.
+Pendiente: la prueba visual en la app real, bloqueada aquí por el entorno
+(Node 22 sin pnpm ni herramientas nativas).
+
+## 2026-11-04 — arranque dev y entrada al tablero (0.16.1)
+
+Qué: fix del arranque en dev (el main fija `app.setVersion(ZCODE_VERSION)`
+antes de cargar `electron-updater`, que rechazaba la versión `0.0` y moría
+sin ventana), espacio Auton sin sesión para proyectos sin hilo, y botón
+Plan en el panel de workers del shell que conmuta al tablero en el sidebar.
+Por qué: la prueba visual destapó que el tablero existía pero no era
+alcanzable: sin sesión la lista saltaba al shell de ZCode y el panel
+embebido no recibía `onOpenPlan`.
+Verificado con: 5 tests del bootstrap del desktop, 18 tests de UI
+(lista y sidebar), `tsc` de UI y del desktop, `oxlint` y
+`architecture:check` en verde; por CDP en la app real, proyecto-prueba
+sin sesiones abre el tablero (Total 4, Activos 1, Bloqueados 1,
+Terminados 2), s1 muestra su evidencia, s4 se marca no demostrado,
+s3 muestra su pregunta, y editar `plan.json` mueve s2 a Terminados sin
+recargar. Merge a `auton-desktop` en 9462caee.
+Pendiente: elegir modelo en el entorno dev para probar el hilo del
+orquestador, y un panel ancho para el tablero dentro del shell.
+
+## 2026-11-04 — tablero desplegable desde el sidebar
+
+Qué: al pulsar Plan, el tablero se despliega desde el borde derecho del
+sidebar como panel animado (portal con transición de ancho hasta
+1480px) y Hilo lo repliega; el hilo del centro no se mueve. Se trajo el
+trabajo de B desde origin (relojes, cierre honesto, espejos y su fix de
+arranque por manifest, que convive con el bootstrap de versión) y el
+manifest del desktop quedó en 0.16.1 como VERSION.
+Por qué: a 264px el tablero quedaba cortado; el humano pidió que se
+deslizara hasta verse bien sin perder el hilo de vista.
+Verificado con: 10 tests de autonWorkersSidebar, oxlint y
+architecture:check en verde; por CDP el panel crece a 1480px con
+columnas e inspector visibles y se repliega al cerrar.
+Pendiente: probar el hilo del orquestador con modelo (River ya quedó
+configurado en el entorno dev local, fuera del repo).
+
+## 2026-11-04 — tablero legible, workers de sesión en el sidebar y poda propuesta
+
+Qué: las 7 columnas del tablero entran en una fila (minmax 180px), la línea
+de dueño/esfuerzo ya no se corta, el detalle del objetivo empieza plegado y
+el inspector va debajo. El sidebar de workers ahora lee también
+`.auton/workers/index.json` (con el hook que ya usaba el espacio del
+proyecto): los workers en modo sesión no producen filas de subagente y el
+panel decía 0 con 15 workers reales en Feria. Propuesta de poda tanda 1 en
+docs/private con los datos de la corrida (38 ofrecidas, 7 usadas).
+Por qué: el humano no entendía el tablero ni por qué Workers decía 0; ambas
+eran la misma deuda de lectura, no de motor.
+Verificado con: 37 tests de UI (sidebar + tablero), 10 de proyección de
+workers, `tsc` de UI, `oxlint` y `architecture:check` en verde; por CDP las
+7 columnas quedan en una fila en el proyecto Feria real. La causa del
+cuelgue al probar fue un mock con identidad nueva por render, no la app:
+en producción los servicios salen de un contexto estable.
+Pendiente: terminar Feria (parada manual del research y recall de cierre)
+y ejecutar la tanda 1 de la poda cuando esa corrida cierre.
+
+## 2026-11-04 — marca Auton y poda de precios (0.17.0)
+
+Qué: la marca visible pasa a la A en círculo que ya existía como logo del
+proveedor Auton (componente AutonLogo, asset auton-logo.svg e ícono de
+escritorio generado en PNG/ICO; el .icns de mac queda pendiente por no
+poder generarse en Linux). ZCode→Auton en los locales en/zh y en los
+textos fijos visibles (ventana, bienvenida, diálogos del sistema).
+Precios fuera: banners de compra, acción de suscripción y de mejora de
+plan ocultos en ajustes de proveedores tras AUTON_MVP.
+Por qué: el humano pidió que lo que se ve sea Auton y que no se vendan
+planes de Z.ai dentro de Auton. El proveedor Z.ai conserva su nombre
+donde es el servicio real (como OpenAI); sus ids internos no se tocaron.
+Verificado con: tsc de UI, oxlint, 188 tests de coding plan (con la
+bandera mockeada a false para no perder la cobertura del upstream),
+57 de ajustes/composer/arranque y 125 de chat/permisos/skills.
+Pendiente: el archivo de logo que el humano quiere usar (llegó una
+captura, no el archivo), el .icns, y las entradas de compra secundarias
+(banner de error de cuota y composer) que aún pueden abrir el diálogo.
+
+## 2026-11-04 — columnas plegables del tablero (0.18.0)
+
+Qué: cada columna del tablero de sprints tiene su propio botón expandir/
+reducir a la derecha del contador; arranca reducida y se despliega con
+deslizamiento (grid-rows 0fr→1fr, 500ms, mismo patrón que
+ModelEditorAdvanced). Primero se hizo un botón global arriba y el humano
+corrigió: era por columna, y el global se quitó.
+Por qué: una columna larga (Terminados con 15) alargaba todo el tablero;
+ahora se abre solo la columna que se quiere ver.
+Verificado con: 38 tests del tablero (incluido uno nuevo de despliegue
+por columna), tsc y oxlint, y en la app real por CDP con clic de mouse:
+Terminados pasó de 0 a 2120px con altura intermedia en plena animación,
+sin mover las demás columnas.
+
+## 2026-11-04 — umbral de columnas, sin plan Z.ai, sin login, sin Z (0.18.1)
+
+Qué: columnas con 5 o menos quedan expandidas y al pasar de 5 se recogen
+solas; todo el encabezado es el botón. Fuera la tarjeta de plan de
+Z.ai/BigModel del detalle de proveedor (queda la configuración por API
+key) y fuera el login forzado al arrancar: se entra directo. El splash
+de escritorio y web, About y los logos heredados dibujan la A de Auton.
+En el núcleo, el puerto de workers de sesión ahora entrega el modelo
+activo y el override del despacho a la fábrica, con la precedencia de
+un subagente; antes los descartaba.
+Por qué: el humano pidió tablero corto sin cazar la flechita, que el
+plan de Z.ai no exista en la app, entrar sin loguearse con ZCode, y que
+el worker corra sí o sí con lo seleccionado en el orquestador. En Feria
+los 15 workers ya usaban el modelo del orquestador; el hueco era el
+override explícito, que ningún worker de sesión recibía.
+Verificado con: 39 tests del tablero, 227 de UI (plan del proveedor,
+compuerta de arranque, login), 29 del núcleo (puerto y selección), tsc
+de UI y del núcleo, y en la app real: splash con la A, detalle de Z.ai
+sin tarjetas de plan y columnas con el umbral correcto. Los dos errores
+de tsc de desktop (arms y setVersion) existen igual en el árbol limpio.
+Pendiente de esa tanda: el texto del indicador de Computer Use en Windows
+sigue diciendo ZCode; tocar ese archivo exige registrar su módulo en la
+gobernanza de arquitectura, y eso va en una tanda aparte.
+
+## 2026-11-04 — fuente Montserrat en toda la app (0.19.0)
+
+Qué: Montserrat variable e itálica variable convertidas a woff2 (200 y
+216 KB) dentro de assets/fonts con su licencia OFL, declaradas con
+@font-face y como --font-sans del tema. El mono conserva su pila.
+Por qué: el humano entregó la fuente de marca y pidió que todo Auton la
+use. La app seguía mostrando lo viejo porque el proceso en memoria no
+recoge cambios de arranque: se reinició el stack de desarrollo.
+Verificado con: computed style del body en Montserrat y document.fonts
+en cargada, captura de la lista de proyectos ya en Montserrat, y la app
+entrando directo sin login (perfil en «Connect» y workspace usable).
+
+## 2026-11-04 — ni pantalla de login ni Z.ai (0.19.1)
+
+Qué: la WelcomeScreen ya no se renderiza bajo AUTON_MVP desde ningún
+motivo y el botón Connect del perfil desaparece (sin cuenta, configurar
+un proveedor es dentro de Ajustes). La navegación de proveedores oculta
+los integrados de plan (Z.ai/BigModel, personal y Start) tras una opción
+nueva del hook; el grupo queda vacío y quedan los personalizados.
+Por qué: el humano aclaró que "entrar directo" no era cerrar sesiones:
+era que ningún usuario, nuevo o no, vea una pared de login. La salida de
+su cuenta fue el reinicio con el entorno test; se restauró completando
+el OAuth de Z.ai y el perfil volvió a Aveess.
+Verificado con: tests de UI de proveedores y compuerta (mock a false
+para el upstream), tsc, y en la app real: sin Welcome, grupo Providers
+vacío y perfil Aveess visible.
+
+## 2026-11-04 — Meta en Model settings y marca de agua (0.20.0)
+
+Qué: Meta queda donde iba Z.ai en Model settings, con el nombre «Meta»
+a secas (plantilla renombrada en los dos archivos builtin). Sin login:
+seleccionarla crea su proveedor y abre el formulario de API key; al
+crearlo pasa a personalizados. Se tapó la fuga del selector «Agregar
+proveedor», que ya no lista Z.ai/BigModel. El logo de fondo de la
+pantalla vacía baja a marca de agua (8% en oscuro).
+Por qué: el botón Meta de terminal8 vivía en la pantalla de login, que
+ya no existe. Al probarlo salió el hueco real: el host usa la caché
+remota de ZCode y esa no trae las plantillas de Auton, así que crear el
+proveedor fallaba con «Template no existe». Se mezclan en memoria las
+plantillas que solo trae el bundled, sin tocar la caché ni su revisión.
+Verificado con: tests de navegación, selector, plantilla y mezcla
+(203+29 en verde), tsc y oxlint, y en la app real por CDP.
+
+## 2026-11-04 — Poda banner/recomendaciones y zoom +1 (0.20.1)
+
+Qué: fuera el banner «No model available. Upgrade…» (suprimido solo su
+código model_config_missing bajo AUTON_MVP), fuera las tarjetas de
+recomendación bajo el input en SessionPane, y zoom por defecto nivel 1
+(constante DESKTOP_ZOOM_DEFAULT_LEVEL, también en reset).
+Por qué: sin Z.ai no hay upgrade que vender y las tarjetas son ruido de
+la demo; el zoom +1 es el tamaño que el usuario usa. Todo reversible:
+bandera AUTON_MVP y una constante.
+Verificado con: tests banner+zoom (24 en verde), tsc ui, architecture
+sin violaciones y CDP en la app real (sin banner ni tarjetas).

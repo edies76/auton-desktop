@@ -69,6 +69,19 @@ const DATA: AutonProjectSpaceData = {
 afterEach(cleanup);
 
 describe("panel de workers", () => {
+  it("marca el worker Muse con su badge", () => {
+    renderUi(
+      <AutonWorkerPanel
+        workers={[worker("m1", "trabajando", { kind: "muse", engine: "muse" })]}
+        now={NOW}
+        onOpenWorker={vi.fn()}
+        onStopWorker={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByTestId("auton-worker-muse-badge").textContent).toContain("Muse");
+  });
+
   it("pinta los cinco estados con etiqueta distinta", () => {
     renderUi(
       <AutonWorkerPanel workers={WORKERS} now={NOW} onOpenWorker={vi.fn()} onStopWorker={vi.fn()} />,

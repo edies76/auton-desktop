@@ -196,7 +196,23 @@ it("selects the saved project only after directory refresh and preserves the dra
     initialComposerDraft: { sourceWorkspaceKey: "/draft", draft: { text: "" }, attachments: [] },
   });
 });
-it.each(["existing", "save", "refresh", "draft", "workspace", "failure"])(
+it("selects the created project when the home draft rebinds during refresh", async () => {
+  const { props } = await setup();
+  props.onSaved.mockImplementation(async () => {
+    useZCodeSessionStore.getState().startDraft("/draft", undefined, undefined, {
+      projectId: "project",
+    });
+  });
+  fireEvent.click(screen.getByTestId("virtual-project-save"));
+  await waitFor(() =>
+    expect(props.onCreateTask).toHaveBeenCalledExactlyOnceWith({
+      projectId: "project",
+      hostId: "local",
+      taskGroupId: null,
+    }),
+  );
+});
+it.each(["existing", "save", "refresh", "workspace", "failure"])(
   "does not select a created project after %s invalidates the draft",
   async (boundary) => {
     if (boundary === "existing") useZCodeSessionStore.getState().setActiveTaskId("/draft", "task");
@@ -208,7 +224,6 @@ it.each(["existing", "save", "refresh", "draft", "workspace", "failure"])(
       });
     props.onSaved.mockImplementation(async () => {
       if (boundary === "refresh") useZCodeSessionStore.getState().setActiveTaskId("/draft", "task");
-      if (boundary === "draft") useZCodeSessionStore.getState().startDraft("/draft");
       if (boundary === "workspace")
         rerender(createElement(ProjectCreation, { ...props, workspacePath: "/other" } as never));
     });

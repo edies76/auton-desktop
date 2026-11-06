@@ -64,7 +64,7 @@ export function ZCodeStartupLogo({
       width="118"
       height="100"
       fill="none"
-      viewBox="0 0 256 218"
+      viewBox="0 0 64 64"
       className={cn("shrink-0 text-current", className)}
       aria-hidden="true"
       focusable="false"
@@ -78,14 +78,24 @@ export function ZCodeStartupLogo({
           values="1;0.4;1"
         />
       ) : null}
+      {/* Marca de Auton (A en círculo); antes era la Z de ZCode. */}
+      <circle cx="32" cy="32" r="25" fill="none" stroke="currentColor" strokeWidth="5" />
       <path
-        fill="currentColor"
-        d="M134.4 0.130152L116.48 25.6022C113.665 29.5699 109.054 32.0019 104.064 32.0019H6.3999V0C6.3999 0.130149 134.4 0.130152 134.4 0.130152Z"
+        d="M20 45 L32 17 L44 45"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="6"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
-      <path fill="currentColor" d="M256 0.130127L102.401 217.732H0L153.599 0.130127H256Z" />
-      <path
-        fill="currentColor"
-        d="M121.601 217.732L139.65 192.134C142.465 188.166 147.076 185.734 152.067 185.734H249.604V217.736H121.601V217.732Z"
+      <line
+        x1="25"
+        y1="37"
+        x2="39"
+        y2="37"
+        stroke="currentColor"
+        strokeWidth="5"
+        strokeLinecap="round"
       />
     </svg>
   );

@@ -34,7 +34,7 @@ it.each([
           {},
           createElement(ProjectSidebarNavigation, {
             props: {},
-            onCreate: vi.fn(),
+            
           }),
           createElement(ProjectSidebarListHeader, {
             onOpenCommandCenter,
@@ -68,7 +68,7 @@ it("SBV02: la cabecera no ofrece las vistas nativas de ZCode", () => {
         {},
         createElement(ProjectSidebarNavigation, {
           props: {},
-          onCreate: vi.fn(),
+          
         }),
         createElement(ProjectSidebarListHeader, {
           onOpenCommandCenter: vi.fn(),
@@ -117,7 +117,7 @@ it("SBV04: la pantalla de entrada solo ofrece proyectos", () => {
       createElement(ProjectSidebarNavigation, {
         props: { onOpenAutomations: vi.fn(), onOpenPluginStore: vi.fn() },
         home: true,
-        onCreate: vi.fn(),
+        
       }),
       createElement(ProjectSidebarListHeader, {
         onOpenCommandCenter: vi.fn(),

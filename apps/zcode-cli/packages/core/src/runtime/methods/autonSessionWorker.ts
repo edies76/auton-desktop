@@ -9,7 +9,13 @@
 // pruebas: aquí solo se aplica lo que esa decisión resolvió.
 
 import { mkdir } from "node:fs/promises";
-import type { SessionId, SubagentPort } from "@zcode/contracts";
+import type {
+  Model,
+  ModelSelection,
+  SessionId,
+  SubagentPort,
+  SubagentRunOptions,
+} from "@zcode/contracts";
 import {
   ENTER_PLAN_MODE_TOOL_NAME,
   EXIT_PLAN_MODE_TOOL_NAME,
@@ -19,6 +25,7 @@ import type { AgentRuntimeInternal } from "../internal.js";
 import type { AgentRuntimeDeps } from "../types.js";
 import { cloneModelSelection } from "../model-selection.js";
 import { resolveSubagentSelection } from "../helpers/subagent-selection.js";
+import { modelSelectionFromActiveModel } from "./subagent.js";
 import { deriveChildClientPorts } from "../helpers/child-client-ports.js";
 import { createCoordinatorResponsePort } from "../../subagent/coordinator-response.js";
 import { buildAutonWorkerPromptForRequest } from "../../auton/workerPolicy.js";
@@ -100,17 +107,47 @@ export function buildMuseWorkerPrompt(
   ].join("\n");
 }
 
+/**
+ * La selección del worker es la del orquestador, con la misma precedencia
+ * que un subagente (runtime/methods/subagent.ts): primero el override
+ * explícito del despacho; si no hay, el modelo activo del turno que lo
+ * despachó; si tampoco, la selección guardada de la sesión orquestadora.
+ * Sin selección en ningún lado, `resolveSubagentSelection` falla el
+ * despacho en vez de arrancar al worker con otro proveedor por defecto.
+ */
+export function resolveAutonWorkerChildSelection(input: {
+  parentSelection?: ModelSelection | null;
+  model?: Model;
+  modelOverride?: SubagentRunOptions["modelOverride"];
+  resolveSelection?: (
+    selection: ModelSelection,
+  ) => import("@zcode/shared/model-selection").EffectiveModelSelectionResult;
+}): ModelSelection {
+  const { selection } = resolveSubagentSelection({
+    ...(input.parentSelection !== undefined
+      ? { parentSelection: input.parentSelection }
+      : {}),
+    ...(input.modelOverride ? { overrideSelection: input.modelOverride.selection } : {}),
+    ...(input.resolveSelection ? { resolveSelection: input.resolveSelection } : {}),
+  });
+  if (!input.modelOverride && input.model) {
+    return modelSelectionFromActiveModel(input.model);
+  }
+  return cloneModelSelection(selection);
+}
+
 async function createWorkerSessionRuntime(
   parent: AgentRuntimeInternal,
   deps: AgentRuntimeDeps,
   input: AutonSessionWorkerFactoryInput,
 ): Promise<AutonSessionWorkerHandle> {
   const { request, placement, agentId, sessionId, onEvent } = input;
-  const { selection } = resolveSubagentSelection({
+  const childSelection = resolveAutonWorkerChildSelection({
     parentSelection: parent.getSessionModelSelection(),
+    ...(input.model ? { model: input.model } : {}),
+    ...(input.modelOverride ? { modelOverride: input.modelOverride } : {}),
     resolveSelection: deps.resolveEffectiveModelSelection,
   });
-  const childSelection = cloneModelSelection(selection);
   const abort = new AbortController();
   const capturedEvents: import("@zcode/contracts").SessionEvent[] = [];
   let lastTranscript: readonly WorkerTranscriptEntry[] = [];

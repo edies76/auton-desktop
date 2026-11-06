@@ -525,7 +525,7 @@ describe("buildConversationTurnRenderUnits", () => {
     expect(units[0]?.workSegments?.[0]?.assistantHistoryDefaultOpen).toBe(false);
   });
 
-  it("el loop Auton se abre mientras corre y se colapsa al terminar", () => {
+  it("el loop Auton deja el header visible y el contenido cerrado", () => {
     const rows = (headerState: "running" | "completedSuccess") => [
       turnHeader(1, { state: headerState }),
       userInput(2, "revisa el README"),
@@ -541,12 +541,10 @@ describe("buildConversationTurnRenderUnits", () => {
     ];
 
     const [running] = buildConversationTurnRenderUnits(rows("running"));
-    expect(running?.assistantHistoryDefaultOpen).toBe(true);
-    expect(running?.workSegments?.[0]?.assistantHistoryDefaultOpen).toBe(true);
+    expect(running?.workSegments?.[0]?.autonLoop).toBe(true);
 
     const [completed] = buildConversationTurnRenderUnits(rows("completedSuccess"));
-    expect(completed?.assistantHistoryDefaultOpen).toBe(false);
-    expect(completed?.workSegments?.[0]?.assistantHistoryDefaultOpen).toBe(false);
+    expect(completed?.workSegments?.[0]?.autonLoop).toBe(true);
   });
 
   it("reconoce un turno Auton por su firma aunque trabaje con tools directas", () => {
@@ -560,7 +558,7 @@ describe("buildConversationTurnRenderUnits", () => {
 
     const [running] = buildConversationTurnRenderUnits(rows("running"));
     const runningSegment = running?.workSegments?.[0];
-    expect(runningSegment?.assistantHistoryDefaultOpen).toBe(true);
+    expect(runningSegment?.autonLoop).toBe(true);
     // La narración anterior y la final van fuera del loop; la tool, dentro.
     expect(
       (running?.workSegments ?? [])
@@ -590,6 +588,27 @@ describe("buildConversationTurnRenderUnits", () => {
       expect(segment.flowItems.some((item) => item.kind === "assistantHistory")).toBe(true);
       expect(segment.flowItems.some((item) => item.kind === "assistantText")).toBe(true);
     }
+  });
+
+  it("abre un loop por worker", () => {
+    const [unit] = buildConversationTurnRenderUnits([
+      turnHeader(1, { state: "running" }),
+      userInput(2, "manda dos workers"),
+      assistantText(3, "Mando el primero."),
+      toolCall(4, "Agent", { description: "Uno", subagent_type: "auton-worker" }),
+      subagent(5, { subagentType: "auton-worker", status: "success", summaryText: "uno" }),
+      assistantText(6, "Mando el segundo."),
+      toolCall(7, "Agent", { description: "Dos", subagent_type: "auton-worker" }),
+      subagent(8, { subagentType: "auton-worker", status: "success", summaryText: "dos" }),
+      assistantText(9, "Listo.\n\n— Auton · terminal9 · dos workers"),
+    ]);
+
+    const workerSegments = (unit?.workSegments ?? []).filter((segment) =>
+      segment.flowItems.some(
+        (item) => item.kind === "assistantHistory" && item.rows.some((row) => row.kind === "subagent"),
+      ),
+    );
+    expect(workerSegments).toHaveLength(2);
   });
 
   it("不按 raw /compact 文本隐藏 CLI 标记为 visible 的 user input", () => {

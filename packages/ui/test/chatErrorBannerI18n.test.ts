@@ -4,7 +4,10 @@ import {
   MEDIA_BUDGET_CURRENT_VIDEO_TOO_LARGE_ERROR_CODE,
   OFF_PEAK_TICKET_EXPIRED_MARKER,
 } from "@zcode/shared";
-import { resolveChatErrorBannerDisplayMessage } from "@/ChatErrorBanner.js";
+import {
+  resolveChatErrorBannerDisplayMessage,
+  shouldSuppressChatErrorBanner,
+} from "@/ChatErrorBanner.js";
 import type { IntlInstance } from "@/i18n/IntlProvider.js";
 import enUS from "@/i18n/locales/en-US.js";
 import zhCN from "@/i18n/locales/zh-CN.js";
@@ -21,6 +24,13 @@ function createIntl(messages: Record<string, string>): IntlInstance {
 }
 
 describe("ChatErrorBanner i18n", () => {
+  it("en Auton no muestra el banner de falta de modelo (sin Upgrade que ofrecer)", () => {
+    expect(
+      shouldSuppressChatErrorBanner({ code: "model_config_missing", message: "Model config is missing" }),
+    ).toBe(true);
+    expect(shouldSuppressChatErrorBanner({ code: "OTHER", message: "boom" })).toBe(false);
+  });
+
   it("uses the remote wording for an empty remote workspace instead of local plan copy", () => {
     const zhIntl = createIntl(zhCN);
     const enIntl = createIntl(enUS);

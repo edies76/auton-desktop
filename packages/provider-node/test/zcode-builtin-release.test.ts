@@ -580,6 +580,58 @@ describe("ZCode Built-in Release", () => {
     expect(JSON.parse(await readFile(activeFilePath, "utf8"))).toEqual(releaseObject(1, "model-a"));
     source.dispose();
   });
+
+  it("el snapshot conserva las plantillas que solo trae el bundled (las de Auton)", async () => {
+    const root = await temporaryRoot();
+    const bundledFilePath = join(root, "bundled.json");
+    const activeFilePath = join(root, "active.json");
+    const bundled = releaseObject(1, "model-a");
+    bundled.config.providerConfigRules.templateRules.push({
+      templateId: "auton-meta",
+      templateNameMap: { "en-US": "Meta" },
+      config: {
+        access: { type: "api-key", apiKeyManagementUrl: "https://dev.meta.ai" },
+        api: { type: "openai-chat-completions", baseUrl: "https://api.meta.ai/v1" },
+        builtinModelIds: ["muse-wonder-1.0"],
+        logo: { type: "builtin", key: "auton" },
+      },
+    } as never);
+    bundled.config.modelConfigRules.templateModelRules.push({
+      templateId: "auton-meta",
+      modelId: "muse-wonder-1.0",
+      config: { properties: { supportsToolCall: true } },
+    } as never);
+    await writeFile(bundledFilePath, JSON.stringify(bundled), "utf8");
+    // El activo simula la caché remota: revision mayor y sin esa plantilla.
+    await writeRelease(activeFilePath, 2, "model-a");
+
+    const source = new NodeZCodeBuiltinProviderConfigSource({
+      bundledFilePath,
+      activeFilePath,
+      watch: false,
+    });
+    try {
+      const snapshot = await source.read();
+      expect(snapshot.providerTemplates?.has("auton-meta")).toBe(true);
+      expect(snapshot.providerTemplates?.get("auton-meta")?.config.api.baseUrl).toBe(
+        "https://api.meta.ai/v1",
+      );
+      const resolved = snapshot.models.resolve({
+        providerId: "personal-auton-meta",
+        modelId: "muse-wonder-1.0",
+        apiType: "openai-chat-completions",
+        baseUrl: "https://api.meta.ai/v1",
+        templateId: "auton-meta",
+      });
+      expect(resolved.properties?.supportsToolCall).toBe(true);
+      // La mezcla es en memoria: el archivo activo queda como estaba.
+      expect(JSON.parse(await readFile(activeFilePath, "utf8"))).toEqual(
+        releaseObject(2, "model-a"),
+      );
+    } finally {
+      source.dispose();
+    }
+  });
 });
 
 async function temporaryRoot(): Promise<string> {

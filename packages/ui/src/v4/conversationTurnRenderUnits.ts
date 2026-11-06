@@ -62,7 +62,7 @@ export function hasAutonWorkerRows(rows: readonly ConversationRow[]): boolean {
  * turno del orquestador cuando trabajó con tools directas (sin `auton-worker`),
  * sin cambiar el layout de sesiones de ZCode que no firman.
  */
-function hasAutonSignature(rows: readonly ConversationRow[]): boolean {
+export function hasAutonSignature(rows: readonly ConversationRow[]): boolean {
   return rows.some(
     (row) =>
       row.kind === "assistantText" && /(^|\n)\s*—\s*Auton\b/u.test(row.text),
@@ -283,7 +283,7 @@ function materializeDraftUnit(
     (row) => !leadingBoundaryRowIds.has(row.rowId) && !browserTurnEndRowIds.has(row.rowId),
   );
   const isAutonTurn =
-    hasAutonWorkerRows(flowRows) || hasAutonSignature(flowRows);
+    hasAutonWorkerRows(draft.orderedRows) || hasAutonSignature(draft.orderedRows);
   const latestAssistantTextRow =
     actionAssistantTextRow ??
     ((!isRunning || isAutonTurn) && lastFlowRow && isAssistantTextRow(lastFlowRow)
@@ -387,26 +387,29 @@ function normalizeRenderUnitPosition(
 ): ConversationTurnRenderUnit {
   const isLastTurn = index === total - 1;
   const forceOpenHistory = shouldForceOpenAbnormalHistory(unit.header, options.sessionPhase);
-  const hasAutonWorker = hasAutonWorkerRows(unit.assistantWorkRows);
-  const autonLoopOpen =
-    hasAutonWorker &&
-    (unit.isRunning ||
-      unit.workStatus?.state === "running" ||
-      unit.workSegments?.at(-1)?.workStatus?.state === "running");
+  const unitRows = [
+    ...unit.assistantWorkRows,
+    ...unit.assistantHistoryRows,
+    ...unit.assistantFollowingRows,
+    ...unit.assistantTextRows,
+    ...unit.assistantTailRows,
+  ];
+  const hasAutonWorker =
+    hasAutonWorkerRows(unitRows) || hasAutonSignature(unitRows);
   const assistantHistoryDefaultOpen =
     unit.workSegments && unit.workSegments.length > 0
       ? !unit.timelineOnly &&
         (forceOpenHistory ||
-          autonLoopOpen ||
-          (isLastTurn && unit.workSegments.at(-1)?.workStatus?.state === "running") ||
-          (unit.workSegments.length === 1 &&
-            unit.latestAssistantTextRow === undefined &&
-            unit.assistantWorkRows.length > 0))
+          (!hasAutonWorker &&
+            ((isLastTurn && unit.workSegments.at(-1)?.workStatus?.state === "running") ||
+              (unit.workSegments.length === 1 &&
+                unit.latestAssistantTextRow === undefined &&
+                unit.assistantWorkRows.length > 0))))
       : !unit.timelineOnly &&
         (forceOpenHistory ||
-          autonLoopOpen ||
-          (isLastTurn && unit.workStatus?.state === "running") ||
-          (unit.latestAssistantTextRow === undefined && unit.assistantWorkRows.length > 0));
+          (!hasAutonWorker &&
+            ((isLastTurn && unit.workStatus?.state === "running") ||
+              (unit.latestAssistantTextRow === undefined && unit.assistantWorkRows.length > 0))));
   const workSegments = unit.workSegments?.map((segment, segmentIndex, segments) =>
     segmentIndex === segments.length - 1
       ? {
@@ -414,11 +417,11 @@ function normalizeRenderUnitPosition(
           assistantHistoryDefaultOpen:
             !unit.timelineOnly &&
             (forceOpenHistory ||
-              autonLoopOpen ||
-              (isLastTurn && segment.workStatus?.state === "running") ||
-              (segments.length === 1 &&
-                unit.latestAssistantTextRow === undefined &&
-                segment.assistantWorkRows.length > 0)),
+              (!hasAutonWorker &&
+                ((isLastTurn && segment.workStatus?.state === "running") ||
+                  (segments.length === 1 &&
+                    unit.latestAssistantTextRow === undefined &&
+                    segment.assistantWorkRows.length > 0)))),
         }
       : segment,
   );

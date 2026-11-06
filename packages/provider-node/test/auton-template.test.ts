@@ -10,6 +10,7 @@ const models = ["beam-free", "longcat-2.5-preview-free"];
 let rules: ModelConfigRules;
 let templates: {
   templateId: string;
+  templateNameMap?: Record<string, string>;
   config: {
     api: { type: string; baseUrl: string };
     access: unknown;
@@ -63,6 +64,11 @@ const metaModels = [
 ];
 
 describe("Auton Meta provider template", () => {
+  it("se presenta solo como Meta, sin el prefijo Auton", () => {
+    const t = templates.find((t) => t.templateId === "auton-meta");
+    expect(t?.templateNameMap).toEqual({ "zh-CN": "Meta", "en-US": "Meta" });
+  });
+
   it("expone el template auton-meta sobre la API de Meta con sus modelos", () => {
     const t = templates.find((t) => t.templateId === "auton-meta");
     expect(t).toBeDefined();

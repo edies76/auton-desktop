@@ -51,6 +51,7 @@ const PRIVATE_PAGES = [
   { slug: "orquestador-planea", file: "docs/private/orquestador-planea.md", title: "El orquestador que planea", blurb: "Cinco pasos, proporción y los dos mecanismos de la D7." },
   { slug: "chat-intercalado", file: "context/UI-CHAT-INTERCALADO.md", title: "Chat intercalado", blurb: "Propuesta de una sola crónica: narración, canales y eventos en orden." },
   { slug: "deuda-y-riesgos", file: "docs/private/deuda-y-riesgos.md", title: "Deuda y riesgos", blurb: "Lo que falta y lo que puede romperse." },
+  { slug: "poda-tanda-1-propuesta", file: "docs/private/poda-tanda-1-propuesta.md", title: "Poda tanda 1: propuesta", blurb: "Qué herramientas no llamó el orquestador en una corrida real y qué se propone esconder primero." },
 ];
 
 const escapeHtml = (text) =>

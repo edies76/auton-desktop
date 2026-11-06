@@ -583,8 +583,13 @@ export function App({
   const handleCreateTaskIfWritable = useCallback(
     (request?: Parameters<typeof onCreateTask>[0]) => {
       // En la pantalla de proyectos no hay tarea sin proyecto: el atajo y la
-      // paleta esperan a que el humano elija o cree uno.
-      if (useAutonHomeStore.getState().homeVisible) return;
+      // paleta esperan a que el humano elija o cree uno. Un pedido con proyecto
+      // explícito (elegir/crear) sí puede preparar su workspace desde el home.
+      const requestHasProject =
+        typeof request === "object" &&
+        request !== null &&
+        Boolean(request.projectId || request.targetWorkspace?.projectId);
+      if (useAutonHomeStore.getState().homeVisible && !requestHasProject) return;
       if (!workspaceReadOnlyReason) {
         onCreateTask(request);
       }
