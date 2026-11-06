@@ -382,14 +382,17 @@ function resolveBundledWorkspaceZCodeAgentCommand(
   }
 
   const sourceEntrypoint = findUpward("apps/zcode-cli/packages/cli/src/main.ts");
-  const tsxEntrypoint = findUpward("node_modules/.bin/tsx");
-  if (!sourceEntrypoint || !tsxEntrypoint) {
+  // El .bin/tsx de pnpm es un script de shell sin extension: en Windows `spawn`
+  // sin shell no puede ejecutarlo. Se usa el cli real con el node actual.
+  const tsxCli = findUpward("node_modules/tsx/dist/cli.mjs");
+  if (!sourceEntrypoint || !tsxCli) {
     return null;
   }
   return {
-    command: tsxEntrypoint,
-    args: [sourceEntrypoint, "app-server", "--stdio"],
+    command: process.execPath,
+    args: [tsxCli, sourceEntrypoint, "app-server", "--stdio"],
     cwd: context.workspacePath,
+    ...(process.versions.electron ? { env: { ELECTRON_RUN_AS_NODE: "1" } } : {}),
   };
 }
 

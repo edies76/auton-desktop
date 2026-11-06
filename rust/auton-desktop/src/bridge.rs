@@ -48,7 +48,11 @@ impl EngineBridge {
             }
             command
         } else {
-            let mut command = Command::new("corepack");
+            #[cfg(windows)]
+            let corepack: &std::ffi::OsStr = "corepack.cmd".as_ref();
+            #[cfg(not(windows))]
+            let corepack: &std::ffi::OsStr = "corepack".as_ref();
+            let mut command = Command::new(corepack);
             command.args([
                 "pnpm@10.33.2",
                 "exec",
