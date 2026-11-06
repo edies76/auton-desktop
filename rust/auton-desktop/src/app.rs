@@ -8,7 +8,7 @@ use gpui::{
 use serde_json::{Value, json};
 use std::{
     fs,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
@@ -23,12 +23,13 @@ pub fn run() -> Result<()> {
         .map(|bridge| Arc::new(Mutex::new(bridge)));
     let project_path = project.display().to_string();
     Application::new().run(move |cx: &mut App| {
-        let bounds = Bounds::centered(None, size(px(1280.0), px(820.0)), cx);
+        let bounds = Bounds::centered(None, size(px(1360.0), px(900.0)), cx);
         let project_path = project_path.clone();
         let engine = bridge.clone();
         cx.open_window(
             WindowOptions {
                 window_bounds: Some(WindowBounds::Windowed(bounds)),
+                window_min_size: Some(size(px(960.0), px(640.0))),
                 ..Default::default()
             },
             move |window, cx| {
@@ -227,6 +228,9 @@ impl AutonWindow {
                         && let Some(engine) = &self.engine
                         && let Ok(mut engine) = engine.lock()
                     {
+                        // La sesión guardada ya no existe: no volver a intentar
+                        // el resume (6 s) en cada arranque.
+                        let _ = fs::remove_file(&self.session_file);
                         let _ = engine.request(
                             "session.create",
                             json!({"workspacePath": self.project.to_string()}),
@@ -437,7 +441,7 @@ impl Render for AutonWindow {
             div().id("sidebar").flex().w(px(260.0)).flex_col().gap_6().overflow_y_scroll().border_r_1().border_color(rgb(0x242832)).bg(rgb(0x12141a)).p_6()
                 .child(div().text_xl().font_weight(gpui::FontWeight::BOLD).child("auton"))
                 .child(div().text_xs().text_color(rgb(0x777e8c)).child("PROYECTO ACTUAL"))
-                .child(div().text_sm().child(self.project.clone()))
+                .child(div().text_sm().child(project_label(&self.project)))
                 .child(div().mt_8().text_xs().text_color(rgb(0x777e8c)).child("OBJETIVO"))
                 .child(div().rounded_md().bg(rgb(0x1a1d25)).p_3().text_sm().child(self.goal.clone()))
                 .child(div().mt_4().text_xs().text_color(rgb(0x777e8c)).child("PLAN"))
@@ -450,7 +454,7 @@ impl Render for AutonWindow {
             div().flex().flex_1().flex_col().p_8().child(
                 div().flex().items_center().justify_between().border_b_1().border_color(rgb(0x242832)).pb_5()
                     .child(div().text_lg().child("Espacio de trabajo"))
-                    .child(div().text_xs().text_color(rgb(0x9ea3ad)).child(self.status.clone()))
+                    .child(div().max_w(px(560.0)).truncate().text_xs().text_color(rgb(0x9ea3ad)).child(self.status.clone()))
             ).child(
                 div().id("transcript").flex().flex_1().flex_col().gap_4().overflow_y_scroll().py_6().children(if transcript.is_empty() {
                     vec![div().mt_12().text_center().text_color(rgb(0x777e8c)).child("Cuéntale a Auton qué resultado necesitas. Aquí verás el trabajo y sus eventos reales.")]
@@ -461,6 +465,21 @@ impl Render for AutonWindow {
                     .child(div().id("send-button").cursor_pointer().rounded_lg().bg(rgb(0xe84a36)).px_5().py_3().text_sm().font_weight(gpui::FontWeight::BOLD).child("Enviar").on_click(cx.listener(Self::send)))
             )
         )
+    }
+}
+
+fn project_label(project: &str) -> String {
+    let path = Path::new(project);
+    let Some(name) = path.file_name().and_then(|value| value.to_str()) else {
+        return project.to_string();
+    };
+    match path
+        .parent()
+        .and_then(Path::file_name)
+        .and_then(|value| value.to_str())
+    {
+        Some(parent) if !parent.is_empty() => format!("…/{parent}/{name}"),
+        _ => name.to_string(),
     }
 }
 

@@ -38,9 +38,10 @@ pub struct EngineBridge {
 
 impl EngineBridge {
     pub fn start() -> Result<Self> {
-        let repo_root = std::env::var_os("AUTON_REPO_ROOT")
-            .map(PathBuf::from)
-            .unwrap_or(std::env::current_dir()?);
+        // En Windows el binario suele arrancarse desde `rust/` o desde
+        // `rust/target/<profile>`. El puente vive en la raíz del repo; se busca
+        // hacia arriba para no exigir `AUTON_REPO_ROOT` en cada arranque.
+        let repo_root = find_repo_root();
         let mut command = if let Some(program) = std::env::var_os("AUTON_BRIDGE_COMMAND") {
             let mut command = Command::new(program);
             if let Some(script) = std::env::var_os("AUTON_BRIDGE_SCRIPT") {
@@ -137,6 +138,29 @@ impl Drop for EngineBridge {
         let _ = self.child.kill();
         let _ = self.child.wait();
     }
+}
+
+fn find_repo_root() -> PathBuf {
+    if let Some(value) = std::env::var_os("AUTON_REPO_ROOT") {
+        return PathBuf::from(value);
+    }
+    let mut starts = Vec::new();
+    if let Ok(cwd) = std::env::current_dir() {
+        starts.push(cwd);
+    }
+    if let Ok(exe) = std::env::current_exe() {
+        if let Some(parent) = exe.parent() {
+            starts.push(parent.to_path_buf());
+        }
+    }
+    for start in starts {
+        for ancestor in start.ancestors() {
+            if ancestor.join("packages/auton-bridge/main.ts").is_file() {
+                return ancestor.to_path_buf();
+            }
+        }
+    }
+    std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."))
 }
 
 fn auton_home() -> String {
