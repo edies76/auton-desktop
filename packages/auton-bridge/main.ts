@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 import { createInterface } from "node:readline";
 import { readFile } from "node:fs/promises";
 import {
-  createServerHostServices,
+  createLocalServices,
   disposeServiceResourcesAndWait,
   getAppConfigDir,
   materializeZCodeBuiltinProviderConfig,
@@ -52,8 +52,8 @@ async function ensureServices(): Promise<void> {
     const providerConfig = process.env.AUTON_BUILTIN_PROVIDER_CONFIG_FILE?.trim() || resolve(repoRoot, "config/provider/zcode-builtin.json");
     const configText = await readFile(providerConfig, "utf8");
     const providerConfigPath = await materializeZCodeBuiltinProviderConfig({ environmentConfigRoot: getAppConfigDir(), content: configText });
-    const host = await createServerHostServices({ sourceServerId: "auton-native-local", zcodeBuiltinProviderConfigFilePath: providerConfigPath });
-    services = host.services;
+    const host = await createLocalServices({ zcodeBuiltinProviderConfigFilePath: providerConfigPath });
+    services = host;
     agent = services.get(AgentServiceToken);
   })();
   return initialized;
@@ -72,8 +72,9 @@ async function handle(request: Request): Promise<void> {
     if (request.method === "session.create") {
       await ensureServices();
       const workspacePath = field<string>(params, "workspacePath");
-      const ready = await agent!.initialize({ workspacePath });
-      if (!ready.available) throw new Error(ready.reason || "Agent runtime unavailable; configure a provider first");
+      // No se inicializa antes: `createSession` reserva el proyecto antes de
+      // arrancar el agente. Adelantar el proceso deja su SQLite tomando la
+      // misma base y la reserva se queda esperando el lock.
       const snapshot = await agent!.createSession({ workspacePath, persistence: "immediate" });
       const sessionId = snapshot.session.sessionId;
       sessions.set(sessionId, { workspacePath, sessionId, sequence: 0 });
