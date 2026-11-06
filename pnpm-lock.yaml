@@ -826,6 +826,12 @@ importers:
 
   apps/zcode-cli/tools/typescript: {}
 
+  packages/auton-bridge:
+    dependencies:
+      '@zcode/services':
+        specifier: workspace:*
+        version: link:../services
+
   packages/client:
     dependencies:
       '@zcode/rpc':
