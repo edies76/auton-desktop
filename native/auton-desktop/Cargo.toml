@@ -1,0 +1,17 @@
+[package]
+name = "auton-desktop-native"
+version = "0.1.0"
+edition = "2024"
+publish = false
+
+[dependencies]
+crossbeam-channel = "0.5"
+eframe = { version = "0.37.0", default-features = false, features = ["accesskit", "default_fonts", "glow", "clipboard", "x11", "wayland"] }
+rfd = { version = "0.16", default-features = false, features = ["async-std", "wayland", "xdg-portal"] }
+serde_json = "1"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+opt-level = "s"
