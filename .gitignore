@@ -82,3 +82,6 @@ site/private-dist/
 
 # Capturas generadas por las pruebas E2E
 e2e-*.png
+
+# Rust build artifacts for the native Auton experiments
+/rust/target/

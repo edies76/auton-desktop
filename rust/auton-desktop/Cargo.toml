@@ -1,0 +1,16 @@
+[package]
+name = "auton-desktop"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "auton"
+path = "src/main.rs"
+
+[dependencies]
+auton-core = { path = "../auton-core" }
+anyhow.workspace = true
+gpui = "=0.2.2"
+serde.workspace = true
+serde_json.workspace = true

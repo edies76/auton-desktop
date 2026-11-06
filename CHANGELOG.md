@@ -4,6 +4,20 @@ Todo lo relevante de Auton Desktop. Formato basado en
 [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/); versionado
 [SemVer](https://semver.org/lang/es/) mientras no haya releases p├║blicas.
 
+## [0.20.2] — 2026-11-06
+
+Propuesta experimental de shell nativo en Rust.
+
+### Agregado
+
+- App de escritorio GPUI y puente JSONL al AgentRuntime existente. Muestra sesión real, plan, workers observados y evidencia.
+- Primer crate `auton-core` Rust compatible con el plan v1 y registro JSONL.
+- Guía de arranque y protocolo de medición frente a Electron; sin cifras de rendimiento hasta hacer la comparación.
+
+### Estado
+
+- Linux compila. No verificados proveedor real, smoke visual, Windows ni benchmark. No reemplaza todavía la distribución estable Electron.
+
 ## [0.20.1] — 2026-11-04
 
 Poda de ruido en la pantalla vacía y zoom un paso mayor.

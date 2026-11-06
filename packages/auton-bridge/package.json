@@ -1,0 +1,11 @@
+{
+  "name": "@auton/native-bridge",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.14.0"
+  },
+  "dependencies": {
+    "@zcode/services": "workspace:*"
+  }
+}
