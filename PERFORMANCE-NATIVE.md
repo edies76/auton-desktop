@@ -18,3 +18,12 @@ La app nueva dibuja la ventana con GPUI y no incluye Chromium. Para conservar el
 ## Estado de esta comparación
 
 No hay mediciones todavía. El entorno de implementación no tiene `$DISPLAY` ni `WAYLAND_DISPLAY`, por lo que no permite cronometrar una ventana visible. Tampoco se construyó ni ejecutó un baseline Electron equivalente en este entorno. No se publican cifras estimadas de arranque o RAM.
+
+## Windows: primera medición (2026-11-06)
+
+- Equipo: Windows 11 x64; build `release`; proyecto temporal sin sesión previa; sin otros procesos del runtime.
+- **Apertura en frío hasta ventana visible**: **1.0 s** (release), **1.5 s** (debug). La sesión real se conecta después, en segundo plano.
+- **Memoria a los 6 s**: **51.4 MB** para `auton.exe` (release) y **316.2 MB** para el árbol Node del puente (5 procesos). En debug: 48.8 MB + 369.3 MB.
+- **Binario**: 10.8 MB.
+- No hay baseline Electron medido en este equipo. No se afirma una reducción del 50%; solo se publican las cifras de esta app y sus condiciones.
+- El árbol Node incluye el runtime TypeScript que conserva el agente y los proveedores; es la parte dominante. La ventana Rust y su memoria son ligeras.
