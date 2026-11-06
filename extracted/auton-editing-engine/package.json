@@ -1,0 +1,19 @@
+{
+  "name": "@auton/editing-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.14.0"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.d.ts",
+      "import": "./src/index.mjs"
+    }
+  },
+  "scripts": {
+    "check": "node --check src/index.mjs && node --check src/engine.mjs && node --check src/patch.mjs && node --check src/path.mjs",
+    "test": "node --test test/*.test.mjs"
+  }
+}
