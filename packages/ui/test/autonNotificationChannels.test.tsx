@@ -4,7 +4,10 @@ import { fileURLToPath } from "node:url";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import { createAutonNotificationRegistry } from "@zcode/shared/auton-notifications";
-import { NotificationChannelsPanel } from "../src/auton/NotificationChannelsPanel.js";
+import {
+  NotificationChannelsPanel,
+  notificationDisplayText,
+} from "../src/auton/NotificationChannelsPanel.js";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
@@ -14,6 +17,31 @@ const here = dirname(fileURLToPath(import.meta.url));
  * registro que usa la tool del orquestador). Sin reimplementar el reductor.
  */
 describe("panel de canales del orquestador", () => {
+  it("la fila muestra el hecho legible, no el envoltorio crudo de la tarea", () => {
+    const raw = [
+      "<task-notification>",
+      "<task-id>exec_854b75fd-4157-495d-a71a-0e17dbb56a45</task-id>",
+      "<status>completed</status>",
+      '<summary>Background command "esperar 5 segundos" completed (exit code 0)</summary>',
+      "</task-notification>",
+    ].join("\n");
+    expect(notificationDisplayText(raw)).toBe(
+      'Background command "esperar 5 segundos" completed (exit code 0)',
+    );
+    // Entidades (incluido el doble escape real) quedan decodificadas.
+    expect(
+      notificationDisplayText(
+        "<task-notification><summary>envió &amp;quot;prueba&amp;quot; al orquestador</summary></task-notification>",
+      ),
+    ).toBe('envió "prueba" al orquestador');
+    // Sin summary: se quitan etiquetas y se colapsa el espacio.
+    expect(
+      notificationDisplayText("<task-notification><status>completed</status></task-notification>"),
+    ).toBe("completed");
+    // Texto llano del canal de worker pasa tal cual.
+    expect(notificationDisplayText("voy por el CSS")).toBe("voy por el CSS");
+  });
+
   it("la conversación monta el panel sobre las filas reales de notificación", () => {
     const paneSource = readFileSync(resolve(here, "../src/v4/SessionPane.tsx"), "utf8");
     expect(paneSource).toContain("NotificationChannelsPanel");
@@ -45,6 +73,9 @@ describe("panel de canales del orquestador", () => {
       <NotificationChannelsPanel notifications={registry.list()} />,
     );
     expect(before).toContain('data-testid="auton-notification-channels"');
+    expect(before).toContain('data-testid="auton-notification-channels-toggle"');
+    // La tarjeta opaca del dock, como el resto de superficies de la conversación.
+    expect(before).toContain("rounded-xl border border-border bg-card");
     expect(before).toContain("Workers");
     expect(before).toContain("Agentes externos");
     expect(before).toContain('data-testid="auton-channel-unread-worker"');
@@ -52,6 +83,8 @@ describe("panel de canales del orquestador", () => {
     expect(before).toMatch(/auton-channel-unread-external"[^>]*>1</);
     expect(before).toContain("voy por el CSS, faltan dos secciones");
     expect(before).toContain("terminé la revisión del README");
+    // El texto crudo solo vive en el tooltip de la fila.
+    expect(before).toContain('title="terminé la revisión del README"');
     expect(before).toContain("nuevo");
 
     // Operación real de lectura: solo el canal de workers.
