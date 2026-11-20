@@ -157,9 +157,12 @@ Esto es lo que hace que el multiagente **se sienta** y no se administre.
   botón") y uno grande ("quiero mejorar el modo de estudio de Lunar").
 - **Qué tiene que verse**:
   - En el pequeño: **un encargo**, sin exploración previa ni plan largo, y la
-    frase que lo justifica: **"es un archivo, así que un encargo"**.
+    frase que lo justifica: **"alcance pequeño, un encargo"** (lo que decide es
+    el tamaño, no que sea un archivo).
   - En el grande: **conversación**, alternativas con ventajas y límites, y un
     plan con dependencias y verificación. **No** una lista de veinte tareas.
+    Si el entregable es uno pero grande, el corte es **por frentes en paralelo**
+    (investigación, secciones con costura, verificación), nunca todo a un worker.
 - **Cómo se comprueba sin modelo**: `auton-orchestrator-planning.test.ts` exige
   que la sección ensamblada tenga la regla, el ejemplo y la frase de
   justificación. La corrida con modelo se anota abajo.

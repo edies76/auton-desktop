@@ -40,6 +40,14 @@ describe("el orquestador sabe de qué equipo es y cómo se habla", () => {
     expect(doctrine).toContain("No hay worker invisible");
   });
 
+  it("la doctrina manda partir un entregable grande en varios frentes", () => {
+    expect(doctrine).toContain("no lo metas entero a un worker");
+    expect(doctrine).toContain("pártelo por frentes que");
+    expect(doctrine).toContain("no se pisen");
+    expect(doctrine).toContain("verificación en carriles");
+    expect(doctrine).toContain("Nunca dos workers escribiendo el mismo archivo a la vez");
+  });
+
   it("la doctrina llega al prompt ensamblado, no se queda en el archivo", () => {
     const root = mkdtempSync(join(tmpdir(), "auton-doctrine-"));
     roots.push(root);

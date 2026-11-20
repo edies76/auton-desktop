@@ -61,8 +61,22 @@ describe("el orquestador que sabe planear y conversar", () => {
     expect(staticSection).toContain("La proporción");
     expect(staticSection.toLowerCase()).toContain("un cambio de un botón o de un texto");
     expect(staticSection).toContain("modo de estudio de Lunar");
-    expect(staticSection).toContain("es un archivo, así que un encargo");
+    expect(staticSection).toContain("entregable grande, varios frentes");
+    expect(staticSection).toContain('"Es un archivo" no basta');
     expect(staticSection).toContain("No infles lo pequeño ni aplanes lo grande");
+  });
+
+  it("reparte varios workers cuando el encargo se puede partir", () => {
+    expect(staticSection).toContain("## Reparto en paralelo");
+    expect(staticSection).toContain("El default no es un worker, es el mejor reparto");
+    expect(staticSection).toContain("frentes que no se pisen");
+    expect(staticSection).toContain("archivo propio");
+    expect(staticSection).toContain("Nunca dos workers sobre el mismo archivo");
+    expect(staticSection).toContain("un integrador");
+    expect(staticSection).toContain("verificación en");
+    expect(staticSection).toContain("paralelizar de más también es un fallo");
+    // La lección vieja (un archivo = una fila) ya no está en el prompt.
+    expect(staticSection).not.toContain("una fila, no un equipo");
   });
 
   it("se comporta como compañero: una pregunta con recomendación, alcance y aviso", () => {
