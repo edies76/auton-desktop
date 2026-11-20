@@ -8,6 +8,7 @@ import { escapeXml } from "../../runtime-task/notification.js";
 import { clearWaitingForAnswer } from "../../auton/answerLock.js";
 import { autonNotificationRegistryFor } from "@zcode/shared/auton-notifications";
 import { SessionEventType } from "@zcode/contracts";
+import { wakeOrchestratorForNotifications } from "./auton-wake.js";
 
 export function formatSubagentMessage(input: {
   agentId: string;
@@ -72,7 +73,9 @@ export function enqueueSubagentMessage(
     summary: command.summary.slice(0, 200),
   });
   // Canal de workers: el mensaje entra como notificación encolada, no como
-  // mensaje del humano ni como turno. El orquestador decide leerlo.
+  // mensaje del humano. Su contenido se lee con AutonNotifications; además
+  // este aviso enciende un turno genérico del orquestador (auton-wake) para
+  // que el humano no se quede sin decir nada mientras el worker reporta.
   const registry = autonNotificationRegistryFor(String(this.sessionId));
   const notification = registry.enqueue({
     channel: "worker",
@@ -133,6 +136,7 @@ export function enqueueSubagentMessage(
   // El worker respondió: la pregunta que el orquestador marcó como decisión
   // deja de estar pendiente. El candado era suyo y él lo levanta al recibir.
   clearWaitingForAnswer(this.runtimeTaskRegistry, input.agentId);
+  wakeOrchestratorForNotifications(this, input.traceContext);
   return undefined;
 }
 

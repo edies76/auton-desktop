@@ -83,4 +83,19 @@ describe("auton-worker registrado como built-in", () => {
     expect(worker.systemPrompt).toContain("REPORTE");
     expect(worker.systemPrompt).toContain("POLÍTICA DE ESFUERZO: standard");
   });
+
+  it("su prompt exige recaps de avance, problema y verificación", () => {
+    const worker = normalizeAgentProfiles([]).find(
+      (profile) => profile.name === AUTON_WORKER_AGENT_TYPE,
+    )!;
+    const prompt = worker.systemPrompt;
+    expect(prompt).toContain("RECAPS DE AVANCE (obligatorios)");
+    expect(prompt).toContain("RespondToCoordinator");
+    expect(prompt).toContain("cierres una pieza del brief");
+    expect(prompt).toContain("encuentres un problema o error");
+    expect(prompt).toContain("comprobación o verificación");
+    expect(prompt).toContain("sin publicar nada, manda un recap de una línea");
+    expect(prompt).toContain("qué hice · qué encontré · qué sigue");
+    expect(prompt).toContain("no sustituye el REPORTE final");
+  });
 });

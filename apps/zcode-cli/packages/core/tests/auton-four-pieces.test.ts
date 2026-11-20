@@ -42,6 +42,12 @@ describe("las cuatro piezas del núcleo", () => {
     expect(orchestratorSection).toContain("AutonNotifications");
     expect(orchestratorSection).toContain("Canales y avisos");
     expect(orchestratorSection).toContain("notificaciones");
+    // El aviso despierta un turno de guía y el orquestador da el parte; los
+    // recaps del worker son la otra mitad del trato.
+    expect(orchestratorSection).toContain("te despierta un turno con una guía genérica");
+    expect(orchestratorSection).toContain("lee los avisos y dile al humano lo");
+    expect(orchestratorSection).toContain("recaps de avance");
+    expect(orchestratorSection).toContain("pídele un recap");
   });
 
   it("el prompt del orquestador dice CUÁNDO usar cada una", () => {

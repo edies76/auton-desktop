@@ -124,11 +124,13 @@ describe("el orquestador que sabe planear y conversar", () => {
     expect(staticSection).toContain("verifica lo básico");
   });
 
-  it("los dos canales llegan como notificaciones y se leen con AutonNotifications", () => {
+  it("los dos canales llegan como notificaciones, despiertan y se leen con AutonNotifications", () => {
     expect(staticSection).toContain("## Canales y avisos");
-    expect(staticSection).toContain("no interrumpen ni abren turno solos");
     expect(staticSection).toContain("AutonNotifications");
     expect(staticSection).toContain("marca leído");
+    expect(staticSection).toContain("te despierta un turno");
+    expect(staticSection).toContain("lee los avisos y dile al humano lo");
+    expect(staticSection).toContain("recaps de avance");
   });
 
   it("el escaneo del proyecto entra en la sección y el análisis pendiente se anuncia", () => {

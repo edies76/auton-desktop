@@ -9,6 +9,7 @@ import type { SealBackgroundTaskNotificationsInput } from "../types.js";
 import { shouldSuppressSealedSubagentBashNotification } from "../../runtime-task/notification-policy.js";
 import { getAutonLiveLoop } from "../../auton/live-loop.js";
 import { autonNotificationRegistryFor } from "@zcode/shared/auton-notifications";
+import { wakeOrchestratorForNotifications } from "./auton-wake.js";
 
 export function enqueueBackgroundTaskNotification(
   this: AgentRuntimeInternal,
@@ -47,10 +48,10 @@ export function enqueueBackgroundTaskNotification(
     });
     return;
   }
-  const commandId = createRuntimeCommandId();
   // Canal externo: el aviso de otra sesión/agente entra como notificación
-  // encolada. No abre turno ni se inyecta como mensaje del humano; el
-  // orquestador decide leerlo.
+  // encolada para lectura; además despierta un aviso genérico al orquestador
+  // (ver auton-wake) para que no se quede sin decir nada. El contenido sigue
+  // viajando solo por la lectura.
   const registry = autonNotificationRegistryFor(String(this.sessionId));
   const queued = registry.enqueue({
     channel: "external",
@@ -86,6 +87,7 @@ export function enqueueBackgroundTaskNotification(
       channel: "external",
     });
   });
+  wakeOrchestratorForNotifications(this, notification.traceContext);
 }
 
 export function sealBackgroundTaskNotifications(

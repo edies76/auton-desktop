@@ -4,6 +4,7 @@ import { autonNotificationRegistryFor } from "@zcode/shared/auton-notifications"
 import { createTestAgentRuntime } from "./test-agent-runtime.js";
 import { createTestSessionEventStore } from "./test-event-store.js";
 import { AutonLiveLoop, registerAutonLiveLoop } from "../src/auton/live-loop.js";
+import { resetAutonWakeWindow } from "../src/auton/wake.js";
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -16,11 +17,12 @@ function stopModel(generateText: ReturnType<typeof vi.fn>) {
 
 /**
  * El turno termina aunque queden workers vivos: el humano puede escribir y
- * enviar. El evento del worker entra por la cola de comandos y abre un turno
+ * enviar. El aviso del worker entra por la cola de comandos con una guía
+ * genérica (el contenido solo viaja por AutonNotifications) y abre un turno
  * nuevo; el latido sigue vivo mientras el canal existe.
  */
 describe("turno vivo sobre una sesión real", () => {
-  it("cierra para dejar escribir y el evento del worker abre un turno nuevo", async () => {
+  it("cierra para dejar escribir y el aviso del worker abre un turno de guía", async () => {
     const sessionId = createSessionId("auton-live-turn");
     const onHeartbeat = vi.fn();
     const generateText = vi.fn(async () => ({
@@ -58,8 +60,9 @@ describe("turno vivo sobre una sesión real", () => {
     expect(onHeartbeat).toHaveBeenCalled();
     const callsBeforeNotification = generateText.mock.calls.length;
 
-    // La ruta externa encola una notificación; no arranca otro turno. El
-    // orquestador la leerá cuando decida.
+    // La ruta externa encola una notificación y despierta un turno de guía:
+    // el aviso arranca el turno, pero su contenido no viaja en él.
+    resetAutonWakeWindow(String(sessionId));
     runtime.enqueueBackgroundTaskNotification({
       text: "el worker terminó",
       traceContext: createRootTraceContext({
@@ -67,8 +70,13 @@ describe("turno vivo sobre una sesión real", () => {
         turnId: "turn-live" as never,
       }),
     });
-    await wait(60);
-    expect(generateText.mock.calls.length).toBe(callsBeforeNotification);
+    await vi.waitFor(
+      () => expect(generateText.mock.calls.length).toBe(callsBeforeNotification + 1),
+      { timeout: 5_000 },
+    );
+    const wakePayload = JSON.stringify(generateText.mock.calls.at(-1));
+    expect(wakePayload).toContain("avisos sin leer");
+    expect(wakePayload).not.toContain("el worker terminó");
     expect(
       autonNotificationRegistryFor(String(sessionId)).unread("external"),
     ).toHaveLength(1);

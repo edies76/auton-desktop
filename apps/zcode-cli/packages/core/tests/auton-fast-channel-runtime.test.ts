@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   createChildTraceContext,
   createRootTraceContext,
@@ -68,10 +68,13 @@ describe("canal rápido sobre el runtime real", () => {
 
     expect(result.status).toBe("success");
 
-    // El mensaje del worker queda como notificación encolada en su canal; no
-    // arranca turno ni entra como mensaje del humano.
-    await new Promise((resolve) => setTimeout(resolve, 40));
-    expect(requests).toHaveLength(0);
+    // El mensaje del worker queda como notificación encolada en su canal y el
+    // despertar abre un turno con una guía genérica: ni el texto del worker ni
+    // un mensaje del humano viajan en él.
+    await vi.waitFor(() => expect(requests.length).toBeGreaterThanOrEqual(1), { timeout: 5_000 });
+    const wakePayload = JSON.stringify(requests.at(-1));
+    expect(wakePayload).toContain("avisos sin leer");
+    expect(wakePayload).not.toContain("voy por el CSS");
     const registry = autonNotificationRegistryFor(String(sessionId));
     const unread = registry.unread("worker");
     expect(unread).toHaveLength(1);

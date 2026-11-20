@@ -157,12 +157,15 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
   `core/tests/auton-live-loop-wiring.test.ts` (4).
 - **Hecho — dos canales de entrada como notificaciones**: los mensajes del worker
   (`runtime/methods/subagent-messages.ts`) y los avisos de agentes externos /
-  otras sesiones (`runtime/methods/background-notifications.ts`) ya no abren turno
-  ni entran como mensaje del humano: quedan encolados en un registro con canal
-  (`worker` | `external`), origen, hora y estado no leída/leída, y la operación
-  real `AutonNotifications` los entrega y los marca leídos cuando el orquestador
-  decide leerlos. Pruebas: `core/tests/auton-notification-channels.test.ts`,
-  `bootstrap/tests/auton-notification-projection.test.ts`,
+  otras sesiones (`runtime/methods/background-notifications.ts`) quedan
+  encolados en un registro con canal (`worker` | `external`), origen, hora y
+  estado no leída/leída; su contenido se entrega solo con la operación real
+  `AutonNotifications`, y además un aviso despierta un turno con una guía
+  genérica y coalescida (`auton/wake.ts`, ventana de 60 s) para que el
+  orquestador lea y dé el parte sin quedarse mudo. Los recaps de avance —cierre
+  de pieza, problema, verificación— son obligación del worker en
+  (`auton/workerPolicy.ts`). Pruebas: `auton-notification-channels.test.ts`,
+  `auton-wake.test.ts`, `bootstrap/tests/auton-notification-projection.test.ts`,
   `shared/test/autonNotificationRegistry.test.ts`.
 - **Hecho — la UI muestra los dos canales**: `ui/src/auton/NotificationChannelsPanel.tsx`
   pinta el contador de no leídas y el detalle por canal sobre las filas reales
