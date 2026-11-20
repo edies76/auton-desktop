@@ -188,8 +188,8 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
 | Canal con reloj | `ui/src/auton/subagentChannel.ts` | `autonSubagentChannel.test.ts` | `3491a3ca` |
 | Fila despertadora (3 tipos) | `ui/src/auton/subagentChannel.ts` (`deriveWakeEvents`), `ui/src/auton/WakeEventItem.tsx`, `v4/conversationAssistantWorkItems.ts` | `autonThreadChannels.test.tsx`, `autonWakeEventRow.test.tsx`, `auton-thread-question-projection.test.ts` | `b75b7042`, `3491a3ca`, `b60d66a6` |
 | Canal rápido bidireccional | `subagent/coordinator-response.ts`, `message-steering.ts` | `auton-fast-channel-runtime.test.ts` | `b38bcbfa` |
-| Dos canales como notificaciones | `runtime/methods/subagent-messages.ts`, `runtime/methods/background-notifications.ts`, `auton/notifications-handler.ts`, `shared/src/auton/notificationRegistry.ts` | `auton-notification-channels.test.ts`, `autonNotificationRegistry.test.ts` | esta entrega |
-| Panel de canales en la conversación | `ui/src/auton/NotificationChannelsPanel.tsx`, `v4/SessionPane.tsx` | `autonNotificationChannels.test.tsx` | esta entrega |
+| Dos canales como notificaciones | `runtime/methods/subagent-messages.ts`, `runtime/methods/background-notifications.ts`, `auton/notifications-handler.ts`, `shared/src/auton/notificationRegistry.ts` | `auton-notification-channels.test.ts`, `autonNotificationRegistry.test.ts` | `93a519f3` |
+| Panel de canales en la conversación | `ui/src/auton/NotificationChannelsPanel.tsx`, `v4/SessionPane.tsx` | `autonNotificationChannels.test.tsx` | `93a519f3` |
 | Cuatro piezas y ensamblado | `auton/contextAuton.ts`, `context/builder.ts` | `auton-four-pieces.test.ts` | `a373592a` |
 
 ## 9. Relación con los otros documentos
