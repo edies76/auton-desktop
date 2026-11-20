@@ -794,6 +794,11 @@ exceptions:
     rule: unmanaged-new-file
     paths: [ packages/shared/src/auton/notificationRegistry.ts ]
     reason: El registro puro de los dos canales del orquestador vive junto a projectFacts.ts en el modulo legacy shared; adoptarlo como modulo propio exige mudar el paquete compartido y queda fuera de este cambio.
+  - id: auton-wake-runtime-method
+    rule: unmanaged-new-file
+    paths:
+      - apps/zcode-cli/packages/core/src/runtime/methods/auton-wake.ts
+    reason: El despertador encola el comando generico de aviso desde el runtime; adoptarlo como modulo propio exige mover la cola de comandos y queda fuera de este cambio.
   - id: side-pane-full-view-shortcut-command-edit
     rule: unmanaged-new-file
     paths: [ packages/shared/src/shortcutCommands.ts ]
