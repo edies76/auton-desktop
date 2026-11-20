@@ -104,10 +104,11 @@ describe("worker de sesión por el camino real del núcleo", () => {
     } as never;
 
     const sessionId = createSessionId("auton-session-worker-real");
+    const eventStore = createTestSessionEventStore();
     const parent = createTestAgentRuntime(
       sessionId,
       { mode: "build", autonWorkerMode: "session" },
-      { eventStore: createTestSessionEventStore(), modelAdapter, executionPort },
+      { eventStore, modelAdapter, executionPort },
     );
     const trace = createRootTraceContext({
       sessionId,
@@ -175,6 +176,22 @@ describe("worker de sesión por el camino real del núcleo", () => {
     expect((await stat(workerDir)).isDirectory()).toBe(true);
     const ranIn = bashCwds.map((cwd) => cwd.replaceAll("\\", "/"));
     expect(ranIn).toContain(workerDir.replaceAll("\\", "/"));
+
+    // El padre recibe el nacimiento y el cierre del worker como fila de
+    // subagente: de esa fila viven el panel de workers y el directorio.
+    const events = await eventStore.getEvents(sessionId);
+    const spawned = events.find((event) => event.type === "subagent_spawned");
+    expect(spawned).toBeTruthy();
+    const spawnedPayload = spawned?.payload as Record<string, unknown>;
+    expect(spawnedPayload.agentType).toBe("auton-worker");
+    expect(String(spawnedPayload.childSessionId)).toMatch(/^sess_auton_/);
+    expect(spawnedPayload.parentToolCallId).toBe("call_agent_1");
+    expect(spawnedPayload.background).toBe(true);
+    const stopped = events.find((event) => event.type === "subagent_stopped");
+    expect(stopped).toBeTruthy();
+    const stoppedPayload = stopped?.payload as Record<string, unknown>;
+    expect(stoppedPayload.status).toBe("completed");
+    expect(stoppedPayload.agentId).toBe(spawnedPayload.agentId);
   }, 30_000);
 
   it("con el interruptor apagado el worker sigue siendo subagente", async () => {
@@ -303,10 +320,11 @@ describe("worker de sesión por el camino real del núcleo", () => {
     } as never;
 
     const sessionId = createSessionId("auton-session-worker-stop");
+    const eventStore = createTestSessionEventStore();
     const parent = createTestAgentRuntime(
       sessionId,
       { mode: "build", autonWorkerMode: "session" },
-      { eventStore: createTestSessionEventStore(), modelAdapter },
+      { eventStore, modelAdapter },
     );
     const trace = createRootTraceContext({
       sessionId,
@@ -331,16 +349,28 @@ describe("worker de sesión por el camino real del núcleo", () => {
     });
     expect(stopped.ok).toBe(true);
 
+    // La fila del worker también se cierra cuando lo detienen: sin esto el panel
+    // lo dejaría "running" para siempre.
+    const events = await eventStore.getEvents(sessionId);
+    const stoppedRows = events.filter(
+      (event) =>
+        event.type === "subagent_stopped" &&
+        (event.payload as Record<string, unknown>).agentId === task!.taskId,
+    );
+    expect(stoppedRows).toHaveLength(1);
+    expect((stoppedRows[0]?.payload as Record<string, unknown>).status).toBe("cancelled");
+
     releaseWorker();
     await turn;
   }, 30_000);
 
   it("el worker de sesión responde al orquestador y levanta el candado", async () => {
+    const parentEventStore = createTestSessionEventStore();
     const parent = createTestAgentRuntime(
       createSessionId("auton-session-channel-parent"),
       { mode: "build" },
       {
-        eventStore: createTestSessionEventStore(),
+        eventStore: parentEventStore,
         modelAdapter: {
           async generateText(): Promise<ModelResult> {
             return {
@@ -421,6 +451,14 @@ describe("worker de sesión por el camino real del núcleo", () => {
     expect(parentUnread).toHaveLength(1);
     expect(parentUnread[0]?.text).toContain("voy por el CSS");
     expect(parentUnread[0]?.origin).toBe("auton-worker");
+    // El mismo hecho deja su marca en la fila del worker en el hilo: el
+    // mensaje es la señal de vida que reinicia el silencio del latido.
+    const parentEvents = await parentEventStore.getEvents(parent.sessionId);
+    const messageRows = parentEvents.filter((event) => event.type === "subagent_message");
+    expect(messageRows).toHaveLength(1);
+    const messagePayload = messageRows[0]?.payload as Record<string, unknown>;
+    expect(messagePayload.agentId).toBe(agentId);
+    expect(String(messagePayload.summaryText)).toContain("voy por el CSS");
     // El candado que puso el orquestador se levanta con la respuesta.
     expect(parent.runtimeTaskRegistry.get(agentId)?.waitingForAnswer).toBe(false);
   }, 30_000);

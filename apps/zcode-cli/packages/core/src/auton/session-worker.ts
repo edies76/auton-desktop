@@ -11,6 +11,7 @@ import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import {
+  createSessionEvent,
   createSessionId,
   type AgentCompletedOutput,
   type AgentOutput,
@@ -24,6 +25,7 @@ import {
   type SubagentSendMessageRequest,
   type SubagentSendMessageResult,
 } from "@zcode/contracts";
+import { SessionEventType } from "@zcode/contracts";
 import type { RuntimeTaskRegistry, RuntimeTaskSnapshot } from "../runtime-task/registry.js";
 import { isTerminalRuntimeTask } from "../runtime-task/registry.js";
 import { markWaitingForAnswer } from "./answerLock.js";
@@ -150,6 +152,24 @@ export function createAutonSessionWorkerPort(
     await upsertWorkerSession(workspaceRoot, entry).catch(() => undefined);
   };
 
+  /**
+   * La fila `subagent` del padre es el hecho que alimenta el panel de workers,
+   * el directorio de subagentes y las filas despertadoras. El worker como
+   * sesión no pasa por el runner de subagentes, así que este puerto publica su
+   * nacimiento y su cierre con la misma forma que el camino clásico.
+   */
+  const emitSubagentEvent = async (
+    type: SessionEventType,
+    request: SubagentRunRequest,
+    payload: Record<string, unknown>,
+  ): Promise<void> => {
+    const event = createSessionEvent(type, request.sessionId, payload, {
+      turnId: request.turnId,
+      traceId: request.trace.traceId,
+    });
+    await options.emitParentEvent(event, request.trace);
+  };
+
   const snapshotFor = (
     request: SubagentRunRequest,
     placement: AutonWorkerPlacement,
@@ -257,6 +277,16 @@ export function createAutonSessionWorkerPort(
       ...(request.mode ? { mode: request.mode } : {}),
       ...(request.effort ? { effort: request.effort } : {}),
     });
+    await emitSubagentEvent(SessionEventType.SubagentSpawned, request, {
+      agentId,
+      agentType: request.agentType,
+      childSessionId: sessionId,
+      description: request.description,
+      prompt: request.prompt,
+      parentToolCallId: String(request.parentToolCallId),
+      status: "running",
+      background: true,
+    });
 
     const runPromise = (async (): Promise<AutonSessionWorkerRunResult> => {
       // Un stop del orquestador o del humano ya dejó el task en estado terminal.
@@ -319,6 +349,16 @@ export function createAutonSessionWorkerPort(
             traceContext: request.trace,
           });
         }
+        await emitSubagentEvent(SessionEventType.SubagentStopped, request, {
+          agentId,
+          agentType: request.agentType,
+          background: true,
+          childSessionId: sessionId,
+          parentToolCallId: String(request.parentToolCallId),
+          status: "completed",
+          outputFile,
+          totalDurationMs: Date.now() - startedAt,
+        });
         return result;
       } catch (error) {
         if (alreadyTerminal()) throw error;
@@ -363,6 +403,16 @@ export function createAutonSessionWorkerPort(
             traceContext: request.trace,
           });
         }
+        await emitSubagentEvent(SessionEventType.SubagentStopped, request, {
+          agentId,
+          agentType: request.agentType,
+          background: true,
+          childSessionId: sessionId,
+          parentToolCallId: String(request.parentToolCallId),
+          status: "failed",
+          error: message,
+          totalDurationMs: Date.now() - startedAt,
+        });
         throw error;
       } finally {
         // Un host conversacional (Muse MSP) sigue vivo tras el primer turno:
@@ -439,6 +489,14 @@ export function createAutonSessionWorkerPort(
         startedAt: new Date(record?.startedAt ?? Date.now()).toISOString(),
         endedAt: new Date().toISOString(),
         description: worker.request.description,
+      });
+      await emitSubagentEvent(SessionEventType.SubagentStopped, worker.request, {
+        agentId: taskId,
+        agentType: worker.request.agentType,
+        background: true,
+        ...(record?.sessionId ? { childSessionId: record.sessionId } : {}),
+        parentToolCallId: String(worker.request.parentToolCallId),
+        status: "cancelled",
       });
       active.delete(taskId);
       return options.registry.get(taskId);

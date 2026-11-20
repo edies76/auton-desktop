@@ -106,6 +106,30 @@ export function enqueueSubagentMessage(
       channel: "worker",
     });
   });
+  // La fila del worker en el hilo se actualiza con el mismo hecho: es su señal
+  // de vida (silencia el latido y baja la pregunta pendiente en la proyección).
+  void this.appendEvent(
+    this.createEvent(
+      SessionEventType.SubagentMessage,
+      {
+        agentId: input.agentId,
+        agentType: input.agentType,
+        childSessionId: input.childSessionId,
+        ...(input.parentToolCallId ? { parentToolCallId: input.parentToolCallId } : {}),
+        summaryText: `\n${input.message.trim() || input.summary?.trim() || ""}`,
+      },
+      input.traceContext,
+    ),
+    input.traceContext,
+  ).catch((error) => {
+    this.logger?.warn("Failed to publish subagent message event", {
+      ...traceContextToLogContext(input.traceContext),
+      errorMessage: error instanceof Error ? error.message : String(error),
+      event: "subagent.message.publish_failed",
+      module: "core.runtime",
+      agentId: input.agentId,
+    });
+  });
   // El worker respondió: la pregunta que el orquestador marcó como decisión
   // deja de estar pendiente. El candado era suyo y él lo levanta al recibir.
   clearWaitingForAnswer(this.runtimeTaskRegistry, input.agentId);

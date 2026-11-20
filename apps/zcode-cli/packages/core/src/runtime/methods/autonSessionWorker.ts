@@ -36,6 +36,7 @@ import {
   type AutonSessionWorkerFactoryInput,
   type AutonSessionWorkerHandle,
 } from "../../auton/session-worker.js";
+import { isStaleBranchRuntimeTaskEvent } from "./runtime-command-generation.js";
 
 export function createDefaultAutonSessionWorkerPort(
   this: AgentRuntimeInternal,
@@ -45,6 +46,15 @@ export function createDefaultAutonSessionWorkerPort(
     registry: this.runtimeTaskRegistry,
     mode: "session",
     emitParentEvent: async (event, traceContext) => {
+      // El nacimiento/cierre del worker son hechos del PADRE: se persisten y
+      // fan-out como los del camino clásico (de ahí vive la fila `subagent`).
+      // Los eventos del hijo solo se espejan a los sinks, que es por donde el
+      // host los rutea a la sesión hija sin ensuciar el store del padre.
+      if (String(event.sessionId) === String(this.sessionId)) {
+        if (isStaleBranchRuntimeTaskEvent(this, event)) return;
+        await this.appendEvent(event, traceContext);
+        return;
+      }
       await this.notifyEventSinks(event, traceContext);
     },
     enqueueParentTaskNotification: (notification) => {

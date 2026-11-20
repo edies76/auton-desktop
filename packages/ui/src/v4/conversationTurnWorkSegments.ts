@@ -138,6 +138,41 @@ function splitVisualWorkSegments(
   return segments;
 }
 
+/**
+ * Duración del tramo medida con las marcas de sus propias filas de trabajo.
+ *
+ * El loop del orquestador parte la crónica en varios tramos sin `triggerRow`
+ * (cada narración abre un bloque). Esos tramos no tienen un hecho por tramo en
+ * el header, y el fallback por límites repetiría el total del turno en todos
+ * los bloques ("Worked for 4m 20s" cuatro veces). Aquí se mide lo que de
+ * verdad corrió en el tramo: del primer trabajo al último cierre.
+ */
+function resolveWorkRowsDurationMs(
+  rows: readonly AssistantWorkRow[],
+  segmentRunning: boolean,
+  nowMs: number | undefined,
+): number | undefined {
+  let start: number | undefined;
+  let end: number | undefined;
+  const widen = (from: number | undefined, to: number | undefined): void => {
+    if (from !== undefined) start = start === undefined ? from : Math.min(start, from);
+    if (to !== undefined) end = end === undefined ? to : Math.max(end, to);
+  };
+  for (const row of rows) {
+    if (row.kind === "toolCall") {
+      widen(row.startedAt ?? row.createdAt, row.endedAt ?? row.startedAt ?? row.createdAt);
+    } else if (row.kind === "subagent") {
+      widen(
+        row.startedAt ?? row.createdAt,
+        row.endedAt ?? row.lastActivityAt ?? row.startedAt ?? row.createdAt,
+      );
+    }
+  }
+  if (start === undefined) return undefined;
+  if (segmentRunning && nowMs !== undefined) return Math.max(0, nowMs - start);
+  return Math.max(0, (end ?? start) - start);
+}
+
 function resolveSegmentDurationMs(options: {
   header?: TurnHeaderRow;
   segmentIndex: number;
@@ -146,17 +181,32 @@ function resolveSegmentDurationMs(options: {
   segmentRunning: boolean;
   segmentCount: number;
   nowMs?: number;
+  workRows: readonly AssistantWorkRow[];
 }): number | undefined {
+  const facts = options.header?.workSegments;
+  const indexedFact =
+    options.triggerRow || (facts?.length ?? 0) === options.segmentCount
+      ? facts?.[options.segmentIndex]
+      : undefined;
   const fact =
     (options.triggerRow?.entityId
-      ? options.header?.workSegments?.find(
-          (candidate) => candidate.triggerEntityId === options.triggerRow?.entityId,
-        )
-      : undefined) ?? options.header?.workSegments?.[options.segmentIndex];
+      ? facts?.find((candidate) => candidate.triggerEntityId === options.triggerRow?.entityId)
+      : undefined) ?? indexedFact;
   if (fact?.activeMs !== undefined) return fact.activeMs;
   if (fact?.endedAt !== undefined) return Math.max(0, fact.endedAt - fact.startedAt);
   if (fact && options.segmentRunning && options.nowMs !== undefined) {
     return Math.max(0, options.nowMs - fact.startedAt);
+  }
+  if (!options.triggerRow) {
+    const fromRows = resolveWorkRowsDurationMs(
+      options.workRows,
+      options.segmentRunning,
+      options.nowMs,
+    );
+    if (fromRows !== undefined) return fromRows;
+    // Un tramo abierto por narración pura (sin filas de trabajo) no tiene
+    // tramo propio: mejor sin pie que repetir el total del turno debajo.
+    if (options.workRows.length === 0) return undefined;
   }
   if (options.segmentCount === 1) {
     return resolveConversationTurnWorkDurationMs(
@@ -234,6 +284,7 @@ export function buildConversationTurnWorkSegments(options: {
       segmentRunning,
       segmentCount: visualDrafts.length,
       nowMs: options.nowMs,
+      workRows: segmentFlowRows,
     });
     const segmentWorkStatus = resolveConversationTurnWorkStatus(
       options.header,

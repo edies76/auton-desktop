@@ -4791,7 +4791,87 @@ export class ProductProjection {
     const backgroundWorks = existing
       ? prev.map((work) => (work.workId === workId ? next : work))
       : [...prev, next];
-    return [{ op: "state.updated", patch: { backgroundWorks } }];
+    return [
+      { op: "state.updated", patch: { backgroundWorks } },
+      ...this.mirrorBackgroundSubagentRow(event, payload, next),
+    ];
+  }
+
+  /**
+   * La tarea de fondo de un worker espeja su fila `subagent` cuando el spawn
+   * real no llegó (agentes encendidos antes de que el puerto de sesión emitiera
+   * `SubagentSpawned`, o cualquier sesión vieja vivida en otra versión). Sin
+   * este espejo el worker corre pero no existe en el panel de workers ni en el
+   * directorio de subagentes: la tarea de fondo ya trae los mismos hechos
+   * (agente, sesión hija, título, estado). Si la fila con dueño aparece después,
+   * `onSubagentSpawned` la upsertea como siempre.
+   */
+  private mirrorBackgroundSubagentRow(
+    event: SessionEvent,
+    payload: Record<string, unknown>,
+    work: BackgroundWorkSummary,
+  ): ConversationDelta[] {
+    if (work.kind !== "subagent") return [];
+    const childSessionId = work.childSessionId;
+    if (!childSessionId) return [];
+    const status: SubagentRow["status"] =
+      work.status === "running"
+        ? "running"
+        : work.status === "cancelled"
+          ? "cancelled"
+          : work.status === "failed"
+            ? "failed"
+            : "success";
+    const existingRowId = this.subagentRowIdByAgentId.get(work.workId);
+    const existingRow =
+      existingRowId === undefined
+        ? undefined
+        : (() => {
+            const row = this.findRow(existingRowId);
+            return row?.kind === "subagent" ? row : undefined;
+          })();
+    if (existingRow) {
+      if (existingRow.status === status && existingRow.childSessionId === childSessionId) {
+        return [];
+      }
+      const row: SubagentRow = {
+        ...existingRow,
+        status,
+        childSessionId,
+        lastActivityAt: this.ms(event),
+        ...(status === "running" ? {} : { endedAt: existingRow.endedAt ?? this.ms(event) }),
+      };
+      return [{ op: "row.upserted", row }];
+    }
+    const toolCallId = this.stringPayload(payload, "toolCallId");
+    const row: SubagentRow = {
+      ...this.rowBase(event, this.turnIdOf(event), work.workId),
+      kind: "subagent",
+      ...(toolCallId ? { parentToolCallId: toolCallId } : {}),
+      subagentType: this.subagentTypeFromToolCall(toolCallId) ?? "subagent",
+      status,
+      summaryText: work.title,
+      childSessionId,
+      backgrounded: true,
+      workId: work.workId,
+      startedAt: work.startedAt,
+      lastActivityAt: this.ms(event),
+      ...(status === "running" ? {} : { endedAt: this.ms(event) }),
+    };
+    this.subagentRowIdByAgentId.set(work.workId, row.rowId);
+    return [{ op: "row.appended", row }];
+  }
+
+  /** El tipo de agente vive en el input de la llamada `Agent` que abrió la tarea. */
+  private subagentTypeFromToolCall(toolCallId: string | undefined): string | undefined {
+    if (!toolCallId) return undefined;
+    const rowId = this.toolRowIdByCallId.get(toolCallId);
+    const row = rowId === undefined ? undefined : this.findRow(rowId);
+    if (row?.kind !== "toolCall") return undefined;
+    const input = row.input;
+    if (!input || typeof input !== "object" || Array.isArray(input)) return undefined;
+    const value = (input as Record<string, unknown>).subagent_type;
+    return typeof value === "string" && value.trim() ? value : undefined;
   }
 
   // ── dwf 实时运行态：DynamicWorkflowRunProgress → workflowRuns 状态键 ──
