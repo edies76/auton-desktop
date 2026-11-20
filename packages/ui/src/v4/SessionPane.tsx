@@ -45,6 +45,7 @@ import type {
 } from "@zcode/shared";
 import type {
   AttachmentRef,
+  AutonNotificationRow,
   CommandAck,
   CommandEnvelope,
   CommandType,
@@ -56,6 +57,7 @@ import type {
   V4ConversationFileChangesResult,
 } from "@zcode/shared/zcode-protocol-v4";
 import { logger } from "@/logger.js";
+import { NotificationChannelsPanel } from "@/auton/NotificationChannelsPanel.js";
 import { PluginUiSessionProvider } from "@/plugin-ui/index.js";
 import {
   getConversationShareErrorDetails,
@@ -5568,8 +5570,30 @@ export function SessionPane({
         onConfirm={handleShareConfirm}
       />
     );
+  // Canales del orquestador: notificaciones de workers y de agentes externos
+  // que el orquestador decide leer. Viven sobre el compositor, en la misma
+  // conversación; el contador de no leídas sale de las filas reales.
+  const autonNotifications = useMemo(
+    () =>
+      (timelineSnapshot?.rows.window ?? [])
+        .filter((row): row is AutonNotificationRow => row.kind === "autonNotification")
+        .map((row) => ({
+          id: row.notificationId,
+          channel: row.channel,
+          origin: row.origin,
+          text: row.text,
+          at: row.at,
+          ...(row.readAt !== undefined ? { readAt: row.readAt } : {}),
+        })),
+    [timelineSnapshot?.rows.window],
+  );
+  const notificationChannels =
+    autonNotifications.length > 0 ? (
+      <NotificationChannelsPanel notifications={autonNotifications} />
+    ) : null;
   const conversationBottomDockContent = readOnly ? null : (
     <>
+      {notificationChannels}
       {quotaBanner.state.visible &&
       !quotaBanner.dismissed &&
       (!projectedComposerError || quotaBanner.takesOverError || quotaBanner.state.blocksSubmit) ? (

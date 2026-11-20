@@ -155,11 +155,24 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
   que el aviso de cierre, así que despierta al orquestador sin abrir un mensaje
   del humano. Pruebas: `core/tests/auton-live-loop.test.ts` (9) y
   `core/tests/auton-live-loop-wiring.test.ts` (4).
-- **Hecho — canal rápido bidireccional**: el worker publica a mitad de encargo por
-  el port de coordinación y el orquestador lo recibe como `<subagent-message>`
-  (nunca como mensaje del humano); el orquestador instruye al worker en curso con
+- **Hecho — dos canales de entrada como notificaciones**: los mensajes del worker
+  (`runtime/methods/subagent-messages.ts`) y los avisos de agentes externos /
+  otras sesiones (`runtime/methods/background-notifications.ts`) ya no abren turno
+  ni entran como mensaje del humano: quedan encolados en un registro con canal
+  (`worker` | `external`), origen, hora y estado no leída/leída, y la operación
+  real `AutonNotifications` los entrega y los marca leídos cuando el orquestador
+  decide leerlos. Pruebas: `core/tests/auton-notification-channels.test.ts`,
+  `bootstrap/tests/auton-notification-projection.test.ts`,
+  `shared/test/autonNotificationRegistry.test.ts`.
+- **Hecho — la UI muestra los dos canales**: `ui/src/auton/NotificationChannelsPanel.tsx`
+  pinta el contador de no leídas y el detalle por canal sobre las filas reales
+  (`autonNotification`) dentro de la conversación (`v4/SessionPane.tsx`), y pasa a
+  leído cuando la lectura real ocurre; las filas de notificación viven solo en el
+  panel (`v4/conversationTurnRenderUnits.ts`). Prueba:
+  `ui/test/autonNotificationChannels.test.tsx`.
+- **Hecho — instrucción al worker en curso**: el orquestador instruye al worker con
   el sink real y la instrucción entra en la siguiente petición del worker. Prueba:
-  `core/tests/auton-fast-channel-runtime.test.ts`.
+  el segundo caso de `core/tests/auton-fast-channel-runtime.test.ts`.
 - **Hecho — turno que no se cierra**: `runtime/methods/turn-loop.ts` espera con
   `waitForAutonIdle` antes de cerrar (30 min, abortable), y cualquier notificación
   de worker reinicia el reloj (`background-notifications.ts` → `activity()`).
@@ -175,6 +188,8 @@ Si el humano tiene que preguntar "¿qué pasó?", el contrato falló.
 | Canal con reloj | `ui/src/auton/subagentChannel.ts` | `autonSubagentChannel.test.ts` | `3491a3ca` |
 | Fila despertadora (3 tipos) | `ui/src/auton/subagentChannel.ts` (`deriveWakeEvents`), `ui/src/auton/WakeEventItem.tsx`, `v4/conversationAssistantWorkItems.ts` | `autonThreadChannels.test.tsx`, `autonWakeEventRow.test.tsx`, `auton-thread-question-projection.test.ts` | `b75b7042`, `3491a3ca`, `b60d66a6` |
 | Canal rápido bidireccional | `subagent/coordinator-response.ts`, `message-steering.ts` | `auton-fast-channel-runtime.test.ts` | `b38bcbfa` |
+| Dos canales como notificaciones | `runtime/methods/subagent-messages.ts`, `runtime/methods/background-notifications.ts`, `auton/notifications-handler.ts`, `shared/src/auton/notificationRegistry.ts` | `auton-notification-channels.test.ts`, `autonNotificationRegistry.test.ts` | esta entrega |
+| Panel de canales en la conversación | `ui/src/auton/NotificationChannelsPanel.tsx`, `v4/SessionPane.tsx` | `autonNotificationChannels.test.tsx` | esta entrega |
 | Cuatro piezas y ensamblado | `auton/contextAuton.ts`, `context/builder.ts` | `auton-four-pieces.test.ts` | `a373592a` |
 
 ## 9. Relación con los otros documentos

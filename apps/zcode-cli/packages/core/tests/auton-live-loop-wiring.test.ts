@@ -30,19 +30,26 @@ describe("enganche del latido en el runner de subagentes", () => {
     expect(runnerSource).toMatch(/enqueue\?\.\(\{[\s\S]{0,300}backgroundSource: "subagent"/);
   });
 
-  it("el turno cierra y el evento del worker lo despierta por la cola", () => {
+  it("el turno cierra y las dos rutas encolan notificaciones sin arrancar turno", () => {
     const turnLoop = readFileSync(
       resolve(here, "../src/runtime/methods/turn-loop.ts"),
       "utf8",
     );
     // El turno no se queda esperando: cierra para que el humano pueda escribir.
     expect(turnLoop).not.toContain("waitForAutonIdle(");
-    // La notificación del worker entra por la cola de comandos del runtime,
-    // que abre un turno nuevo.
+    // Las dos rutas reales encolan en el registro de notificaciones; ya no
+    // meten un comando de turno.
     const backgroundNotifications = readFileSync(
       resolve(here, "../src/runtime/methods/background-notifications.ts"),
       "utf8",
     );
-    expect(backgroundNotifications).toContain("enqueueRuntimeCommand(");
+    expect(backgroundNotifications).toContain("autonNotificationRegistryFor(");
+    expect(backgroundNotifications).not.toContain("this.enqueueRuntimeCommand({");
+    const subagentMessages = readFileSync(
+      resolve(here, "../src/runtime/methods/subagent-messages.ts"),
+      "utf8",
+    );
+    expect(subagentMessages).toContain("autonNotificationRegistryFor(");
+    expect(subagentMessages).not.toContain("this.enqueueRuntimeCommand(command)");
   });
 });

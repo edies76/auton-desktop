@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { createSessionId, type ModelResult } from "@zcode/contracts";
 import { createTestAgentRuntime } from "./test-agent-runtime.js";
+import { autonNotificationRegistryFor } from "@zcode/shared/auton-notifications";
 import { createTestSessionEventStore } from "./test-event-store.js";
 import { listWorkerSessions, readWorkerIndex } from "../src/auton/workerIndex.js";
 
@@ -145,9 +146,17 @@ describe("worker ZCode: reanudación en la misma sesión", () => {
       const thirdOutput = await readFile(third!.outputFile!, "utf8");
       expect(thirdOutput).toContain("tercera respuesta");
 
-      // El contexto de la sesión viaja al modelo en la reanudación.
-      const resumeRequests = requests.filter((entry) => entry.tools.length > 0);
-      expect(JSON.stringify(resumeRequests.at(-1)?.messages)).toContain("segunda respuesta");
+      // La respuesta del worker llega al orquestador como notificación de su
+      // canal; el contenido queda disponible para la lectura explícita.
+      const parentNotifications = autonNotificationRegistryFor(
+        String(parent.sessionId),
+      ).unread("external");
+      expect(parentNotifications.some((item) => item.text.includes("segunda respuesta"))).toBe(
+        true,
+      );
+      expect(parentNotifications.some((item) => item.text.includes("tercera respuesta"))).toBe(
+        true,
+      );
     } finally {
       await rm(root, { recursive: true, force: true });
     }

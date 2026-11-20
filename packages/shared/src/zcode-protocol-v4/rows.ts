@@ -443,6 +443,23 @@ export const timelineMarkerRowSchema = z.object({
 });
 export type TimelineMarkerRow = z.infer<typeof timelineMarkerRowSchema>;
 
+/**
+ * Notificación de los dos canales del orquestador (workers / agentes externos).
+ * Nunca es un mensaje del humano: vive fuera del turno y solo cambia a leída
+ * cuando la operación real de lectura la marca.
+ */
+export const autonNotificationRowSchema = z.object({
+  ...rowBaseFields,
+  kind: z.literal("autonNotification"),
+  notificationId: z.string(),
+  channel: z.enum(["worker", "external"]),
+  origin: z.string(),
+  text: z.string(),
+  at: z.number(),
+  readAt: z.number().optional(),
+});
+export type AutonNotificationRow = z.infer<typeof autonNotificationRowSchema>;
+
 export const conversationRowSchema = z.discriminatedUnion("kind", [
   turnHeaderRowSchema,
   userInputRowSchema,
@@ -453,6 +470,7 @@ export const conversationRowSchema = z.discriminatedUnion("kind", [
   subagentRowSchema,
   hookInvocationRowSchema,
   timelineMarkerRowSchema,
+  autonNotificationRowSchema,
 ]);
 export type ConversationRow = z.infer<typeof conversationRowSchema>;
 export type ConversationRowKind = ConversationRow["kind"];

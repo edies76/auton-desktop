@@ -233,6 +233,35 @@ describe("conversation share public projection", () => {
     );
   });
 
+  it("filters auton notification rows out of the public payload", () => {
+    const rows = rowsWithCompletedSubagent();
+    rows.push({
+      rowId: 106,
+      turnId: "local-turn-a",
+      entityId: "local-entity-notification",
+      productTurnId: "local-product-turn-a",
+      createdAt: 1_045,
+      createdAtSeq: 15,
+      kind: "autonNotification",
+      notificationId: "local-notification-1",
+      channel: "worker",
+      origin: "auton-worker",
+      text: "voy por el CSS",
+      at: 1_045,
+    } as ConversationRow);
+
+    const result = build(rows);
+
+    expect(result.rows.map((row) => row.kind)).toEqual([
+      "turnHeader",
+      "userInput",
+      "toolCall",
+      "assistantText",
+    ]);
+    expect(JSON.stringify(result.rows)).not.toContain("voy por el CSS");
+    expect(JSON.stringify(result.rows)).not.toContain("auton-notification");
+  });
+
   it("allows rows to share one persistent entity identity", () => {
     const rows = rowsWithCompletedSubagent();
     rows[1] = { ...rows[1]!, entityId: rows[0]!.entityId } as ConversationRow;

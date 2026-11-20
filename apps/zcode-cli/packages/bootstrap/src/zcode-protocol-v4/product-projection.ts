@@ -104,6 +104,7 @@ import type {
   StatePatch,
   SubagentProjectionState,
   SubagentRow,
+  AutonNotificationRow,
   TimelineMarkerPayload,
   TimelineMarkerRow,
   ToolCallDisplay,
@@ -444,6 +445,8 @@ export class ProductProjection {
   // 这里只保留上一条满足 length/zero-tool/视觉紧邻条件的 text row，任何真实边界都会清空。
   private outputContinuationTextRowId: number | null = null;
   private toolRowIdByCallId = new Map<string, number>();
+  // Notificaciones de los dos canales del orquestador, por id de notificación.
+  private autonNotificationRowsById = new Map<string, AutonNotificationRow>();
   private latestListAppsSnapshot = new Map<number, CuaAppIdentity>();
   // snapshot 是权威状态；该 Set 只是 TurnComplete 缺终态兜底的派生索引，避免每轮扫描全表。
   private openForegroundToolCallIds = new Set<string>();
@@ -1066,7 +1069,11 @@ export class ProductProjection {
           ? this.onHighspeedMetricsUpdated(event)
           : event.type === SessionEventType.TurnExecutionModelFallback
             ? this.onTurnExecutionModelFallback(event)
-            : (() => {
+            : event.type === SessionEventType.AutonNotificationQueued
+              ? this.onAutonNotificationQueued(event)
+              : event.type === SessionEventType.AutonNotificationRead
+                ? this.onAutonNotificationRead(event)
+                : (() => {
                 const fact = normalizeConversationEvent(event, {
                   productTurnId,
                   openAssistantSegments: this.openAssistantSegments(),
@@ -1144,6 +1151,7 @@ export class ProductProjection {
       ]),
     );
     clone.subagentRowIdByAgentId = new Map(this.subagentRowIdByAgentId);
+    clone.autonNotificationRowsById = new Map(this.autonNotificationRowsById);
     clone.hookRowIdByInvocationId = new Map(this.hookRowIdByInvocationId);
     clone.pendingSessionHookInvocations = new Map(
       [...this.pendingSessionHookInvocations].map(([invocationId, pending]) => [
@@ -1207,6 +1215,7 @@ export class ProductProjection {
     this.openForegroundToolCallIds = candidate.openForegroundToolCallIds;
     this.fileToolInputPreviewByCallId = candidate.fileToolInputPreviewByCallId;
     this.subagentRowIdByAgentId = candidate.subagentRowIdByAgentId;
+    this.autonNotificationRowsById = candidate.autonNotificationRowsById;
     this.hookRowIdByInvocationId = candidate.hookRowIdByInvocationId;
     this.pendingSessionHookInvocations = candidate.pendingSessionHookInvocations;
     this.rewoundHookInvocationIds = candidate.rewoundHookInvocationIds;
@@ -1548,6 +1557,10 @@ export class ProductProjection {
         return this.onSubagentSpawned(event);
       case SessionEventType.SubagentMessage:
         return this.onSubagentMessage(event);
+      case SessionEventType.AutonNotificationQueued:
+        return this.onAutonNotificationQueued(event);
+      case SessionEventType.AutonNotificationRead:
+        return this.onAutonNotificationRead(event);
       case SessionEventType.SubagentStopped:
         return this.onSubagentStopped(event);
       default:
@@ -4588,6 +4601,53 @@ export class ProductProjection {
       ...(row.waitingForAnswer === true ? { waitingForAnswer: false } : {}),
     };
     return [{ op: "row.upserted", row: updated }];
+  }
+
+  private onAutonNotificationQueued(event: SessionEvent): ConversationDelta[] {
+    const payload = event.payload as {
+      notificationId?: unknown;
+      channel?: unknown;
+      origin?: unknown;
+      text?: unknown;
+      at?: unknown;
+    };
+    if (typeof payload.notificationId !== "string") return [];
+    const channel = payload.channel === "external" ? "external" : "worker";
+    const existing = this.autonNotificationRowsById.get(payload.notificationId);
+    const base =
+      existing ?? this.rowBase(event, this.turnIdOf(event), payload.notificationId);
+    const row: AutonNotificationRow = {
+      ...base,
+      kind: "autonNotification",
+      notificationId: payload.notificationId,
+      channel,
+      origin: typeof payload.origin === "string" ? payload.origin : channel,
+      text: typeof payload.text === "string" ? payload.text : "",
+      at: typeof payload.at === "number" ? payload.at : this.ms(event),
+      ...(existing?.readAt !== undefined ? { readAt: existing.readAt } : {}),
+    };
+    this.autonNotificationRowsById.set(payload.notificationId, row);
+    return [{ op: existing ? "row.upserted" : "row.appended", row }];
+  }
+
+  private onAutonNotificationRead(event: SessionEvent): ConversationDelta[] {
+    const payload = event.payload as {
+      notificationIds?: unknown;
+      readAt?: unknown;
+    };
+    const ids = Array.isArray(payload.notificationIds)
+      ? payload.notificationIds.filter((id): id is string => typeof id === "string")
+      : [];
+    const readAt = typeof payload.readAt === "number" ? payload.readAt : this.ms(event);
+    const deltas: ConversationDelta[] = [];
+    for (const id of ids) {
+      const row = this.autonNotificationRowsById.get(id);
+      if (!row) continue;
+      const updated: AutonNotificationRow = { ...row, readAt };
+      this.autonNotificationRowsById.set(id, updated);
+      deltas.push({ op: "row.upserted", row: updated });
+    }
+    return deltas;
   }
 
   private onSubagentStopped(event: SessionEvent): ConversationDelta[] {

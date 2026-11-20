@@ -1,12 +1,14 @@
 import { createMessageId, traceContextToLogContext } from "../deps.js";
 import type { MessageId, TraceContext } from "../deps.js";
 import type { BackgroundResultOriginMeta } from "@zcode/contracts";
+import { SessionEventType } from "@zcode/contracts";
 import { createRuntimeCommandId, type TaskNotificationRuntimeCommand } from "../command-queue.js";
 import { runtimeInputMetadata } from "../../agent/runtime-input-presentation.js";
 import type { AgentRuntimeInternal } from "../internal.js";
 import type { SealBackgroundTaskNotificationsInput } from "../types.js";
 import { shouldSuppressSealedSubagentBashNotification } from "../../runtime-task/notification-policy.js";
 import { getAutonLiveLoop } from "../../auton/live-loop.js";
+import { autonNotificationRegistryFor } from "@zcode/shared/auton-notifications";
 
 export function enqueueBackgroundTaskNotification(
   this: AgentRuntimeInternal,
@@ -46,44 +48,44 @@ export function enqueueBackgroundTaskNotification(
     return;
   }
   const commandId = createRuntimeCommandId();
-  this.enqueueRuntimeCommand({
-    branchGeneration,
-    createdAt: new Date(),
-    id: commandId,
-    mode: "task-notification",
-    priority: "next",
-    source: "background_task",
-    originMeta: notification.originMeta,
-    taskId: notification.taskId,
+  // Canal externo: el aviso de otra sesión/agente entra como notificación
+  // encolada. No abre turno ni se inyecta como mensaje del humano; el
+  // orquestador decide leerlo.
+  const registry = autonNotificationRegistryFor(String(this.sessionId));
+  const queued = registry.enqueue({
+    channel: "external",
+    origin: notification.originMeta?.title?.trim() || notification.taskId || "agente externo",
     text: notification.text,
-    toolName: notification.toolName,
-    traceContext: notification.traceContext,
-  });
-  // wake 入账本（admitted）。runtime 命令队列是纯内存的，账本是唯一
-  // durable 痕迹——崩溃重启后后台子进程已死、通知不可恢复，resume 会把残留
-  // admitted 收口为 discarded(session_resumed)（留痕不静默，同一语义）。
-  const admission = this.sessionStore?.saveSessionInput?.({
-    id: String(commandId),
-    sessionID: this.sessionId,
-    kind: "backgroundNotification",
-    delivery: "queue",
-    payload: {
-      text: notification.text,
+    meta: {
       ...(notification.taskId ? { taskId: notification.taskId } : {}),
-      ...(notification.originMeta ? { originMeta: notification.originMeta } : {}),
+      ...(notification.toolName ? { toolName: notification.toolName } : {}),
+      ...(notification.originMeta?.backgroundSource
+        ? { backgroundSource: notification.originMeta.backgroundSource }
+        : {}),
     },
   });
-  if (admission) {
-    void this.trackResidencyBlockingWork(admission).catch((error) => {
-      this.logger?.warn("Failed to admit background notification to ledger", {
-        ...traceContextToLogContext(notification.traceContext),
-        errorMessage: error instanceof Error ? error.message : String(error),
-        event: "session_input.admit_failed",
-        module: "core.runtime",
-        status: "failed",
-      });
+  void this.appendEvent(
+    this.createEvent(
+      SessionEventType.AutonNotificationQueued,
+      {
+        notificationId: queued.id,
+        channel: queued.channel,
+        origin: queued.origin,
+        text: queued.text,
+        at: queued.at,
+      },
+      notification.traceContext,
+    ),
+    notification.traceContext,
+  ).catch((error) => {
+    this.logger?.warn("Failed to publish auton notification event", {
+      ...traceContextToLogContext(notification.traceContext),
+      errorMessage: error instanceof Error ? error.message : String(error),
+      event: "auton.notification.publish_failed",
+      module: "core.runtime",
+      channel: "external",
     });
-  }
+  });
 }
 
 export function sealBackgroundTaskNotifications(

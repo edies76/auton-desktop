@@ -459,7 +459,10 @@ export function buildConversationTurnRenderUnits(
     return unit;
   };
 
-  for (const row of rows) {
+  // Las notificaciones de los canales viven en su panel, no en el hilo.
+  const timelineRows = rows.filter((row) => row.kind !== "autonNotification");
+
+  for (const row of timelineRows) {
     const unit = getOrCreateUnit(row.turnId);
     if (isTurnHeaderRow(row)) {
       unit.header = row;

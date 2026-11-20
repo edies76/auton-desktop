@@ -6,6 +6,8 @@ import type { EnqueueSubagentMessageInput } from "../types.js";
 import { runtimeInputMetadata } from "../../agent/runtime-input-presentation.js";
 import { escapeXml } from "../../runtime-task/notification.js";
 import { clearWaitingForAnswer } from "../../auton/answerLock.js";
+import { autonNotificationRegistryFor } from "@zcode/shared/auton-notifications";
+import { SessionEventType } from "@zcode/contracts";
 
 export function formatSubagentMessage(input: {
   agentId: string;
@@ -59,18 +61,51 @@ export function enqueueSubagentMessage(
     text: formatSubagentMessage(input),
   } satisfies SubagentMessageRuntimeCommand;
 
-  this.logger?.debug("Subagent response enqueued into runtime command queue", {
+  this.logger?.debug("Subagent response queued as notification", {
     ...traceContextToLogContext(command.traceContext),
     agentId: command.agentId,
     commandId: command.id,
-    event: "subagent.response.runtime_enqueued",
+    event: "subagent.response.notification_enqueued",
     messageLength: command.messageLength,
     module: "core.runtime",
-    queueSize: this.runtimeCommandQueue.size() + 1,
     responseId: command.responseId,
     summary: command.summary.slice(0, 200),
   });
-  this.enqueueRuntimeCommand(command);
+  // Canal de workers: el mensaje entra como notificación encolada, no como
+  // mensaje del humano ni como turno. El orquestador decide leerlo.
+  const registry = autonNotificationRegistryFor(String(this.sessionId));
+  const notification = registry.enqueue({
+    channel: "worker",
+    origin: input.agentType || input.agentId,
+    text: input.message,
+    meta: {
+      agentId: input.agentId,
+      childSessionId: input.childSessionId,
+      ...(input.summary ? { summary: input.summary } : {}),
+    },
+  });
+  void this.appendEvent(
+    this.createEvent(
+      SessionEventType.AutonNotificationQueued,
+      {
+        notificationId: notification.id,
+        channel: notification.channel,
+        origin: notification.origin,
+        text: notification.text,
+        at: notification.at,
+      },
+      input.traceContext,
+    ),
+    input.traceContext,
+  ).catch((error) => {
+    this.logger?.warn("Failed to publish auton notification event", {
+      ...traceContextToLogContext(input.traceContext),
+      errorMessage: error instanceof Error ? error.message : String(error),
+      event: "auton.notification.publish_failed",
+      module: "core.runtime",
+      channel: "worker",
+    });
+  });
   // El worker respondió: la pregunta que el orquestador marcó como decisión
   // deja de estar pendiente. El candado era suyo y él lo levanta al recibir.
   clearWaitingForAnswer(this.runtimeTaskRegistry, input.agentId);

@@ -9,6 +9,7 @@ import {
 import { createTestAgentRuntime } from "./test-agent-runtime.js";
 import { createTestSessionEventStore } from "./test-event-store.js";
 import { createCoordinatorResponsePort } from "../src/subagent/coordinator-response.js";
+import { autonNotificationRegistryFor } from "@zcode/shared/auton-notifications";
 
 interface RecordedRequest {
   tools: string[];
@@ -335,15 +336,13 @@ describe("worker de sesión por el camino real del núcleo", () => {
   }, 30_000);
 
   it("el worker de sesión responde al orquestador y levanta el candado", async () => {
-    const parentRequests: unknown[][] = [];
     const parent = createTestAgentRuntime(
       createSessionId("auton-session-channel-parent"),
       { mode: "build" },
       {
         eventStore: createTestSessionEventStore(),
         modelAdapter: {
-          async generateText(request: { messages?: unknown[] }): Promise<ModelResult> {
-            parentRequests.push(request.messages ?? []);
+          async generateText(): Promise<ModelResult> {
             return {
               finishReason: "stop" as const,
               providerMetadata: undefined,
@@ -415,10 +414,13 @@ describe("worker de sesión por el camino real del núcleo", () => {
     // El worker de sesión tiene la herramienta y su llamada no es rechazada.
     expect(worker.getTools().map((tool) => tool.name)).toContain("RespondToCoordinator");
     await worker.executeTurn("reporta tu avance");
-    await parent.executeTurn("recibe el avance");
 
-    expect(JSON.stringify(parentRequests)).toContain("voy por el CSS");
-    expect(JSON.stringify(parentRequests)).toContain("<subagent-message>");
+    // La respuesta del worker queda como notificación encolada en el canal de
+    // workers; no se inyecta en el turno del orquestador.
+    const parentUnread = autonNotificationRegistryFor(String(parent.sessionId)).unread("worker");
+    expect(parentUnread).toHaveLength(1);
+    expect(parentUnread[0]?.text).toContain("voy por el CSS");
+    expect(parentUnread[0]?.origin).toBe("auton-worker");
     // El candado que puso el orquestador se levanta con la respuesta.
     expect(parent.runtimeTaskRegistry.get(agentId)?.waitingForAnswer).toBe(false);
   }, 30_000);

@@ -41,6 +41,7 @@ import { isSubagentDispatchToolName } from "../compat.js";
 import { skillToolEntry } from "./skill.js";
 import { todoReadToolEntry, todoWriteToolEntry } from "./todo.js";
 import { autonPlanToolEntry } from "../../auton/plan-handler.js";
+import { autonNotificationsToolEntry } from "../../auton/notifications-handler.js";
 import { autonRevertToolEntry } from "../../auton/revert-handler.js";
 import { autonRecallToolEntry } from "../../auton/recall-handler.js";
 import {
@@ -95,6 +96,7 @@ export const builtInTools: ToolEntry[] = [
   todoReadToolEntry,
   todoWriteToolEntry,
   autonPlanToolEntry,
+  autonNotificationsToolEntry,
   autonRevertToolEntry,
   autonRecallToolEntry,
   cronCreateToolEntry,

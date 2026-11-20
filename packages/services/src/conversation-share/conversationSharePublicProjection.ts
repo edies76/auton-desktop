@@ -422,6 +422,11 @@ function projectRow(row: ConversationRow, index: number, ids: PublicIdMaps): Con
         "invalid_conversation",
         "Subagent detail rows must be filtered before public projection",
       );
+    case "autonNotification":
+      throwProjectionError(
+        "invalid_conversation",
+        "Auton notification rows must be filtered before public projection",
+      );
     case "hookInvocation":
       throwProjectionError(
         "invalid_conversation",
@@ -645,9 +650,12 @@ export function buildConversationSharePublicProjection(input: {
   }
 
   // 本地运行投影包含 subagent 详情和写入态标识，不能直接作为公开载荷；
-  // 必须先过滤非 V1 Row，再基于剩余内容生成一套闭合的公开 ID。
+  // 通知行是运行时排队态，也不属于 V1。必须先过滤非 V1 Row，再基于剩余内容生成一套闭合的公开 ID。
   const retainedRows = input.rows.filter(
-    (row) => row.kind !== "subagent" && row.kind !== "hookInvocation",
+    (row) =>
+      row.kind !== "subagent" &&
+      row.kind !== "hookInvocation" &&
+      row.kind !== "autonNotification",
   );
   const sourceArtifactRows = retainedRows.filter(
     (row): row is ArtifactRow => row.kind === "artifact",

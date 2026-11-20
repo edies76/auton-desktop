@@ -31,6 +31,19 @@ describe("las cuatro piezas del núcleo", () => {
     }
   });
 
+  it("AutonNotifications está registrada, el prompt dice cuándo usarla y la prueba existe", () => {
+    const entry = builtInTools.find((tool) => tool.metadata.name === "AutonNotifications")!;
+    expect(entry).toBeDefined();
+    expect(entry.metadata.description?.length ?? 0).toBeGreaterThan(80);
+    expect(JSON.stringify(entry.inputSchema)).toContain("worker");
+    expect(JSON.stringify(entry.inputSchema)).toContain("external");
+
+    // El prompt del orquestador nombra la operación real de lectura y su cuándo.
+    expect(orchestratorSection).toContain("AutonNotifications");
+    expect(orchestratorSection).toContain("Canales y avisos");
+    expect(orchestratorSection).toContain("notificaciones");
+  });
+
   it("el prompt del orquestador dice CUÁNDO usar cada una", () => {
     expect(autonSection).toContain("AutonPlan");
     expect(autonSection).toContain("Antes de despachar");

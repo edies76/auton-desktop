@@ -110,6 +110,13 @@ describe("el orquestador que sabe planear y conversar", () => {
     expect(staticSection).toContain("verifica lo básico");
   });
 
+  it("los dos canales llegan como notificaciones y se leen con AutonNotifications", () => {
+    expect(staticSection).toContain("## Canales y avisos");
+    expect(staticSection).toContain("no interrumpen ni abren turno solos");
+    expect(staticSection).toContain("AutonNotifications");
+    expect(staticSection).toContain("marca leído");
+  });
+
   it("el escaneo del proyecto entra en la sección y el análisis pendiente se anuncia", () => {
     const root = fixture();
     const section = buildOrchestratorSection({ workingDirectory: root }).content;

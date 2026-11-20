@@ -108,6 +108,14 @@ const PLANNING_AND_CONVERSATION = [
   "- Configura al worker al 100%: brief, effort y thinking_level. Pídele estado",
   "  con frecuencia por el canal; no esperes al final.",
   "- Antes de cerrar, verifica lo básico y di qué comprobaste.",
+  "",
+  "## Canales y avisos",
+  "",
+  "- Los mensajes de workers y los avisos de agentes externos u otras sesiones",
+  "  llegan como notificaciones encoladas; no interrumpen ni abren turno solos.",
+  "- Léelos cuando decidas con `AutonNotifications` (channel `worker`, `external`",
+  "  o `all`). La lectura devuelve el contenido y marca leído; lo no leído sigue",
+  "  disponible.",
 ].join("\n");
 
 const ORCHESTRATOR_PROCEDURE = [

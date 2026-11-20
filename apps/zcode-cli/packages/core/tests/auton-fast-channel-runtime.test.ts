@@ -10,6 +10,8 @@ import { createTestSessionEventStore } from "./test-event-store.js";
 import { createCoordinatorResponsePort } from "../src/subagent/coordinator-response.js";
 import { createSubagentMessageSink } from "../src/subagent/message-steering.js";
 import { createToolRegistry } from "../src/tool/registry.js";
+import { autonNotificationRegistryFor } from "@zcode/shared/auton-notifications";
+import { autonNotificationsHandler } from "../src/auton/notifications-handler.js";
 
 /** Modelo falso que guarda lo que recibe y cierra el turno. */
 function recordingModel() {
@@ -66,16 +68,30 @@ describe("canal rápido sobre el runtime real", () => {
 
     expect(result.status).toBe("success");
 
-    await parent.executeTurn("hola");
+    // El mensaje del worker queda como notificación encolada en su canal; no
+    // arranca turno ni entra como mensaje del humano.
+    await new Promise((resolve) => setTimeout(resolve, 40));
+    expect(requests).toHaveLength(0);
+    const registry = autonNotificationRegistryFor(String(sessionId));
+    const unread = registry.unread("worker");
+    expect(unread).toHaveLength(1);
+    expect(unread[0]?.origin).toBe("auton-worker");
+    expect(unread[0]?.text).toContain("voy por el CSS");
 
-    const delivered = requests
-      .flat()
-      .map(textOf)
-      .filter((text) => text.includes("voy por el CSS"));
-    expect(delivered.length).toBeGreaterThan(0);
-    expect(delivered.some((text) => text.includes("<subagent-message>"))).toBe(true);
-    // No entra como mensaje escrito por el humano: va envuelto como mensaje del worker.
-    expect(delivered.every((text) => text.includes("<subagent-message>"))).toBe(true);
+    // La operación real de lectura lo entrega y lo marca leído.
+    const read = await autonNotificationsHandler(
+      { channel: "worker" },
+      {
+        sessionId,
+        turnId: createTurnId("turn-read-fast"),
+        traceId: "trace-read-fast",
+        emitEvent: async () => undefined,
+      } as never,
+    );
+    expect(read.read.map((item) => item.text)).toEqual([
+      "voy por el CSS, faltan 2 secciones",
+    ]);
+    expect(registry.unread("worker")).toHaveLength(0);
   }, 20_000);
 
   it("el orquestador instruye al worker en curso y el worker la recibe", async () => {

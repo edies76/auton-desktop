@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createSessionId } from "@zcode/contracts";
 import { createTestAgentRuntime } from "./test-agent-runtime.js";
+import { autonNotificationRegistryFor } from "@zcode/shared/auton-notifications";
 import { createTestSessionEventStore } from "./test-event-store.js";
 import { createToolRegistry } from "../src/tool/registry.js";
 import { registerBuiltInTools } from "../src/tool/handlers/index.js";
@@ -32,12 +33,10 @@ describe("turno vivo y canal rápido sobre una sesión real", () => {
     let workerStarted = false;
     let workerFinished = false;
     let workerDispatched = false;
-    const seenRequests: string[] = [];
 
     const modelAdapter = {
       async generateText(request: { messages?: Array<{ role: string; content: unknown }> }) {
         const text = JSON.stringify(request.messages ?? []);
-        seenRequests.push(text);
 
         // El worker: tarda lo suficiente para que el turno del orquestador espere.
         if (text.includes("escribe index.html")) {
@@ -163,12 +162,11 @@ describe("turno vivo y canal rápido sobre una sesión real", () => {
     }
     expect(Object.values(runtimeTaskRegistry.all()).some((task) => task.status === "running")).toBe(false);
 
-    // 5) La pregunta del worker llega al orquestador como evento envuelto, nunca
-    //    como un mensaje escrito por el humano.
-    await runtime.executeTurn("sigue");
-    const delivered = seenRequests.filter((text) => text.includes("¿uso la paleta nueva?"));
-    expect(delivered.length).toBeGreaterThan(0);
-    expect(delivered.every((text) => text.includes("<subagent-message>"))).toBe(true);
+    // 5) La pregunta del worker queda como notificación en su canal; no entra
+    //    como mensaje del humano ni arranca un turno.
+    const workerUnread = autonNotificationRegistryFor(String(sessionId)).unread("worker");
+    expect(workerUnread.map((item) => item.text)).toContain("¿uso la paleta nueva?");
+    expect(workerUnread[0]?.origin).toBe("auton-worker");
   }, 20_000);
 
   it("el orquestador instruye al worker en curso y el worker la recibe", async () => {

@@ -178,6 +178,9 @@ export const SessionEventType = {
   SubagentSpawned: "subagent_spawned",
   SubagentMessage: "subagent_message",
   SubagentStopped: "subagent_stopped",
+  // Auton: notificación encolada (worker o agente externo) y su lectura explícita.
+  AutonNotificationQueued: "auton_notification_queued",
+  AutonNotificationRead: "auton_notification_read",
   Interrupt: "interrupt",
   Cancel: "cancel",
   Resume: "resume",

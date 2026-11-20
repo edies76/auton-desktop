@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { createRootTraceContext, createSessionId } from "@zcode/contracts";
+import { autonNotificationRegistryFor } from "@zcode/shared/auton-notifications";
 import { createTestAgentRuntime } from "./test-agent-runtime.js";
 import { createTestSessionEventStore } from "./test-event-store.js";
 import { AutonLiveLoop, registerAutonLiveLoop } from "../src/auton/live-loop.js";
@@ -55,9 +56,10 @@ describe("turno vivo sobre una sesión real", () => {
     // El latido sigue vivo mientras el canal existe, aunque el turno haya cerrado.
     await wait(120);
     expect(onHeartbeat).toHaveBeenCalled();
-    const callsBeforeWake = generateText.mock.calls.length;
+    const callsBeforeNotification = generateText.mock.calls.length;
 
-    // El evento del worker despierta un turno nuevo por la cola de comandos.
+    // La ruta externa encola una notificación; no arranca otro turno. El
+    // orquestador la leerá cuando decida.
     runtime.enqueueBackgroundTaskNotification({
       text: "el worker terminó",
       traceContext: createRootTraceContext({
@@ -65,11 +67,11 @@ describe("turno vivo sobre una sesión real", () => {
         turnId: "turn-live" as never,
       }),
     });
-    const wakeDeadline = Date.now() + 2_000;
-    while (generateText.mock.calls.length <= callsBeforeWake && Date.now() < wakeDeadline) {
-      await wait(25);
-    }
-    expect(generateText.mock.calls.length).toBeGreaterThan(callsBeforeWake);
+    await wait(60);
+    expect(generateText.mock.calls.length).toBe(callsBeforeNotification);
+    expect(
+      autonNotificationRegistryFor(String(sessionId)).unread("external"),
+    ).toHaveLength(1);
 
     testLoop.close();
   }, 10_000);
