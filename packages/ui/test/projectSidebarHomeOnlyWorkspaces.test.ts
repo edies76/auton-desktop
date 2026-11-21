@@ -380,6 +380,8 @@ describe("ProjectSidebar home-only workspace list", () => {
         props(switcher, {
           isWebRemoteControl: false,
           webRemoteControlWorkspaceSwitcher: undefined,
+          // El sidebar trabaja sobre el workspace del proyecto cuyas tareas carga.
+          workspacePath: "/workspace/lunar",
           onSelectTask,
         }),
       ),

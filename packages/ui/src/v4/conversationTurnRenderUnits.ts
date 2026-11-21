@@ -481,12 +481,100 @@ export function buildConversationTurnRenderUnits(
   }
 
   const materializedUnits = units.map((unit, index) =>
-    materializeDraftUnit(unit, index, units.length, options),
+    materializeDraftUnitCached(unit, index, units.length, options),
   );
   const keptUnits = materializedUnits.filter(shouldKeepRenderUnit);
   const normalizedUnits = keptUnits.map((unit, index) =>
     normalizeRenderUnitPosition(unit, index, keptUnits.length, options),
   );
-  return markHighspeedOutputFooterUnits(normalizedUnits, options.nowMs ?? Date.now());
+  const markedUnits = markHighspeedOutputFooterUnits(normalizedUnits, options.nowMs ?? Date.now());
+  return stableUnitsArray(markedUnits);
+}
+
+/**
+ * Caché por turno: la materialización de un turno (segmentos, flujos, colas)
+ * solo se rehace cuando SU rebanada de filas o las opciones que le afectan
+ * cambian. Un tick (nowMs avanza) o un chunk que solo toca el turno en curso
+ * reutiliza el mismo objeto para los turnos terminados, y React no los vuelve
+ * a renderizar. El turno en curso nunca se cachea: crece y depende del reloj.
+ */
+interface TurnUnitCacheEntry {
+  rows: readonly ConversationRow[];
+  header: TurnHeaderRow | undefined;
+  userInputs: readonly UserInputRow[];
+  hookInvocations: readonly HookInvocationRow[];
+  assistantWorkRows: readonly AssistantWorkRow[];
+  index: number;
+  total: number;
+  sessionPhase: BuildConversationTurnRenderUnitsOptions["sessionPhase"];
+  pluginUiPinResolver: BuildConversationTurnRenderUnitsOptions["pluginUiPinResolver"];
+  unit: ConversationTurnRenderUnit;
+}
+
+const TURN_UNIT_CACHE_MAX = 256;
+const turnUnitCache = new Map<string, TurnUnitCacheEntry>();
+let lastUnitsArray: ConversationTurnRenderUnit[] | null = null;
+
+function sameRowRefs<T>(a: readonly T[], b: readonly T[]): boolean {
+  return a === b || (a.length === b.length && a.every((row, index) => row === b[index]));
+}
+
+function materializeDraftUnitCached(
+  draft: DraftTurnRenderUnit,
+  index: number,
+  total: number,
+  options: BuildConversationTurnRenderUnitsOptions,
+): ConversationTurnRenderUnit {
+  const cached = turnUnitCache.get(draft.turnId);
+  if (
+    cached &&
+    cached.index === index &&
+    cached.total === total &&
+    cached.header === draft.header &&
+    cached.sessionPhase === options.sessionPhase &&
+    cached.pluginUiPinResolver === options.pluginUiPinResolver &&
+    sameRowRefs(cached.rows, draft.orderedRows) &&
+    sameRowRefs(cached.userInputs, draft.userInputs) &&
+    sameRowRefs(cached.hookInvocations, draft.hookInvocations) &&
+    sameRowRefs(cached.assistantWorkRows, draft.assistantWorkRows)
+  ) {
+    return cached.unit;
+  }
+  const unit = materializeDraftUnit(draft, index, total, options);
+  if (!unit.isRunning) {
+    turnUnitCache.set(draft.turnId, {
+      rows: draft.orderedRows,
+      header: draft.header,
+      userInputs: draft.userInputs,
+      hookInvocations: draft.hookInvocations,
+      assistantWorkRows: draft.assistantWorkRows,
+      index,
+      total,
+      sessionPhase: options.sessionPhase,
+      pluginUiPinResolver: options.pluginUiPinResolver,
+      unit,
+    });
+    if (turnUnitCache.size > TURN_UNIT_CACHE_MAX) {
+      const oldest = turnUnitCache.keys().next().value;
+      if (oldest !== undefined) turnUnitCache.delete(oldest);
+    }
+  } else {
+    turnUnitCache.delete(draft.turnId);
+  }
+  return unit;
+}
+
+/** Misma secuencia de unidades ⇒ mismo array: los memos de arriba bajan. */
+function stableUnitsArray(units: ConversationTurnRenderUnit[]): ConversationTurnRenderUnit[] {
+  const previous = lastUnitsArray;
+  if (
+    previous &&
+    previous.length === units.length &&
+    previous.every((unit, index) => unit === units[index])
+  ) {
+    return previous;
+  }
+  lastUnitsArray = units;
+  return units;
 }
 

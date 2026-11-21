@@ -243,11 +243,13 @@ describe("virtual-project sidebar on desktop and mobile", () => {
     );
     const device = screen.getByRole("button", { name: "webRemoteControl.switchDevice" });
     const navigation = screen.getByTestId("sidebar-primary-navigation");
-    // 设备行是导航首行：位于 las acciones del proyecto 之上.
+    // 设备行是导航首行：位于 las acciones del proyecto 之上. Bajo AUTON_MVP el
+    // botón de plugin store no existe; el ancla son las acciones reales.
     expect(navigation.firstElementChild).toBe(device);
+    const actions =
+      screen.queryByTestId("auton-projects-home") ?? screen.getByTestId("auton-new-project");
     expect(
-      device.compareDocumentPosition(screen.getByTestId("plugin-store-sidebar-open")) &
-        Node.DOCUMENT_POSITION_FOLLOWING,
+      device.compareDocumentPosition(actions) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     fireEvent.click(device);
     expect(chooseOtherDevice).toHaveBeenCalledOnce();

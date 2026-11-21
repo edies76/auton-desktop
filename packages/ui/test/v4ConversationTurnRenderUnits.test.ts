@@ -1144,3 +1144,69 @@ describe("buildConversationTurnRenderUnits", () => {
     expect(unit?.workSegments?.[0]?.assistantHistoryDefaultOpen).toBe(false);
   });
 });
+
+describe("identidad de unidades: tick y streaming no reconstruyen el pasado", () => {
+  it("conserva los turnos terminados y solo reconstruye el turno en curso", () => {
+    const now = 1_700_000_100_000;
+    const rows: ConversationRow[] = [];
+    let rowId = 1;
+    const finishedTurnIds: string[] = [];
+    for (let turn = 0; turn < 10; turn += 1) {
+      const turnId = `turn-done-${turn}`;
+      finishedTurnIds.push(turnId);
+      rows.push(turnHeader(rowId++, { turnId }));
+      rows.push(userInput(rowId++, `pedido ${turn}`, { turnId }));
+      rows.push(toolCall(rowId++, "Read", { turnId }));
+      rows.push(assistantText(rowId++, `respuesta ${turn}`, { turnId }));
+    }
+    const runningTurnId = "turn-running";
+    rows.push(
+      turnHeader(rowId++, {
+        turnId: runningTurnId,
+        state: "running",
+        activeMs: undefined,
+        endedAt: undefined,
+      }),
+      userInput(rowId++, "haz el trabajo", { turnId: runningTurnId }),
+      assistantText(rowId++, "voy con ello", { turnId: runningTurnId }),
+      toolCall(rowId++, "Agent", {
+        turnId: runningTurnId,
+        status: "running",
+        input: { subagent_type: "auton-worker" },
+      }),
+    );
+
+    const first = buildConversationTurnRenderUnits(rows, { nowMs: now });
+    expect(first).toHaveLength(11);
+    expect(first.at(-1)?.turnId).toBe(runningTurnId);
+
+    // Un tick: el reloj avanza 1 s y NINGÚN turno terminado se reconstruye.
+    const second = buildConversationTurnRenderUnits(rows, { nowMs: now + 1_000 });
+    expect(second).toHaveLength(first.length);
+    for (let index = 0; index < 10; index += 1) {
+      expect(second[index]).toBe(first[index]);
+      expect(second[index]?.turnId).toBe(finishedTurnIds[index]);
+    }
+    const runningFirst = first.at(-1)!;
+    const runningSecond = second.at(-1)!;
+    expect(runningSecond).not.toBe(runningFirst);
+    expect(runningSecond.workStatus?.durationMs).toBeGreaterThan(
+      runningFirst.workStatus?.durationMs ?? 0,
+    );
+
+    // Streaming: llega una fila nueva al turno en curso; el pasado sigue igual.
+    const streamedRow = assistantText(rowId++, "sigo trabajando", {
+      turnId: runningTurnId,
+    });
+    const third = buildConversationTurnRenderUnits([...rows, streamedRow], {
+      nowMs: now + 2_000,
+    });
+    expect(third).toHaveLength(first.length);
+    for (let index = 0; index < 10; index += 1) {
+      expect(third[index]).toBe(first[index]);
+    }
+    const runningThird = third.at(-1)!;
+    expect(runningThird).not.toBe(runningFirst);
+    expect(runningThird.assistantTextRows.map((row) => row.text)).toContain("sigo trabajando");
+  });
+});

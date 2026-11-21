@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button.js";
 import { cn } from "@/components/lib/utils.js";
+import { useAutonClock } from "./clock.js";
 import {
   AUTON_WORKER_STATUS_META,
   formatClock,
@@ -25,7 +26,8 @@ export interface AutonWorkerPanelProps {
   workers?: readonly AutonWorkerView[];
   /** Canales agrupados por rol/motor (sidebar del proyecto). */
   groups?: readonly AutonWorkerGroup[];
-  now: number;
+  /** Reloj inyectable; sin él, el panel corre su propio reloj de hoja. */
+  now?: number;
   selectedWorkerId?: string | null;
   onOpenWorker: (workerId: string) => void;
   onOpenSubagent?: (workerId: string) => void;
@@ -201,6 +203,9 @@ export function AutonWorkerPanel({
   canStop = true,
   embedded = false,
 }: AutonWorkerPanelProps) {
+  // El reloj vive aquí (hoja) cuando no se inyecta: un tick no tiene por qué
+  // re-renderizar a quien deriva la lista, solo a las filas que muestran tiempo.
+  const clockNow = useAutonClock(now);
   const total = groups
     ? groups.reduce((count, group) => count + group.workers.length, 0)
     : workers.length;
@@ -274,7 +279,7 @@ export function AutonWorkerPanel({
                       <WorkerRow
                         key={worker.id}
                         worker={worker}
-                        now={now}
+                        now={clockNow}
                         selected={selectedWorkerId === worker.id}
                         canStop={group.canStop ?? canStop}
                         onOpenWorker={
@@ -308,7 +313,7 @@ export function AutonWorkerPanel({
             <WorkerRow
               key={worker.id}
               worker={worker}
-              now={now}
+              now={clockNow}
               selected={selectedWorkerId === worker.id}
               canStop={canStop}
               onOpenWorker={onOpenWorker}

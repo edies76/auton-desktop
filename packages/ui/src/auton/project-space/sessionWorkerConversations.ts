@@ -5,7 +5,7 @@
 // lee con el servicio de archivos del host y los convierte en la misma
 // instantánea que ya consume la proyección del panel.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useOptionalServices } from "@/hooks/useServices.js";
 import type { AutonWorkerEvent } from "./model.js";
 import type { AutonSessionWorkerSnapshot } from "./sessionWorker.js";
@@ -147,17 +147,56 @@ async function readTranscript(
   }
 }
 
-/** Lee el índice y las transcripciones del proyecto mientras la vista vive. */
+/** Firma exacta de una instantánea: contenido equivalente ⇒ misma lista. */
+function snapshotSignature(snapshot: AutonSessionWorkerSnapshot): string {
+  const transcript = (snapshot.transcript ?? [])
+    .map((entry) => `${entry.id}\u0002${entry.at}\u0002${entry.text}`)
+    .join("\u0001");
+  return [
+    snapshot.agentId,
+    snapshot.description,
+    snapshot.status,
+    snapshot.startedAt,
+    snapshot.completedAt ?? "",
+    snapshot.childSessionId ?? "",
+    snapshot.waitingForAnswer ? "1" : "0",
+    snapshot.lastLine ?? "",
+    snapshot.error ?? "",
+    transcript,
+  ].join("\u0001");
+}
+
+export function sameSessionWorkerSnapshots(
+  a: readonly AutonSessionWorkerSnapshot[],
+  b: readonly AutonSessionWorkerSnapshot[],
+): boolean {
+  return (
+    a === b ||
+    (a.length === b.length &&
+      a.every((snapshot, index) => snapshotSignature(snapshot) === snapshotSignature(b[index]!)))
+  );
+}
+
+/**
+ * Lee el índice y las transcripciones del proyecto mientras la vista vive.
+ *
+ * Cadencia declarada `pollMs` (por defecto 4 s): una pasada lee índice +
+ * transcripciones y publica SOLO cuando el contenido cambió — así diez ticks
+ * con archivos intactos no son diez pasadas de lectura+parseo ni diez
+ * instantáneas nuevas (la referencia estable evita re-derivar el espacio).
+ */
 export function useSessionWorkerConversations(
   workspaceRoot: string,
-  pollMs = 1_000,
+  pollMs = 4_000,
 ): AutonSessionWorkerSnapshot[] {
   const services = useOptionalServices();
   const fileService = services?.fileService;
   const [snapshots, setSnapshots] = useState<AutonSessionWorkerSnapshot[]>([]);
+  const snapshotsRef = useRef<AutonSessionWorkerSnapshot[]>([]);
 
   useEffect(() => {
     if (!fileService || !workspaceRoot) {
+      snapshotsRef.current = [];
       setSnapshots([]);
       return;
     }
@@ -176,7 +215,10 @@ export function useSessionWorkerConversations(
         }),
       );
       if (cancelled) return;
-      setSnapshots(loaded);
+      if (!sameSessionWorkerSnapshots(snapshotsRef.current, loaded)) {
+        snapshotsRef.current = loaded;
+        setSnapshots(loaded);
+      }
       timer = setTimeout(() => void read(), pollMs);
     };
 

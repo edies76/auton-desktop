@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   AutonWorkerPanel,
   buildAutonWorkerGroups,
   projectAutonWorkers,
-  useAutonClock,
   useAutonSubagentCounts,
   useAutonWorkerFocusStore,
+  type AutonWorkerView,
 } from "@/auton/index.js";
 import { useBaseWorkspaceServices } from "@/hooks/useWorkspaceServices.js";
 import { logger } from "@/logger.js";
@@ -43,7 +43,6 @@ function AutonWorkersSidebarContents({
   const workerProjection = useConversationProjection(workerLease);
   const rows = projection.snapshot?.rows.window ?? [];
   const workerRows = listWorkerId ? (workerProjection.snapshot?.rows.window ?? []) : [];
-  const now = useAutonClock();
   const services = useBaseWorkspaceServices();
 
   const { leaseTaskId, stopTaskId } = useMemo(
@@ -56,9 +55,11 @@ function AutonWorkersSidebarContents({
     [activeTaskId, orchestratorTaskId],
   );
 
+  // Solo filas: la lista se deriva sin reloj (el tiempo se pinta en las filas
+  // del panel). Un tick no es una fuente de datos.
   const agentWorkers = useMemo(
-    () => projectAutonWorkers(rows, now).filter((worker) => worker.kind === "agent"),
-    [now, rows],
+    () => projectAutonWorkers(rows).filter((worker) => worker.kind === "agent"),
+    [rows],
   );
   const subagentCounts = useAutonSubagentCounts({
     agents: agentWorkers,
@@ -90,7 +91,7 @@ function AutonWorkersSidebarContents({
 
   const groups = useMemo(() => {
     const subagents = listWorkerId
-      ? projectAutonWorkers(workerRows, now).filter((worker) => worker.kind !== "agent")
+      ? projectAutonWorkers(workerRows).filter((worker) => worker.kind !== "agent")
       : [];
     const agents = agentWorkers.map((worker) => {
       const liveCount = worker.id === listWorkerId ? subagents.length : undefined;
@@ -105,13 +106,29 @@ function AutonWorkersSidebarContents({
     return listWorkerId
       ? built.filter((group) => group.kind !== "subagent" || group.workers.length > 0)
       : built.filter((group) => group.kind !== "subagent");
-  }, [agentWorkers, listWorkerId, now, stopTaskId, subagentCounts, workerRows]);
+  }, [agentWorkers, listWorkerId, stopTaskId, subagentCounts, workerRows]);
 
+  // Publicación coalescida: una ráfaga de cambios publica una vez con el último
+  // estado (el store además ignora listas de contenido equivalente).
+  const pendingWorkersRef = useRef<AutonWorkerView[] | null>(null);
+  const publishTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
-    useAutonWorkerFocusStore
-      .getState()
-      .setLiveWorkers(groups.flatMap((group) => group.workers));
+    pendingWorkersRef.current = groups.flatMap((group) => group.workers);
+    if (publishTimerRef.current !== null) return;
+    publishTimerRef.current = setTimeout(() => {
+      publishTimerRef.current = null;
+      const workers = pendingWorkersRef.current;
+      if (workers) {
+        useAutonWorkerFocusStore.getState().setLiveWorkers(workers);
+      }
+    }, 0);
   }, [groups]);
+  useEffect(
+    () => () => {
+      if (publishTimerRef.current !== null) clearTimeout(publishTimerRef.current);
+    },
+    [],
+  );
 
   const openWorker = useCallback(
     (workerId: string) => {
@@ -160,7 +177,6 @@ function AutonWorkersSidebarContents({
       <div className="min-h-0 flex-1">
         <AutonWorkerPanel
           groups={groups}
-          now={now}
           selectedWorkerId={focusedWorkerId}
           onOpenWorker={openWorker}
           onOpenSubagent={openSubagent}

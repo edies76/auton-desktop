@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import type { AutonWorkerView } from "../src/auton/project-space/model.js";
 import { useAutonWorkerFocusStore } from "../src/auton/project-space/workerFocusStore.js";
 import { AutonWorkersSidebar } from "../src/project-sidebar/AutonWorkersSidebar.js";
 
@@ -113,6 +114,104 @@ afterEach(() => {
 });
 
 describe("sidebar de workers del proyecto", () => {
+  describe("ticks y ráfagas (rendimiento)", () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(NOW);
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
+    function subscribePublications(): { publications: AutonWorkerView[][]; stop: () => void } {
+      const publications: AutonWorkerView[][] = [];
+      const stop = useAutonWorkerFocusStore.subscribe((current, previous) => {
+        if (current.liveWorkers !== previous.liveWorkers) {
+          publications.push(current.liveWorkers);
+        }
+      });
+      return { publications, stop };
+    }
+
+    async function flushEffects(): Promise<void> {
+      await act(async () => {
+        await Promise.resolve();
+      });
+    }
+
+    it("un tick ocioso no vuelve a derivar ni a publicar la lista de workers", async () => {
+      state.rows = [fullWorkerRow()];
+      renderSidebar();
+      await flushEffects();
+      // La publicación inicial es coalescida (un macrotask): se deja correr.
+      await act(async () => {
+        vi.advanceTimersByTime(0);
+      });
+      await flushEffects();
+
+      const { publications, stop } = subscribePublications();
+      const firstList = useAutonWorkerFocusStore.getState().liveWorkers;
+      expect(firstList.length).toBeGreaterThan(0);
+      const firstWorker = firstList[0];
+      const clockBefore = document.querySelector('[data-testid="auton-worker-clock"]')
+        ?.textContent;
+
+      await act(async () => {
+        vi.advanceTimersByTime(5_000);
+      });
+      await flushEffects();
+
+      // 0 escrituras al store por tick: la misma referencia, ningún objeto nuevo.
+      expect(publications).toHaveLength(0);
+      const afterList = useAutonWorkerFocusStore.getState().liveWorkers;
+      expect(afterList).toBe(firstList);
+      expect(afterList[0]).toBe(firstWorker);
+      // Los relojes visibles siguen avanzando.
+      const clockAfter = document.querySelector('[data-testid="auton-worker-clock"]')
+        ?.textContent;
+      expect(clockAfter).not.toBe(clockBefore);
+      stop();
+    });
+
+    it("una ráfaga de 50 actualizaciones publica como máximo 3 veces y gana la última", async () => {
+      state.rows = [fullWorkerRow()];
+      const view = render(
+        <AutonWorkersSidebar workspacePath="/workspace/lunar" orchestratorTaskId="orch" />,
+      );
+      await flushEffects();
+
+      const { publications, stop } = subscribePublications();
+      for (let index = 0; index < 50; index += 1) {
+        state.rows = [
+          fullWorkerRow(),
+          fullWorkerRow({
+            rowId: 200 + index,
+            childSessionId: `auton-burst-${index}`,
+            title: `Ráfaga ${index}`,
+            seq: 100 + index,
+          }),
+        ];
+        await act(async () => {
+          // Elemento nuevo por actualización: con el mismo árbol React hace
+          // bailout y la ráfaga no llegaría al componente.
+          view.rerender(
+            <AutonWorkersSidebar workspacePath="/workspace/lunar" orchestratorTaskId="orch" />,
+          );
+        });
+      }
+      await act(async () => {
+        vi.advanceTimersByTime(1_000);
+      });
+      await flushEffects();
+
+      expect(publications.length).toBeLessThanOrEqual(3);
+      const live = useAutonWorkerFocusStore.getState().liveWorkers;
+      expect(live.map((worker) => worker.id)).toContain("auton-burst-49");
+      stop();
+    });
+  });
+
   it("en la vista del orquestador solo lista agentes completos", () => {
     state.rows = [subagentRow(), fullWorkerRow()];
     renderSidebar();

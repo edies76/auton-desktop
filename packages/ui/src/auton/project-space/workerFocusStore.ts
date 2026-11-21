@@ -22,6 +22,28 @@ interface AutonWorkerFocusState {
   close(): void;
 }
 
+function sameWorker(a: AutonWorkerView, b: AutonWorkerView): boolean {
+  return (
+    a.id === b.id &&
+    a.name === b.name &&
+    a.status === b.status &&
+    a.startedAt === b.startedAt &&
+    a.lastSignalAt === b.lastSignalAt &&
+    a.kind === b.kind &&
+    a.engine === b.engine &&
+    a.lastLine === b.lastLine &&
+    a.subagentCount === b.subagentCount
+  );
+}
+
+/** Contenido equivalente ⇒ misma lista: los consumidores no se despiertan de más. */
+export function sameAutonWorkers(
+  a: readonly AutonWorkerView[],
+  b: readonly AutonWorkerView[],
+): boolean {
+  return a === b || (a.length === b.length && a.every((worker, index) => sameWorker(worker, b[index]!)));
+}
+
 /**
  * El panel izquierdo guarda la selección; la lista viva es un dato aparte que
  * escribe la proyección. Elegir una fila no inventa ni reemplaza esa lista.
@@ -41,7 +63,12 @@ export const useAutonWorkerFocusStore = create<AutonWorkerFocusState>((set) => (
       workspacePath,
       workspaceIdentity,
     }),
-  setLiveWorkers: (workers) => set({ liveWorkers: workers }),
+  // Publicar una lista con el mismo contenido no es noticia: sin esto cada
+  // re-derivación (o un tick) despierta a todos los suscriptores por gusto.
+  setLiveWorkers: (workers) =>
+    set((state) =>
+      sameAutonWorkers(state.liveWorkers, workers) ? state : { liveWorkers: workers },
+    ),
   close: () =>
     set({
       selectedWorkerId: null,
