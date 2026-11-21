@@ -66,6 +66,14 @@ describe("el orquestador que sabe planear y conversar", () => {
     expect(staticSection).toContain("No infles lo pequeño ni aplanes lo grande");
   });
 
+  it("el recap es un gesto corto y separado del compact", () => {
+    expect(staticSection).toContain("## Recap (para reenganchar al humano)");
+    expect(staticSection).toContain("≤80");
+    expect(staticSection).toContain("objetivo, avance verificado y qué sigue");
+    expect(staticSection).toContain("no un compact");
+    expect(staticSection).toContain("no toques el contexto del modelo ni el plan");
+  });
+
   it("reparte varios workers cuando el encargo se puede partir", () => {
     expect(staticSection).toContain("## Reparto en paralelo");
     expect(staticSection).toContain("El default no es un worker, es el mejor reparto");

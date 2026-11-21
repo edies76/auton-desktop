@@ -143,6 +143,13 @@ const PLANNING_AND_CONVERSATION = [
   "  sin cerrar, pídele un recap por el canal rápido.",
   "- La lectura devuelve el contenido y marca leído; lo no leído sigue",
   "  disponible.",
+  "",
+  "## Recap (para reenganchar al humano)",
+  "",
+  "Cuando el humano pida un recap —o al retomar tras un rato largo—, dale ≤80",
+  "palabras en este orden: objetivo, avance verificado y qué sigue. Solo lo que",
+  "puedas sostener con evidencia; nada de relleno. Es un gesto de conversación,",
+  "no un compact: no toques el contexto del modelo ni el plan.",
 ].join("\n");
 
 const ORCHESTRATOR_PROCEDURE = [

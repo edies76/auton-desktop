@@ -275,3 +275,47 @@ it("renders a human guide through real admission and keeps the ongoing turn", as
       "<system-reminder>\nThe user sent a new message while you were working:\nshort B\n\nThis is how ZCode surfaces messages the user sends mid-turn — within the running turn, often alongside the next tool result, rather than as a separate conversation turn. Address the message above as you continue this turn.\n</system-reminder>",
   });
 });
+
+it("un steer humano contra un turno no steerable se encola y es entregable, nunca se pierde", async () => {
+  const entered = deferred<void>();
+  const release = deferred<void>();
+  const requests: unknown[] = [];
+  const runtime = createRuntime("guide-non-steerable", async (request) => {
+    requests.push(request);
+    if (requests.length === 1) {
+      entered.resolve();
+      await release.promise;
+    }
+    return {
+      finishReason: "stop",
+      text: "ok",
+      usage: { inputTokens: 1, outputTokens: 1, totalTokens: 2 },
+    };
+  });
+
+  const first = await runtime.admitPrompt("task A");
+  await entered.promise;
+  // Así marca el runtime un turno que ya no acepta steer (cierre inmediato o
+  // pasos que fijan steerable=false en turn-model-step/turn-tools).
+  const internal = runtime as unknown as { activeTurn?: { steerable: boolean } };
+  expect(internal.activeTurn).toBeDefined();
+  internal.activeTurn!.steerable = false;
+
+  const guide = await runtime.admitPrompt("mid B", undefined, { queueDelivery: "guide" });
+  // El invariante de F2: jamás "rejected" para un mensaje humano; queda encolado.
+  expect(guide.kind).toBe("queued");
+
+  const queuedInput = (await runtime.getProjection()).pendingSteerInputs.find(
+    (input) => input.pendingInputId === guide.pendingInputId,
+  );
+  expect(queuedInput).toBeDefined();
+  expect(JSON.stringify(queuedInput)).toContain("mid B");
+
+  release.resolve(undefined);
+  if (first.kind === "started") await first.completion;
+
+  // Y es entregable: al drenarlo llega a una petición real del modelo.
+  await runtime.executeTurn("mid B", undefined, { intent: queuedInput?.intent });
+  expect(requests).toHaveLength(2);
+  expect(JSON.stringify(requests.at(-1))).toContain("mid B");
+});
