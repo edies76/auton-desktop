@@ -139,38 +139,28 @@ function splitVisualWorkSegments(
 }
 
 /**
- * Duración del tramo medida con las marcas de sus propias filas de trabajo.
- *
- * El loop del orquestador parte la crónica en varios tramos sin `triggerRow`
- * (cada narración abre un bloque). Esos tramos no tienen un hecho por tramo en
- * el header, y el fallback por límites repetiría el total del turno en todos
- * los bloques ("Worked for 4m 20s" cuatro veces). Aquí se mide lo que de
- * verdad corrió en el tramo: del primer trabajo al último cierre.
+ * Duración del tramo del loop del orquestador, medida por sus fronteras:
+ * del arranque de su primera fila al arranque del tramo siguiente (o al ahora
+ * si sigue corriendo). Los tramos de la crónica se abren con la narración y
+ * contienen el trabajo que vino después, así que su tiempo real es la distancia
+ * entre arranques — incluye el pensamiento del modelo, no solo los tools, que
+ * medidos solos darían "1s" bajo un bloque de dos minutos.
  */
-function resolveWorkRowsDurationMs(
-  rows: readonly AssistantWorkRow[],
-  segmentRunning: boolean,
-  nowMs: number | undefined,
-): number | undefined {
-  let start: number | undefined;
-  let end: number | undefined;
-  const widen = (from: number | undefined, to: number | undefined): void => {
-    if (from !== undefined) start = start === undefined ? from : Math.min(start, from);
-    if (to !== undefined) end = end === undefined ? to : Math.max(end, to);
-  };
-  for (const row of rows) {
-    if (row.kind === "toolCall") {
-      widen(row.startedAt ?? row.createdAt, row.endedAt ?? row.startedAt ?? row.createdAt);
-    } else if (row.kind === "subagent") {
-      widen(
-        row.startedAt ?? row.createdAt,
-        row.endedAt ?? row.lastActivityAt ?? row.startedAt ?? row.createdAt,
-      );
-    }
-  }
+function resolveLoopSegmentDurationMs(options: {
+  workRows: readonly AssistantWorkRow[];
+  nextSegmentStartAt: number | undefined;
+  segmentRunning: boolean;
+  nowMs?: number;
+  fallbackEndAt: number | undefined;
+}): number | undefined {
+  const start = options.workRows[0]?.createdAt;
   if (start === undefined) return undefined;
-  if (segmentRunning && nowMs !== undefined) return Math.max(0, nowMs - start);
-  return Math.max(0, (end ?? start) - start);
+  if (options.segmentRunning && options.nowMs !== undefined) {
+    return Math.max(0, options.nowMs - start);
+  }
+  const end = options.nextSegmentStartAt ?? options.fallbackEndAt;
+  if (end === undefined) return undefined;
+  return Math.max(0, end - start);
 }
 
 function resolveSegmentDurationMs(options: {
@@ -182,6 +172,7 @@ function resolveSegmentDurationMs(options: {
   segmentCount: number;
   nowMs?: number;
   workRows: readonly AssistantWorkRow[];
+  nextSegmentStartAt?: number;
 }): number | undefined {
   const facts = options.header?.workSegments;
   const indexedFact =
@@ -197,23 +188,26 @@ function resolveSegmentDurationMs(options: {
   if (fact && options.segmentRunning && options.nowMs !== undefined) {
     return Math.max(0, options.nowMs - fact.startedAt);
   }
-  if (!options.triggerRow) {
-    const fromRows = resolveWorkRowsDurationMs(
-      options.workRows,
-      options.segmentRunning,
-      options.nowMs,
-    );
-    if (fromRows !== undefined) return fromRows;
-    // Un tramo abierto por narración pura (sin filas de trabajo) no tiene
-    // tramo propio: mejor sin pie que repetir el total del turno debajo.
-    if (options.workRows.length === 0) return undefined;
-  }
+  // Un turno de un solo tramo es el turno entero: el header manda (aplica
+  // también a la proyección pública de compartir, que no trae triggers).
   if (options.segmentCount === 1) {
     return resolveConversationTurnWorkDurationMs(
       options.header,
       { nowMs: options.nowMs },
       options.segmentRunning,
     );
+  }
+  // Tramo del loop del orquestador (sin trigger): mide por fronteras — del
+  // arranque de su primera fila al arranque del tramo siguiente, o al ahora si
+  // sigue corriendo.
+  if (!options.triggerRow) {
+    return resolveLoopSegmentDurationMs({
+      workRows: options.workRows,
+      nextSegmentStartAt: options.nextSegmentStartAt,
+      segmentRunning: options.segmentRunning,
+      nowMs: options.nowMs,
+      fallbackEndAt: options.header?.endedAt,
+    });
   }
   // 兼容旧 guide snapshot：新 CLI 会下发 workSegments；仅旧数据缺事实时才按
   // guided row 的稳定时间边界恢复，避免刷新后又退回整个 turn 的单一工时。
@@ -285,6 +279,7 @@ export function buildConversationTurnWorkSegments(options: {
       segmentCount: visualDrafts.length,
       nowMs: options.nowMs,
       workRows: segmentFlowRows,
+      nextSegmentStartAt: visualDrafts[segmentIndex + 1]?.orderedRows[0]?.createdAt,
     });
     const segmentWorkStatus = resolveConversationTurnWorkStatus(
       options.header,
